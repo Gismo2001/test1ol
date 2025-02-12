@@ -11,3 +11,11 @@ const sleStyle = new Style
     )
 });
 export { sleStyle };
+
+const wehStyle = new Style({
+    image: new Icon({
+        src: './data/weh.svg',
+        scale: .9 
+    })
+});
+export { wehStyle };

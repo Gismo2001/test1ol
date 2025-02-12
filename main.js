@@ -1,5 +1,3 @@
-
-
 import './style.css';
 
 import {Map, View} from 'ol';
@@ -15,7 +13,7 @@ import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style.js';
 
 import { add } from './myFunc'; // 
 import { UTMToLatLon_Fix } from './myFunc'; // 
-import { sleStyle } from './extStyle';
+import { sleStyle, wehStyle } from './extStyle';
 
 import * as proj from 'ol/proj';
 import {getArea, getLength} from 'ol/sphere.js';
@@ -24,6 +22,8 @@ import { FullScreen, Attribution, defaults as defaultControls, ZoomToExtent, Con
 import { DragRotateAndZoom } from 'ol/interaction.js';
 import { defaults as defaultInteractions } from 'ol/interaction.js';
 import { singleClick } from 'ol/events/condition';
+
+import LayerSwitcher from 'ol-ext/control/LayerSwitcher';
 
 const mapView = new View({
   center: proj.fromLonLat([7.35, 52.7]),
@@ -37,11 +37,6 @@ const attribution = new Attribution({
 
 const map = new Map({
   target: "map",
-  layers: [
-    new TileLayer({
-        source: new OSM()
-    })
-  ],
   view: mapView,
   controls: defaultControls().extend([
     new FullScreen(),
@@ -52,6 +47,19 @@ const map = new Map({
   ]),
   interactions: defaultInteractions().extend([new DragRotateAndZoom()])
 });
+
+const osmTileCr = new TileLayer({
+  title: "osm-color",
+  name: "osm-color",
+  type: 'base',
+  source: new OSM({
+      url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      //attributions: ['© OpenStreetMap contributors', 'Tiles courtesy of <a href="https://www.openstreetmap.org/"></a>'],
+  }),
+  visible: true,
+  //opacity: 0.75
+});
+map.addLayer(osmTileCr);
 
 const gew_layer_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/gew.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
@@ -79,6 +87,30 @@ const exp_bw_sle_layer = new VectorLayer({
   trash: false,
 });
 map.addLayer(exp_bw_sle_layer);
+
+const exp_bw_weh_layer = new VectorLayer({
+  source: new VectorSource({
+    format: new GeoJSON(),
+    url: function (extent) {
+      return './myLayers/exp_bw_weh.geojson' + '?bbox=' + extent.join(',');
+    },
+    strategy: LoadingStrategy.bbox
+  }),
+  title: 'Wehr', // Titel für den Layer-Switcher
+  name: 'weh', // Titel für den Layer-Switcher
+  style: wehStyle,
+  visible: true,
+});
+map.addLayer(exp_bw_weh_layer);
+
+
+const layerSwitcher = new LayerSwitcher({ 
+  activationMode: 'click', 
+  reverse: true, 
+  trash: true, 
+  tipLabel: 'Legende', 
+ });
+map.addControl(layerSwitcher);
 
 const result1 = add(5, 10);
 console.log('Das Ergebnis Addition ist:', result1); // Ausgabe: Das Ergebnis der Addition ist: 15
