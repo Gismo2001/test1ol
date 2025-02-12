@@ -19,3 +19,7 @@ const wehStyle = new Style({
     })
 });
 export { wehStyle };
+
+export function test (c, d) {
+    return c * d;
+} 

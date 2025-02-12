@@ -13,7 +13,7 @@ import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style.js';
 
 import { add } from './myFunc'; // 
 import { UTMToLatLon_Fix } from './myFunc'; // 
-import { sleStyle, wehStyle } from './extStyle';
+import { sleStyle, test, wehStyle } from './extStyle';
 
 import * as proj from 'ol/proj';
 import {getArea, getLength} from 'ol/sphere.js';
@@ -24,17 +24,14 @@ import { defaults as defaultInteractions } from 'ol/interaction.js';
 import { singleClick } from 'ol/events/condition';
 
 import LayerSwitcher from 'ol-ext/control/LayerSwitcher';
-
-const mapView = new View({
-  center: proj.fromLonLat([7.35, 52.7]),
-  zoom: 9
-});
-
 const attribution = new Attribution({
   collapsible: false,
   html: '<a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
 });
-
+const mapView = new View({
+  center: proj.fromLonLat([7.35, 52.7]),
+  zoom: 9
+});
 const map = new Map({
   target: "map",
   view: mapView,
@@ -47,6 +44,7 @@ const map = new Map({
   ]),
   interactions: defaultInteractions().extend([new DragRotateAndZoom()])
 });
+
 
 const osmTileCr = new TileLayer({
   title: "osm-color",
@@ -116,3 +114,6 @@ const result1 = add(5, 10);
 console.log('Das Ergebnis Addition ist:', result1); // Ausgabe: Das Ergebnis der Addition ist: 15
 let result2 = UTMToLatLon_Fix(369450, 5829520, 32, true);
 console.log('Das Ergebnis Umrechung ist:', result2); // Ausgabe: Das Ergebnis der Addition ist: 15
+
+let result3 = test(10, 10);
+console.log('Das Ergebnis test ist:', result3); // Ausgabe: Das Ergebnis der Addition ist: 100
