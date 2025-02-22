@@ -182,14 +182,15 @@ function searchFeaturesByText(searchText) {
       console.log(`Layer: ${layer.get('title')}, Anzahl Features: ${features.length}`);
 
       features.forEach(feature => {
-          let properties = feature.getProperties();
-          let name = properties.name || '';
-          let beschreib = properties.beschreib || '';
-
-          if (name.includes(searchText) || beschreib.includes(searchText)) {
-              matchingFeatures.push({ feature, layer });
-          }
-      });
+        let properties = feature.getProperties();
+        let name = properties.name ? properties.name.toLowerCase() : '';
+        let beschreib = properties.beschreib ? properties.beschreib.toLowerCase() : '';
+        let searchTextLower = searchText.toLowerCase(); // Suchtext ebenfalls in Kleinbuchstaben umwandeln
+    
+        if (name.includes(searchTextLower) || beschreib.includes(searchTextLower)) {
+            matchingFeatures.push({ feature, layer });
+        }
+    });
   });
 
   // Ergebnisse anzeigen
@@ -209,10 +210,11 @@ function displaySearchResults(results) {
   results.forEach((item) => {
       let feature = item.feature;
       let properties = feature.getProperties();
+      let id = properties.bw_id;
       let name = properties.name || 'Unbekannt';
 
       let listItem = document.createElement('li');
-      listItem.textContent = name; // Nur den Namen anzeigen
+      listItem.textContent = id +": " + name; // Nur den Namen anzeigen
       listItem.onclick = () => zoomToFeature(feature);
       
       resultContainer.appendChild(listItem);
