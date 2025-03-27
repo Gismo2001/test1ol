@@ -198,6 +198,8 @@ map.on('click', function (evt) {
   displayFeatureInfo(evt.pixel);
 });
 
+
+
 const osmTileCr = new TileLayer({
   title: "osm-color",
   name: "osm-color",
@@ -244,6 +246,7 @@ const exp_bw_weh_layer = new VectorLayer({
   visible: false
 });
 map.addLayer(exp_bw_weh_layer);
+
 
 const layerSwitcher = new LayerSwitcher({ 
   activationMode: 'click', 
