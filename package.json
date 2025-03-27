@@ -7,10 +7,10 @@
     "serve": "vite preview"
   },
   "devDependencies": {
-    "vite": "^5.4.14"
+    "vite": "^6.2.1"
   },
   "dependencies": {
-    "ol": "^9.0.0",
+    "ol": "^10.4.0",
     "ol-ext": "^4.0.26"
   },
   "description": "This example demonstrates how the `ol` package can be used with [Vite](https://vitejs.dev/).",
@@ -19,3 +19,4 @@
   "author": "",
   "license": "ISC"
 }
+

@@ -20,10 +20,6 @@ const wehStyle = new Style({
 });
 export { wehStyle };
 
-export function test (c, d) {
-    return c * d;
-} 
-
 const bru_nlwknStyle = new Style({
     image: new Icon({
     src: './data/bru_nlwkn.svg',
@@ -32,6 +28,52 @@ const bru_nlwknStyle = new Style({
 });
 
 export { bru_nlwknStyle };
+
+const dueStyle = new Style({
+    image: new Icon({
+        src: './data/due.svg',
+        scale: .9
+    })
+});
+export { dueStyle };
+
+
+export function test (c, d) {
+    return c * d;
+} 
+
+export function geojsonStyle(feature) {
+    const geometryType = feature.getGeometry().getType();
+
+    if (geometryType === 'Point' || geometryType === 'MultiPoint') {
+        return new Style({
+            image: new CircleStyle({
+                radius: 7,
+                fill: new Fill({ color: 'red' }),
+                stroke: new Stroke({ color: 'black', width: 2 })
+            })
+        });
+    }
+
+    if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
+        return new Style({
+            stroke: new Stroke({
+                color: 'red', // Blaue Linienfarbe
+                width: 4 // Linienbreite
+            })
+        });
+    }
+
+    if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
+        return new Style({
+            fill: new Fill({ color: 'red' }), // Halbdurchsichtiges Grün
+            stroke: new Stroke({ color: 'black', width: 3 }),
+            opacity: 0.5
+        });
+    }
+
+    return new Style(); // Fallback-Stil
+}
 
 
 export function searchFeaturesByText(searchText, layer1,layer2, layer3) {
@@ -69,5 +111,42 @@ export function searchFeaturesByText(searchText, layer1,layer2, layer3) {
   
     return matchingFeatures;
   }
+
+ export function getStyleForArtSonPun(feature) {
+    const artValue = feature.get('bauart');
+    let iconSrc;
+
+    if (/boots/i.test(artValue)) {
+        iconSrc = './data/bwSonPun_Anleger.svg';
+    
+    }else if (/betriebs/i.test(artValue)) {
+        iconSrc = './data/sonPunBetrieb.svg';
+    
+    }else if (/steg/i.test(artValue)) {
+        iconSrc = './data/bwSonPun_Anleger.svg';   
+        
+    } else if (artValue === 'Infotafel') {
+        iconSrc = './data/sonPunInfo.svg';
+    } else if (artValue === 'Auskolkung') {
+        iconSrc = './data/sonPunKolk.svg';
+    } else if (artValue === 'Furt') {
+        iconSrc = './data/bwSonPun_Furt.svg';
+    } else if (artValue === 'Tor') {
+        iconSrc = './data/bwSonPun_Tor.svg';
+    } else if (artValue === 'Überfahrt') {
+        iconSrc = './data/bwSonPun_Ueberfahrt.svg';
+    } else if (artValue === 'Betriebspegel') {
+        iconSrc = './data/bwSonPun_Betriebspegel.svg';
+    } else {
+        iconSrc = './data/sonPunSonstige.svg';
+    }
+
+    return new Style({
+        image: new Icon({
+            src: iconSrc,
+            scale: 0.9
+        })
+    });
+}
   //export { searchFeaturesByText };
 

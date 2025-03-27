@@ -1,9 +1,3 @@
-// myFunc.js
-
-export function add(a, b) {
-    return a + b;
-}
-
 export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
     const a = 6378137;
     const e = 0.081819191;
@@ -37,5 +31,8 @@ export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
         + (5 - 2 * C1 + 28 * T1 - 3 * C1 ** 2 + 8 * e ** 2 + 24 * T1 ** 2) * (D ** 5) / 120) / Math.cos(phi1Rad)) * 180 / pi;
   
     return `${lat.toFixed(6)},${lon.toFixed(6)}`;
-  }
-  
+};
+
+export function displayFeatureInfo(a, b ) {
+ return a + b;
+};

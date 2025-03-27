@@ -1,9 +1,3 @@
-// myFunc.js
-
-export function add(a, b) {
-    return a + b;
-}
-
 export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
     const a = 6378137;
     const e = 0.081819191;
