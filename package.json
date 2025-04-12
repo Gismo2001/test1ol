@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "ol": "^10.4.0",
+    "ol-contextmenu": "^5.5.0",
     "ol-ext": "^4.0.26"
   },
   "description": "This example demonstrates how the `ol` package can be used with [Vite](https://vitejs.dev/).",
@@ -19,4 +20,3 @@
   "author": "",
   "license": "ISC"
 }
-
