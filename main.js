@@ -2432,7 +2432,7 @@ edit.on('info', function(e) {
     duration: -1,
     className: 'ol-notification'
     });
-    note.element.style.bottom = '40px';
+    note.element.style.bottom = '50px';
     //note.setPosition('bottom');
   
 });
