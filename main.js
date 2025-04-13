@@ -1,6 +1,9 @@
 import './style.css';
 import {Map, View} from 'ol';
 import * as LoadingStrategy from 'ol/loadingstrategy';
+
+import KML from 'ol/format/KML.js';
+
 import Feature from 'ol/Feature';
 import Overlay from 'ol/Overlay.js';
 import OSM from 'ol/source/OSM';
@@ -2575,7 +2578,7 @@ var save = new Button({
   html: '<i class="fa fa-download"></i>',
   title: "Save",
   handleClick: function(e) {
-    var json= new ol.format.GeoJSON().writeFeatures(vector.getSource().getFeatures());
+    var json= new ol.format.GeoJSON().writeFeatures(vectorEdit.getSource().getFeatures());
    console.log(json);
   }
 });
