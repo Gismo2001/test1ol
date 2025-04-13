@@ -2453,12 +2453,10 @@ const vectorEdit = new VectorLayer({
 });
 map.addLayer(vectorEdit);
 
-
 var select = new Select({ title: 'Auswahl'});
 select.set('title', 'Auswahl');
 var edit = new EditBar({
   interactions: { 
-    
     Select: select,
     DrawLine: 'Polylinie',
     DrawPolygon: 'Polygon',
@@ -2478,6 +2476,7 @@ var edit = new EditBar({
   
 });
 map.addControl(edit);
+edit.setPosition('bottom');
 
 var tooltip = new Tooltip();
 map.addOverlay(tooltip);
@@ -2545,13 +2544,13 @@ edit.on('info', function(e) {
       message += ' – Fläche: ' + areaStr;
     }
   }
-  console.log(message); // Prüfen, ob message komplett ist
-  note.show(message, { 
+    note.show(message, { 
     duration: -1,
     className: 'ol-notification'
   });
   
 });
+
 const editBarElement = edit.element;
 editBarElement.style.display = 'none'; 
 var toggleEditBarButton = new Button({
@@ -2582,4 +2581,4 @@ var save = new Button({
    console.log(json);
   }
 });
-edit.addControl ( save );
+edit.addControl (save);
