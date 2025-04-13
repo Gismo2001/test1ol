@@ -240,36 +240,7 @@ html {
   pointer-events: auto; /* Aktiviert Pointer-Ereignisse */
   opacity: 1; /* Setzt die Deckkraft auf den normalen Wert */
 }
-/* 
-.custom-controls2 {
-  top: 14em;
-  left: .5em;
-  height: 1.375em; 
-  width: 1.375em;
-  z-index: 1004;
-}
- */
-.button-container {
-  text-align: center;
-  margin-top: 10px;
-  position: absolute;
-  bottom: 15px;
-  left: 40px;
-  transform: translateX(-50%);
-  z-index: 1005;
-  font-size: 16px;
-  font-weight: bold; 
-}
-.button-container button {
-  width: 25px; /* Setze die Breite der Buttons auf 25px */
-  height: 25px; /* Setze die Höhe der Buttons auf 25px */
-}
-#toggle-checkbox {
-  margin-left: 10px; /* Füge einen Abstand zwischen der Checkbox und dem Mouse-Position-Element hinzu */
-}
-#mouse-position {
-  margin-left: 10px; /* Füge einen Abstand zwischen der Checkbox und dem Mouse-Position-Element hinzu */
-}
+
 .hidden {
   display: none;
 }
@@ -313,21 +284,6 @@ html {
   font-size: 20px;
 }
 
-/*
- .info {
-  display: inline-block;
-  font-size: 14px;
-  width: 150px; /* Ändere die Breite nach Bedarf 
-} 
-*/
-
-/*
-.info a img {
-  height: 100px;
-  margin-right: .5em;
-  float: left;
-}
-*/
 
 .select {
   position: absolute;
@@ -391,6 +347,8 @@ html {
 
 .ol-control button { 
   background-color: white !important;
+  width: 20px !important;
+  height: 20px !important;
 }
 
 .ol-button i {
@@ -400,7 +358,5 @@ html {
   user-select: text !important;
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
-  z-index: 9999 !important;
-  border: 2px solid lime !important;
   
 }

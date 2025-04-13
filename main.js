@@ -55,6 +55,9 @@ import CanvasTitle from 'ol-ext/control/CanvasTitle';
 import CanvasScaleLine from 'ol-ext/control/CanvasScaleLine';
 import PrintDialog from 'ol-ext/control/PrintDialog';
 
+
+
+
 import { toLonLat, transform } from 'ol/proj';
 import { format } from 'ol/coordinate';
 import contextFeature from 'ol/Feature';
@@ -117,14 +120,16 @@ const mapView = new View({
   zoom: 9
 });
 
-
 const map = new Map({
   target: "map",
   view: mapView,
-  controls: defaultControls().extend([
-    attribution,  
+   controls: defaultControls().extend([
+    new FullScreen(),
+    new ZoomToExtent({
+      extent: [727361, 6839277, 858148, 6990951] 
+    }),
+    attribution,
   ]),
-  //layers: [baseLayer, vectorLayer],
   interactions: defaultInteractions().extend([new DragRotateAndZoom()])
 });
 
@@ -767,8 +772,8 @@ const BaseGroup = new LayerGroup({
 const source = new VectorSource();
 const vector = new VectorLayer({
   displayInLayerSwitcher: true,
-  title: "Messung",
-  name: "Messung",
+  title: "tmp_Layer1",
+  name: "tmp_Layer1",
   source: source,
   style: {
     'fill-color': 'rgba(136, 136, 136, 0.526)',
@@ -790,6 +795,19 @@ map.addLayer(kmGroup);
 map.addLayer(BwGroupL);
 map.addLayer(BwGroupP);
 map.addLayer(vector); 
+
+
+
+//Layer für rechtsclick
+const vectorLayerMark = new VectorLayer({
+  source: new VectorSource({  }),
+  title: "rechtsClick",
+  name: "rechtsClick",
+  displayInLayerSwitcher : false,
+  
+});
+map.addLayer(vectorLayerMark);
+
 
 //Ende Layer hinzufügen---------------------------------------
 //--------------------------------------------------------------------------------------------------Info für WMS-Layer
@@ -1424,9 +1442,7 @@ map.on('click', function (evt) {
       coordinates = evt.coordinate; 
       popup.setPosition(coordinates);
       // Erstelle HTML für alle Attribute außer "geometry"
-      
       let contentHtml = "<strong>Koordinaten</strong><br><ul>"
-      
       for (let key in att) {
           if (key !== 'geometry') { // Geometrie nicht anzeigen
               contentHtml += `<li><strong>${key}:</strong> ${Number(att[key]).toFixed(3)}</li>`;
@@ -1965,63 +1981,27 @@ geojsonInput.addEventListener('change', function (event) {
       }
     }),
     new Toggle({
-      html: 'L',
-      title: "Fehlt",
+      html: 'M',
+      title: "Messung",
       onToggle: function (b) {
-        alert("ohne Funktion");
+        const currentEditionState = edit.get('edition');
+        if (currentEditionState === undefined || currentEditionState === false) {
+          edit.set('edition', true);
+          editBarAnAus = true;
+          editBarElement.style.display = ''; // Zeige die EditBar
+          
+        } else {
+          edit.set('edition', false);
+          editBarAnAus = false;
+          editBarElement.style.display = 'none';
+          edit.deactivateControls(); 
+          
+        }
       }
     })
   ]
 });
 
-// Funktion zum Hinzufügen eines WFS-Layers mit dynamischer BBOX-Anpassung
-/*
-  function addWFSLayer(wfsUrl) {
-  console.log(wfsUrl);
-  let wfsLayer = new VectorLayer({
-    name: "GeoJson: " + wfsUrl,
-    title: "GeoJson: " + wfsUrl,
-    source: new VectorSource({
-      format: new GeoJSON(),
-      url: function (extent) {
-        let wfsLayName = "ms:ni_samtgemeinden";
-        let zoom = map.getView().getZoom();
-        let scaleFactor = 1 + (3 - zoom) * 0.3;
-        scaleFactor = Math.max(1, Math.min(scaleFactor, 3));
-        
-        let minX = extent[0], minY = extent[1], maxX = extent[2], maxY = extent[3];
-        let width = maxX - minX;
-        let height = maxY - minY;
-
-        let newMinX = minX - (width * (scaleFactor - 1) / 2);
-        let newMinY = minY - (height * (scaleFactor - 1) / 2);
-        let newMaxX = maxX + (width * (scaleFactor - 1) / 2);
-        let newMaxY = maxY + (height * (scaleFactor - 1) / 2);
-
-        let adjustedExtent = [newMinX, newMinY, newMaxX, newMaxY];
-
-        const layerName = "vg2500:vg2500_lan"; // Hier kannst du den Layer-Namen dynamisch setzen
-
-        return `${wfsUrl}?service=WFS&version=1.1.0&request=GetFeature&typename=${wfsLayName}&maxFeatures=10&outputFormat=application/json&srsname=EPSG:3857&bbox=${adjustedExtent.join(",")},EPSG:3857`;
-
-      },
-      strategy: LoadingStrategy.bbox,
-    }),
-    style: new Style({
-      stroke: new Stroke({
-        color: "blue",
-        width: 2,
-      }),
-      fill: new Fill({
-        color: "rgba(0, 0, 255, 0.1)",
-      }),
-    }),
-  });
-  
-  map.addLayer(wfsLayer);
-}
-
-*/
 
 //--------------------------------------------------------------------------Drag and Drop
 let dragAndDropInteraction;
@@ -2096,221 +2076,6 @@ function setInteraction()
   });
   map.addInteraction(dragAndDropInteraction);
 }
-/* 
-
-exp_bw_sle_layer.getSource().on('change', function() {
-  if (exp_bw_sle_layer.getSource().getState() === 'ready') {
-    var tmpFeatures = exp_bw_sle_layer.getSource().getFeatures().map(f => {
-      var clone = f.clone();
-      var props = { ...clone.getProperties() };
-      // Unerwünschte Attribute entfernen
-      delete props.ID_con;
-      console.log("Bereinigte Properties:", props); // Prüfen, ob die Attribute entfernt wurden
-      clone.setProperties({});
-      clone.setProperties(props);
-      //listCtrl.setFeatures(clone );
-      return clone;
-    });
-    console.log("Vorhandene Features:", tmpFeatures); // Debugging
-    // Methode 1: Direkt als Array übergeben
-    //listCtrl.setFeatures(tmpFeatures);
-    // Methode 2: Falls nötig, als Collection
-    listCtrl.setFeatures(new collection(tmpFeatures));
-  }
-});
-
-
-
-//----------------------------------------------------------------------ListControl Select-Interaktion
-var selecti = new Select({
-  hitTolerance: 5,
-  condition: singleClick
-});
-map.addInteraction(selecti);
-
-// Feature bei Klick auswählen
-selecti.on('select', function(e) {
-  var f = e.selected[0];
-  if (f) {
-    showInfo(f);
-    listCtrl.select(f);
-  }
-});
-
-function showInfo(f) {
-  var prop = f.getProperties();
-  var content = document.getElementById('popup-content');
-  console.log ("Proper: " + prop)
-  
-  // Inhalt leeren und neue Liste erstellen
-  var html = '<ul>';
-  for (var p in prop) {
-    if (p !== 'geometry') {
-      html += `<li><strong>${p}:</strong> ${prop[p]}</li>`;
-    }
-  }
-  html += '</ul>';
-
-  // Popup-Inhalt setzen
-  content.innerHTML = html;
-
-  // Popup an Feature-Position setzen
-  var coordinates = f.getGeometry().getCoordinates();
-  popup.setPosition(coordinates);
-}
-// Select-Control
-var listCtrl = new FeatureList({
-  className: 'ol-bottom',
-  title: 'Querungen',
-  collapsed: true,
-  //features: exp_bw_sle_layer.getSource().getFeatures(),
-  //target: document.body
-});
-map.addControl(listCtrl);
-
-console.log("Features: " + listCtrl.features);
-const listColumes = ["ID_con", "name"];
-listCtrl.setColumns(listColumes)
-listCtrl.enableSort('bw_id', 'name', 'ID_con');
-
-listCtrl.on('select', function(e) {
-  if (!e.feature) return;
-  selecti.getFeatures().clear();
-  selecti.getFeatures().push(e.feature);
-  showInfo(e.feature);
-});
-
-listCtrl.on('dblclick', function(e) {
-  if (!e.feature) return;
-  map.getView().fit(e.feature.getGeometry().getExtent());
-  map.getView().setZoom(map.getView().getZoom() - 1);
-});
-
-listCtrl.on(['resize', 'collapse', 'sort'], function(e) {
-  console.log(e);
-});
-
- */
-
-//------------------------WMS-Control aus myFunc.js hinzufügen
-//document.addEventListener('DOMContentLoaded', function() {
-//  initializeWMS(WMSCapabilities, map ); // Aufrufen der initializeWMS-Funktion aus myFunc.js
-//});
-
-//-----------------------------------------------------------------------------------------------------Permalink
-
-/* 
-
-var permalinkControl = new Permalink({    
-  target: document.getElementById('permalink-container'), 
-  title: "Link erzeugen",
-  //geohash: /gh=/.test(document.location.href),
-  localStorage: true,  // Save permalink in localStorage if no URL provided
-  urlReplace: false,
-  fixed: 2,
-  visible: true,
-  onclick: function(url) {
-    console.log("Aktuelle URL-Parameter: ", permalinkControl.getUrlParam());
-    console.log("Permalink: ", permalinkControl.getLink());
-    
-    // Layer-Namen sammeln
-    let activeLayers = [];
-    map.getLayers().getArray().forEach(group => {
-      if (group instanceof LayerGroup) {
-        let groupName = group.get('name') || 'UnbekannteGruppe';
-        group.getLayers().forEach(layer => {
-          if (layer.get('visible')) {
-            let layerName = layer.get('name') || 'UnbekannterLayer';
-            activeLayers.push(`${groupName}.${layerName}`);
-          }
-        });
-      }
-    });
-
-    // Layer-Namen zum Permalink hinzufügen
-    let newUrl = new URL(url);
-    if (activeLayers.length) {
-      newUrl.searchParams.set('layers', activeLayers.join(','));
-    }
-    let finalUrl = newUrl.toString();
-    console.log("Neuer Permalink mit Layern:", finalUrl);
-    copyToClipboard(finalUrl);
-  }
-});
-//map.addControl(permalinkControl);
-
-
-// Funktion zum Kopieren des Links in die Zwischenablage
-function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(() => {
-    alert('Permalink wurde in die Zwischenablage kopiert: ' + text);
-  }).catch(err => {
-    alert('Fehler beim Kopieren des Permalinks: ' + err);
-  });
-}
-
- */
-
-/* const mySearch = document.getElementById('searchBox');
-mySearch.addEventListener('change', function(event){
-  console.log('Eingabe erfolgt');
-}); */
-
-/* const searchSelect = document.getElementById('searchSelect');
-searchSelect.addEventListener('change', function(event) {
-    const selectedValue = event.target.value;
-    console.log('Auswahl geändert: ' + selectedValue);
-    // Hier kannst du weitere Aktionen basierend auf der ausgewählten Option durchführen
-}); */
-
-/* document.addEventListener('DOMContentLoaded', function() {
-  const searchButton = document.querySelector('.searchBox button');
-
-  if(searchButton) {
-    searchButton.addEventListener('click', function(event) {
-      searchAddress(event); // Hier wird die Funktion searchAddress() aufgerufen, die du bereits im HTML definiert hast
-    });
-  } else {
-    console.error("Button in '.searchBox' nicht gefunden.");
-  }
-}); */
-
-/* function searchAddress(e) {
-  console.log('angekommen')
-  sLayer.getSource().clear();
-  if (e.search.geojson) {
-    
-    var format = new GeoJSON();
-    var f = format.readFeature(e.search.geojson, { dataProjection: "EPSG:4326", featureProjection: map.getView().getProjection() });
-    //console.log(f)
-    sLayer.getSource().addFeature(f);
-    var view = map.getView();
-    var resolution = view.getResolutionForExtent(f.getGeometry().getExtent(), map.getSize());
-    var zoom = view.getZoomForResolution(resolution);
-    var center = ol.extent.getCenter(f.getGeometry().getExtent());
-    // redraw before zoom
-    setTimeout(function(){
-      view.animate({
-        center: center,
-        zoom: Math.min (zoom, 16)
-      });
-    }, 100);
-  }
-  else 
-  {
-    map.getView().animate({
-    center:e.coordinate,
-    zoom: Math.max (map.getView().getZoom(),16)
-    });
-  }
-  // Füge den Marker hinzu
-  addMarker(e.coordinate);
-} */
-
-/* searchBox.addEventListener('input', function() {
- 
-  console.log(searchBox.value);
-}); */
 
 
 var mainBar1 = new Bar({
@@ -2329,7 +2094,6 @@ var mainBar1 = new Bar({
       bar: sub2,
       onToggle: function() { },
     }),
-
   ]
 });
 map.addControl ( mainBar1 );
@@ -2436,6 +2200,125 @@ function checkForLinkInTH(html) {
 }
 
 
+//--------------------------------------------------------------------------------------------------------------------ContextMenu
+var contextmenuItems = [
+  {
+    text: 'Karte zentrieren',
+    classname: 'bold',
+    icon: centerIcon,
+    callback: center
+  },
+  {
+    text: 'Sonstiges',
+    icon: listIcon,
+    items: [
+      {
+        text: 'Zentrieren',
+        icon: centerIcon,
+        callback: center
+      },
+      {
+        text: 'Marker',
+        icon: pinIcon,
+        callback: marker
+      }
+    ]
+  },
+  {
+    text: 'Marker',
+    icon: pinIcon,
+    callback: marker
+  },
+  '-' // this is a separator
+];
+
+var contextmenu = new ContextMenu({
+  width: 180,
+  items: contextmenuItems
+});
+map.addControl(contextmenu);
+
+var removeMarkerItem = {
+  text: 'Remove this Marker',
+  //classname: 'marker',
+  callback: removeMarker
+};
+
+contextmenu.on('open', function (evt) {
+  var contextFeature =	map.forEachFeatureAtPixel(evt.pixel, ft => ft);
+  if (contextFeature && contextFeature.get('type') === 'removable') {
+    contextmenu.clear();
+    removeMarkerItem.data = { marker: contextFeature };
+    contextmenu.push(removeMarkerItem);
+  } else {
+    contextmenu.clear();
+    contextmenu.extend(contextmenuItems);
+    contextmenu.extend(contextmenu.getDefaultItems());
+  }
+});
+
+map.on('pointermove', function (e) {
+  if (e.dragging) return;
+  var pixel = map.getEventPixel(e.originalEvent);
+  var hit = map.hasFeatureAtPixel(pixel);
+  map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+});
+
+function elastic(t) {
+  return Math.pow(2, -10 * t) * Math.sin((t - 0.075) * (2 * Math.PI) / 0.3) + 1;
+}
+
+function center(obj) {
+  mapView.animate({
+    duration: 700,
+    easing: elastic,
+    center: obj.coordinate
+  });
+}
+
+function removeMarker(obj) {
+  vectorLayerMark.getSource().removeFeature(obj.data.marker);
+}
+
+function marker(obj) {
+  var coord4326 = transform(obj.coordinate, 'EPSG:3857', 'EPSG:4326'),
+      coord3857 = obj.coordinate, // Original-Koordinaten in EPSG:3857
+      coord32632 = transform(obj.coordinate, 'EPSG:3857', 'EPSG:32632'),
+
+      template1 = 'Koordinate (3857): {x}, {y}',
+      template2 = 'Koordinate (4326): {x}, {y}',
+      template3 = 'Koordinate (32632): {x}, {y}',
+
+      iconStyle = new Style({
+        image: new Icon({ scale: .5, src: pinIcon }),
+        text: new Text({
+          offsetY: 40, // Etwas mehr Abstand für zwei Zeilen
+          //text: format(coord3857, template1, 2) + '\n' + format(coord4326, template2, 6) + '\n' + format(coord32632, template3, 6),
+          //font: 'bold 15px Arial, sans-serif',
+          //textAlign: 'center',
+          //justify: 'center',
+          //fill: new Fill({ color: '#111' }),
+          //stroke: new Stroke({ color: '#eee', width: 2 })
+        })
+      }),
+      feature = new contextFeature({
+        type: 'removable',
+        geometry: new Point(obj.coordinate),
+        x_3857: coord3857[0].toFixed(3),
+        y_3857: coord3857[1].toFixed(3), // X,Y Koordinaten in EPSG:3857
+        x_4326: coord4326[0].toFixed(3), // X Koordinate in EPSG:4326
+        y_4326: coord4326[1].toFixed(3),  // Y Koordinate in EPSG:4326
+        x_32632: coord32632[0].toFixed(3), // X Koordinate in EPSG:32632
+        y_32632: coord32632[1].toFixed(3),  // Y Koordinate in EPSG:32632
+
+      });
+
+  feature.setStyle(iconStyle);
+  vectorLayerMark.getSource().addFeature(feature);
+}
+
+
+
 // Add the editbar
 const sourceEdit = new VectorSource();
 const vectorEdit = new VectorLayer({
@@ -2476,7 +2359,8 @@ var edit = new EditBar({
   
 });
 map.addControl(edit);
-edit.setPosition('bottom');
+edit.setPosition('right');
+//edit.element.style.bottom = '60px';
 
 var tooltip = new Tooltip();
 map.addOverlay(tooltip);
@@ -2547,32 +2431,15 @@ edit.on('info', function(e) {
     note.show(message, { 
     duration: -1,
     className: 'ol-notification'
-  });
+    });
+    note.element.style.bottom = '40px';
+    //note.setPosition('bottom');
   
 });
 
 const editBarElement = edit.element;
 editBarElement.style.display = 'none'; 
-var toggleEditBarButton = new Button({
-  title: 'Toggle EditBar',
-  handleClick: function() {
-    const currentEditionState = edit.get('edition');
-    console.log('currentEditionState', currentEditionState);
-    if (currentEditionState === undefined || currentEditionState === false) {
-      edit.set('edition', true);
-      editBarAnAus = true;
-      editBarElement.style.display = ''; // Zeige die EditBar
-      
-    } else {
-      edit.set('edition', false);
-      editBarAnAus = false;
-      editBarElement.style.display = 'none';
-      edit.deactivateControls(); 
-      
-    }
-  }
-});
-map.addControl(toggleEditBarButton);
+
 var save = new Button({
   html: '<i class="fa fa-download"></i>',
   title: "Save",
