@@ -1421,6 +1421,24 @@ map.on('click', function (evt) {
       contentHtml += "</ul>";
       content.innerHTML = contentHtml;
     }
+        // Führen Sie Aktionen für den Layernamen 'editbar' durch
+    if (layname.toLowerCase().startsWith('editbar')) {
+      var att = feature.getProperties();
+      coordinates = evt.coordinate; 
+      popup.setPosition(coordinates);
+      
+      // Erstelle HTML für alle Attribute außer "geometry"
+      let contentHtml = "<strong>Zeichenobjekt:</strong><br><ul>";
+      for (let key in att) {
+          
+              contentHtml += `<li><strong>${key}:</strong> ${att[key]}</li>`;
+          
+      }
+      contentHtml += "</ul>";
+      content.innerHTML = contentHtml;
+    }
+   
+
     // Führen Sie Aktionen für den Layernamen 'kml' durch
     if (layname.toLowerCase().startsWith('kml')) {
       var att = feature.getProperties();
@@ -2345,10 +2363,10 @@ var edit = new EditBar({
     DrawPolygon: 'Polygon',
     DrawHole: 'Loch',
     DrawPoint: 'Punkt',
-    DrawRegular: false,
-    ModifySelect: false,
+    DrawRegular: 'Formen',
+    ModifySelect: 'Modify',
     DragRotateAndZoom: false,
-    DragAndDrop: false,   
+    DragAndDrop: 'Verschieben',   
     Split: false,
     Transform: false,
     Offset: false,
@@ -2359,11 +2377,18 @@ var edit = new EditBar({
   
 });
 map.addControl(edit);
-edit.setPosition('right');
-//edit.element.style.bottom = '60px';
+edit.setPosition('bottom-left');
+edit.element.style.bottom = '60px';
 
 var tooltip = new Tooltip();
 map.addOverlay(tooltip);
+
+edit.getInteraction('Select').on('select', function(e){
+  if (this.getFeatures().getLength()) {
+     tooltip.setInfo('Punkte ziehen');
+   }
+   else tooltip.setInfo();
+ });
 edit.getInteraction('Select').on('change:active', function(e){
   tooltip.setInfo('');
 });
