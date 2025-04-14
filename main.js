@@ -2005,6 +2005,7 @@ geojsonInput.addEventListener('change', function (event) {
         const currentEditionState = edit.get('edition');
         if (currentEditionState === undefined || currentEditionState === false) {
           edit.set('edition', true);
+          edit.setActive(true);
           editBarAnAus = true;
           editBarElement.style.display = ''; // Zeige die EditBar
           
@@ -2012,8 +2013,10 @@ geojsonInput.addEventListener('change', function (event) {
           edit.set('edition', false);
           editBarAnAus = false;
           editBarElement.style.display = 'none';
+          //map.getInteractions().clear();
+          edit.setActive(false);
           edit.deactivateControls(); 
-          
+          edit.getInteraction('Select').getFeatures().clear();
         }
       }
     })
@@ -2115,7 +2118,8 @@ var mainBar1 = new Bar({
   ]
 });
 map.addControl ( mainBar1 );
-mainBar1.setPosition('left');
+mainBar1.setPosition('bottom-left');
+mainBar1.element.style.bottom = '60px';
 
 var mainbar2 = new Bar();
 map.addControl(mainbar2);
@@ -2364,7 +2368,7 @@ var edit = new EditBar({
     DrawHole: 'Loch',
     DrawPoint: 'Punkt',
     DrawRegular: 'Formen',
-    ModifySelect: 'Modify',
+    ModifySelect: false,
     DragRotateAndZoom: false,
     DragAndDrop: 'Verschieben',   
     Split: false,
@@ -2378,16 +2382,16 @@ var edit = new EditBar({
 });
 map.addControl(edit);
 edit.setPosition('bottom-left');
-edit.element.style.bottom = '60px';
+edit.element.style.bottom = '160px';
 
 var tooltip = new Tooltip();
 map.addOverlay(tooltip);
 
 edit.getInteraction('Select').on('select', function(e){
-  if (this.getFeatures().getLength()) {
-     tooltip.setInfo('Punkte ziehen');
-   }
-   else tooltip.setInfo();
+  //if (this.getFeatures().getLength()) {
+  //   tooltip.setInfo('Punkte ziehen');
+  // }
+  // else tooltip.setInfo();
  });
 edit.getInteraction('Select').on('change:active', function(e){
   tooltip.setInfo('');
