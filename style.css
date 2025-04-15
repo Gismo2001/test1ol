@@ -85,18 +85,6 @@ html {
   top: calc(100vh - 100px)
 }
 
-.lengthButtonDiv {
-  position: relative;
-  display: block;
-  margin: 1px auto auto 10px;
-}
-
-.areaButtonDiv {
-  position: relative;
-  display: block;
-  margin: 1px auto auto 10px;
-}
-
 .locate {
   top: 125px;
   left: 8px;
@@ -241,9 +229,7 @@ html {
   opacity: 1; /* Setzt die Deckkraft auf den normalen Wert */
 }
 
-.hidden {
-  display: none;
-}
+
 .ol-search ul {
   color: #333;
   font-size:0.85em;

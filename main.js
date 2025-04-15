@@ -1,9 +1,14 @@
+
 import './style.css';
 import {Map, View} from 'ol';
 import * as LoadingStrategy from 'ol/loadingstrategy';
 
 import KML from 'ol/format/KML.js';
 
+//import jsPDF from "jspdf";
+//import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style.js';
+//import Text from 'ol/style/Text';
+import jsPDF from 'jspdf';
 import Feature from 'ol/Feature';
 import Overlay from 'ol/Overlay.js';
 import OSM from 'ol/source/OSM';
@@ -54,8 +59,6 @@ import CanvasAttribution from 'ol-ext/control/CanvasAttribution';
 import CanvasTitle from 'ol-ext/control/CanvasTitle';
 import CanvasScaleLine from 'ol-ext/control/CanvasScaleLine';
 import PrintDialog from 'ol-ext/control/PrintDialog';
-
-
 
 
 import { toLonLat, transform } from 'ol/proj';
@@ -771,7 +774,7 @@ const BaseGroup = new LayerGroup({
 
 const source = new VectorSource();
 const vector = new VectorLayer({
-  displayInLayerSwitcher: true,
+  displayInLayerSwitcher: false,
   title: "tmp_Layer1",
   name: "tmp_Layer1",
   source: source,
@@ -1484,7 +1487,7 @@ map.on('click', function (evt) {
 
 //--------------------------------------------------------------------------------------------- Photon search control 
 var sLayer = new VectorLayer({
-  title: "tmp_Layer2",
+  title: "Search_Photon",
   name: "tmp_Layer2",
   source: new VectorSource(),
   style: new Style({ image: new CircleStyle({radius: 5,stroke: new Stroke ({color: 'rgb(255,165,0)', width: 3 }),fill: new Fill({color: 'rgba(255,165,0,.3)' })      }),
@@ -1496,7 +1499,7 @@ var sLayer = new VectorLayer({
           color: 'rgba(255,165,0,.3)'
       })
   }),
-  displayInLayerSwitcher : true,
+  displayInLayerSwitcher : false,
 });
 map.addLayer(sLayer);
 
