@@ -995,12 +995,13 @@ var closer = document.getElementById('popup-closer');
 var closer = document.getElementById('popup-closer');
 //-------------------------------------------------------Funktionen für Text im Popup
 map.on('click', function (evt) {
+  console.log(editBarAnAus); 
   if (editBarAnAus===false ){
     var coordinates = evt.coordinate;
     var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) 
     {
       var layname = layer.get('name');
-      console.log(layname);
+      //console.log(layname);
       var beschreibLangValue = feature.get('beschreib_lang');
       var beschreibLangHtml = '';
       if (beschreibLangValue && beschreibLangValue.trim() !== '') {
@@ -1437,8 +1438,6 @@ map.on('click', function (evt) {
       contentHtml += "</ul>";
       content.innerHTML = contentHtml;
     }
-   
-
     // Führen Sie Aktionen für den Layernamen 'kml' durch
     if (layname.toLowerCase().startsWith('kml')) {
       var att = feature.getProperties();
@@ -1474,11 +1473,12 @@ map.on('click', function (evt) {
       content.innerHTML = contentHtml;
     }
     }
+    
   );
 } else if(editBarAnAus===true) {  
   //placeMarkerAndShowCoordinates(evt);
 }
-  
+
 });
 
 
@@ -1909,6 +1909,7 @@ var sub1 = new Bar({
       },
     }),
   ]
+
 });
 
 // Input-Feld (versteckt im HTML, z. B. im Body)
@@ -1986,12 +1987,10 @@ geojsonInput.addEventListener('change', function (event) {
   });
 });
 
-
- var sub2 = new Bar({
+var sub2 = new Bar({
   toggleOne: true,
   controls: [
     new Toggle({
-      //<i class="fa fa-envelope-open" aria-hidden="true"></i>
       html: '<i class="fa fa-envelope-open" aria-hidden="true"></i>',
       title: "Geojson-Datei laden",
       onToggle: function () {
@@ -1999,24 +1998,34 @@ geojsonInput.addEventListener('change', function (event) {
       }
     }),
     new Toggle({
-      html: 'M',
+      html: '<i class="fa fa-ruler-horizontal" aria-hidden="true"></i>',
       title: "Messung",
       onToggle: function (b) {
-        const currentEditionState = edit.get('edition');
-        if (currentEditionState === undefined || currentEditionState === false) {
+        const isEditing = edit.get('edition');
+
+        if (!isEditing) {
           edit.set('edition', true);
           edit.setActive(true);
-          editBarAnAus = true;
-          editBarElement.style.display = ''; // Zeige die EditBar
+
           
+          if (!edit.getInteraction('ModifySelect')) {
+            edit.addInteraction('ModifySelect');
+          }
+          editBarAnAus = true;
+          editBarElement.style.display = ''; 
         } else {
           edit.set('edition', false);
           editBarAnAus = false;
           editBarElement.style.display = 'none';
-          //map.getInteractions().clear();
           edit.setActive(false);
           edit.deactivateControls(); 
-          edit.getInteraction('Select').getFeatures().clear();
+          const select = edit.getInteraction('Select');
+          if (select) select.getFeatures().clear();
+          const interaction = edit.getInteraction('ModifySelect');
+          if (interaction) {
+            interaction.setActive(false);
+          }
+
         }
       }
     })
@@ -2368,11 +2377,11 @@ var edit = new EditBar({
     DrawHole: 'Loch',
     DrawPoint: 'Punkt',
     DrawRegular: 'Formen',
-    ModifySelect: false,
+    ModifySelect: 'Modify',
     DragRotateAndZoom: false,
     DragAndDrop: 'Verschieben',   
     Split: false,
-    Transform: false,
+    Transform: 'Transform',
     Offset: false,
     Resize: false,
     
@@ -2395,6 +2404,12 @@ edit.getInteraction('Select').on('select', function(e){
  });
 edit.getInteraction('Select').on('change:active', function(e){
   tooltip.setInfo('');
+});
+edit.getInteraction('ModifySelect').on('modifystart', function(e){
+  if (e.features.length===1) tooltip.setFeature(e.features[0]);
+});
+edit.getInteraction('ModifySelect').on('modifyend', function(e){
+  tooltip.setFeature();
 });
 edit.getInteraction('DrawPoint').on('change:active', function(e){
   tooltip.setInfo(e.oldValue ? '' : 'Click map to place a point...');
@@ -2473,8 +2488,31 @@ var save = new Button({
   html: '<i class="fa fa-download"></i>',
   title: "Save",
   handleClick: function(e) {
-    var json= new ol.format.GeoJSON().writeFeatures(vectorEdit.getSource().getFeatures());
-   console.log(json);
+    // Features als Objekt exportieren
+    var geojsonObject = new GeoJSON().writeFeaturesObject(
+      vectorEdit.getSource().getFeatures()
+    );
+
+    // Zusätzliche Informationen hinzufügen
+    geojsonObject.name = "Zeichnung";
+    geojsonObject.crs = {
+      type: "name",
+      properties: {
+        name: "urn:ogc:def:crs:EPSG::3857"
+      }
+    };
+
+    // Als JSON-String serialisieren
+    var json = JSON.stringify(geojsonObject, null, 2);
+    console.log(json);
+    // Optional: direkt als Datei herunterladen
+    var blob = new Blob([json], { type: "application/json;charset=utf-8" });
+    var link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "zeichnung.geojson";
+    link.click();
   }
 });
-edit.addControl (save);
+
+edit.addControl(save);
+
