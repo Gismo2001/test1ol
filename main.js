@@ -1998,6 +1998,7 @@ var sub2 = new Bar({
       title: "Geojson-Datei laden",
       onToggle: function () {
         geojsonInput.click(); // Öffnet den Dateiauswahldialog
+        
       }
     }),
     new Toggle({
@@ -2035,6 +2036,55 @@ var sub2 = new Bar({
   ]
 });
 
+geojsonInput.addEventListener('change', function (event) {
+  const file = event.target.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    
+    const fileContent = e.target.result;
+    const features = new GeoJSON().readFeatures(fileContent, {
+      featureProjection: 'EPSG:3857'
+    });
+    
+    if (features.length === 0) {
+      alert("Keine Features aus der Datei geladen!");
+      return;
+    }
+    const vectorSource = new VectorSource({
+      features: features
+    });
+
+    const fileName = file.name.replace(/\.[^/.]+$/, "");
+    const fileEnd = file.name.split('.').pop().toLowerCase();
+    let sourceName;
+    if ((fileEnd === 'geojson' || fileEnd === 'json') && fileName !== 'fot') {
+      sourceName = "GeoJson: " + zaehlerGeojson + " " + fileName;
+    } else if (fileEnd === 'kml') {
+      sourceName = "KML: " + zaehlerKML + " " + fileName;
+    } else if (fileName === 'fot') {
+      sourceName = "fot";
+    } else {
+      sourceName = "Unbekannt: " + fileName;
+    }
+    const layerStyle = fileName === 'fot' ? arrowStyle : geojsonStyle;
+    
+    
+    const vectorLayer = new VectorLayer({
+      source: vectorSource,
+      name: sourceName,
+      title: sourceName,
+      style: layerStyle,
+    });
+    
+    map.addLayer(vectorLayer);
+    
+
+    
+  };
+
+  reader.readAsText(file);
+});
 
 //--------------------------------------------------------------------------Drag and Drop
 let dragAndDropInteraction;
