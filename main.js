@@ -63,13 +63,15 @@ import PrintDialog from 'ol-ext/control/PrintDialog';
 
 import { toLonLat, transform } from 'ol/proj';
 import { format } from 'ol/coordinate';
-import contextFeature from 'ol/Feature';
 import {LineString, Polygon, Point, Circle} from 'ol/geom.js';
 
+/* 
+import contextFeature from 'ol/Feature';
 import ContextMenu from 'ol-contextmenu';
 import pinIcon from './data/pin.png';
 import centerIcon from 'ol-contextmenu';
 import listIcon from 'ol-contextmenu';
+ */
 
 import { Text } from 'ol/style';
 import { Icon } from 'ol/style';
@@ -107,9 +109,12 @@ import { register } from 'ol/proj/proj4';
 import SearchPhoton from 'ol-ext/control/SearchPhoton';
 import WMSCapabilities from'ol-ext/control/WMSCapabilities';
 
+
+
+
 proj4.defs("EPSG:32632", "+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs");
 register(proj4);
-var editBarAnAus = false;
+
 
 const attribution = new Attribution({
   collapsible: false,
@@ -802,6 +807,7 @@ map.addLayer(vector);
 
 
 //Layer für rechtsclick
+/* 
 const vectorLayerMark = new VectorLayer({
   source: new VectorSource({  }),
   title: "rechtsClick",
@@ -811,7 +817,7 @@ const vectorLayerMark = new VectorLayer({
 });
 map.addLayer(vectorLayerMark);
 
-
+ */
 //Ende Layer hinzufügen---------------------------------------
 //--------------------------------------------------------------------------------------------------Info für WMS-Layer
 var toggleButtonU = new Toggle({
@@ -998,8 +1004,10 @@ var closer = document.getElementById('popup-closer');
 var closer = document.getElementById('popup-closer');
 //-------------------------------------------------------Funktionen für Text im Popup
 map.on('click', function (evt) {
-  console.log(editBarAnAus); 
+  
+  
   if (editBarAnAus===false ){
+    
     var coordinates = evt.coordinate;
     var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) 
     {
@@ -1427,6 +1435,7 @@ map.on('click', function (evt) {
     }
         // Führen Sie Aktionen für den Layernamen 'editbar' durch
     if (layname.toLowerCase().startsWith('editbar')) {
+      console.log('angegommen');
       var att = feature.getProperties();
       coordinates = evt.coordinate; 
       popup.setPosition(coordinates);
@@ -1479,6 +1488,7 @@ map.on('click', function (evt) {
     
   );
 } else if(editBarAnAus===true) {  
+  //alert('EditBar ist '+ editBarAnAus + 'map on');
   //placeMarkerAndShowCoordinates(evt);
 }
 
@@ -1488,7 +1498,7 @@ map.on('click', function (evt) {
 //--------------------------------------------------------------------------------------------- Photon search control 
 var sLayer = new VectorLayer({
   title: "Search_Photon",
-  name: "tmp_Layer2",
+  name: "Search_Photon",
   source: new VectorSource(),
   style: new Style({ image: new CircleStyle({radius: 5,stroke: new Stroke ({color: 'rgb(255,165,0)', width: 3 }),fill: new Fill({color: 'rgba(255,165,0,.3)' })      }),
       stroke: new Stroke ({
@@ -1923,7 +1933,7 @@ var sub1 = new Bar({
 //document.body.appendChild(geojsonInput);
 
 // Zähler für die geladenen GeoJSON-Dateien
-let geojsonCounter = 0;
+
 
 //Event-Handler für Datei-Upload
 geojsonInput.addEventListener('change', function (event) {
@@ -1947,31 +1957,31 @@ geojsonInput.addEventListener('change', function (event) {
           features: features
         });
 
-        // Dateiname ohne Erweiterung (optional)
         const fileName = file.name.replace(/\.[^/.]+$/, "");
-
-        // Dynamischer Name und Titel mit Dateinamen
-        const layerTitle = `GeoJSON: Lokal-${geojsonCounter} (${fileName})`;
-        const layerName = `GeoJSON_Lokal_${geojsonCounter}_${fileName}`;
-
-        const vectorLayer = new VectorLayer({
-          source: vectorSource,
-          title: layerTitle,  // Titel anpassen
-          name: layerName,    // Name anpassen
-          displayInLayerSwitcher: true,
-          style: new Style({
-            stroke: new Stroke({
-              color: 'red',
-              width: 2
-            }),
-            fill: new Fill({
-              color: 'rgba(0, 0, 255, 0.1)'
-            })
-          })
-        });
-
-        map.addLayer(vectorLayer);
-
+    const fileEnd = file.name.split('.').pop().toLowerCase();
+    let sourceName;
+    if ((fileEnd === 'geojson' || fileEnd === 'json') && fileName !== 'fot') {
+      sourceName = "GeoJson: " + zaehlerGeojson + " " + fileName;
+    } else if (fileEnd === 'kml') {
+      sourceName = "KML: " + zaehlerKML + " " + fileName;
+    } else if (fileName === 'fot') {
+      sourceName = "fot";
+    } else {
+      sourceName = "Unbekannt: " + fileName;
+    }
+    const layerStyle = fileName === 'fot' ? arrowStyle : geojsonStyle;
+ 
+    
+    const vectorLayer = new VectorLayer({
+      source: vectorSource,
+      name: sourceName,
+      title: sourceName,
+      style: layerStyle,
+    });
+    
+    map.addLayer(vectorLayer);
+    zaehlerGeojson++;
+    zaehlerKML++;
         // Zoom zur geladenen GeoJSON
         map.getView().fit(vectorSource.getExtent(), {
           padding: [20, 20, 20, 20],
@@ -1989,6 +1999,8 @@ geojsonInput.addEventListener('change', function (event) {
     reader.readAsText(file); // Datei einlesen
   });
 });
+
+
 
 var sub2 = new Bar({
   toggleOne: true,
@@ -2016,10 +2028,12 @@ var sub2 = new Bar({
             edit.addInteraction('ModifySelect');
           }
           editBarAnAus = true;
+          
           editBarElement.style.display = ''; 
         } else {
           edit.set('edition', false);
           editBarAnAus = false;
+          
           editBarElement.style.display = 'none';
           edit.setActive(false);
           edit.deactivateControls(); 
@@ -2035,56 +2049,7 @@ var sub2 = new Bar({
     })
   ]
 });
-
-geojsonInput.addEventListener('change', function (event) {
-  const file = event.target.files[0];
-  const reader = new FileReader();
-
-  reader.onload = function (e) {
-    
-    const fileContent = e.target.result;
-    const features = new GeoJSON().readFeatures(fileContent, {
-      featureProjection: 'EPSG:3857'
-    });
-    
-    if (features.length === 0) {
-      alert("Keine Features aus der Datei geladen!");
-      return;
-    }
-    const vectorSource = new VectorSource({
-      features: features
-    });
-
-    const fileName = file.name.replace(/\.[^/.]+$/, "");
-    const fileEnd = file.name.split('.').pop().toLowerCase();
-    let sourceName;
-    if ((fileEnd === 'geojson' || fileEnd === 'json') && fileName !== 'fot') {
-      sourceName = "GeoJson: " + zaehlerGeojson + " " + fileName;
-    } else if (fileEnd === 'kml') {
-      sourceName = "KML: " + zaehlerKML + " " + fileName;
-    } else if (fileName === 'fot') {
-      sourceName = "fot";
-    } else {
-      sourceName = "Unbekannt: " + fileName;
-    }
-    const layerStyle = fileName === 'fot' ? arrowStyle : geojsonStyle;
-    
-    
-    const vectorLayer = new VectorLayer({
-      source: vectorSource,
-      name: sourceName,
-      title: sourceName,
-      style: layerStyle,
-    });
-    
-    map.addLayer(vectorLayer);
-    
-
-    
-  };
-
-  reader.readAsText(file);
-});
+let geojsonCounter = 0;
 
 //--------------------------------------------------------------------------Drag and Drop
 let dragAndDropInteraction;
@@ -2285,6 +2250,8 @@ function checkForLinkInTH(html) {
 
 
 //--------------------------------------------------------------------------------------------------------------------ContextMenu
+/* 
+
 var contextmenuItems = [
   {
     text: 'Karte zentrieren',
@@ -2328,7 +2295,9 @@ var removeMarkerItem = {
   callback: removeMarker
 };
 
+
 contextmenu.on('open', function (evt) {
+    
   var contextFeature =	map.forEachFeatureAtPixel(evt.pixel, ft => ft);
   if (contextFeature && contextFeature.get('type') === 'removable') {
     contextmenu.clear();
@@ -2339,6 +2308,7 @@ contextmenu.on('open', function (evt) {
     contextmenu.extend(contextmenuItems);
     contextmenu.extend(contextmenu.getDefaultItems());
   }
+
 });
 
 map.on('pointermove', function (e) {
@@ -2401,7 +2371,7 @@ function marker(obj) {
   vectorLayerMark.getSource().addFeature(feature);
 }
 
-
+ */
 
 // Add the editbar
 const sourceEdit = new VectorSource();
@@ -2569,3 +2539,13 @@ var save = new Button({
 
 edit.addControl(save);
 
+var editBarAnAus = false;
+window.onload = function() {
+  editBarAnAus = false
+  const select = edit.getInteraction('Select');
+  if (select) select.getFeatures().clear();
+  const interaction = edit.getInteraction('ModifySelect');
+  if (interaction) {
+    interaction.setActive(false);
+  }
+}

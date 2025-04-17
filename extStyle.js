@@ -414,7 +414,7 @@ const km500scalStyle = function(feature, km, resolution) {
 
 function arrowStyle(feature) {   
     const directionValue = feature.get('Direction') || 0; // Standardwert 0, falls kein Wert vorhanden
-    console.log(directionValue)
+    
     return new Style({
         image: new Icon({
         src: './data/arrow.svg', // Ersetze mit dem tatsächlichen Pfad zum Pfeil-Symbol
