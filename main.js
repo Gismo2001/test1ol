@@ -267,7 +267,6 @@ const exp_gew_info_layer = new VectorLayer({
   style: getStyleForArtGewInfo,
   visible: false
 });
-
 const gew_layer_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/gew.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'gew', 
@@ -1007,8 +1006,10 @@ map.on('click', function (evt) {
   var matchingFeatures = [];
   if (editBarAnAus === false) {
     var coordinates = evt.coordinate;
-     // ❌ Diese Layernamen ausschließen
+
+    // ❌ Diese Layernamen ausschließen
     const excludedLayers = ['gew', 'km10scal', 'km100scal', 'km500scal'];
+
     map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
       if (layer && !excludedLayers.includes(layer.get('name'))) {
         matchingFeatures.push(feature);
@@ -2434,60 +2435,22 @@ edit.element.style.bottom = '160px';
 
 var tooltip = new Tooltip();
 map.addOverlay(tooltip);
-
-edit.getInteraction('Select').on('select', function(e) {
-  const selectInteraction = this;
-  const excludedLayers = ['gew', 'km10scal', 'km100scal', 'km500scal'];
-  e.selected.forEach(feature => {
-   let isExcluded = false;
-    map.getLayers().forEach(layer => {
-      if (
-        layer.get('name') && excludedLayers.includes(layer.get('name')) && layer.getSource && typeof layer.getSource().getFeatures === 'function'
-      ) {
-        console.log('angekommen true')
-        const sourceFeatures = layer.getSource().getFeatures();
-        if (sourceFeatures.includes(feature)) {
-          isExcluded = true;
-        }
-      }
-    });
-
-    if (isExcluded) {
-      
-      // Entferne das Feature direkt aus der Auswahl
-      selectInteraction.getFeatures().remove(feature);
-      console.log('wurde entfernt');
-    }
-  });
-
-  // Optional: Tooltip oder Info setzen für gültige Features
-  const validCount = selectInteraction.getFeatures().getLength();
-  if (validCount > 0) {
-    // tooltip.setInfo('Punkte ziehen');
-  } else {
-    // tooltip.setInfo('');
-  }
-});
-
-
 edit.getInteraction('Select').on('select', function(e) {
   // Nur Features behalten, die **nicht** aus dem Layer 'gew' stammen
   const validFeatures = e.selected.filter(feature => {
     // Layer herausfinden
     let found = false;
-    map.forEachLayerAtPixel(map.getPixelFromCoordinate(feature.getGeometry().getCoordinates()), function(layer) {
+    map.forEachFeatureAtPixel(map.getPixelFromCoordinate(feature.getGeometry().getCoordinates()), function(layer) {
       if (layer.getSource && layer.getSource().hasFeature && layer.getSource().hasFeature(feature)) {
         const lname = layer.get('name');
-        if (lname && (lname === 'gew' || lname === 'km500scal')) {
-          console.log('gefunden');
+        if (lname === 'gew') {
           found = true;
         }
       }
     });
     return !found;
   });
-
-  // Nur wenn gültige Features ausgewählt sind, was machen
+ // Nur wenn gültige Features ausgewählt sind, was machen
   if (validFeatures.length > 0) {
     // z. B. Tooltip setzen
     // tooltip.setInfo('Punkte ziehen');
@@ -2495,12 +2458,15 @@ edit.getInteraction('Select').on('select', function(e) {
     // tooltip.setInfo('');
   }
 });
-
+edit.getInteraction('Select').on('change:active', function(e){
+  tooltip.setInfo('');
+  console.log('angekommen edit change');
+});
 edit.getInteraction('ModifySelect').on('modifystart', function(e){
   if (e.features.length===1) tooltip.setFeature(e.features[0]);
 });
 edit.getInteraction('ModifySelect').on('modifyend', function(e){
-
+  console.log('angekommen modify');
   tooltip.setFeature();
 });
 edit.getInteraction('DrawPoint').on('change:active', function(e){
