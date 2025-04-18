@@ -267,6 +267,7 @@ const exp_gew_info_layer = new VectorLayer({
   style: getStyleForArtGewInfo,
   visible: false
 });
+
 const gew_layer_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/gew.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'gew', 
@@ -336,7 +337,7 @@ const exp_bw_sle_layer = new VectorLayer({
 const km10scal_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/km_10_scal.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'km10scal',
-  name: 'km10cal',
+  name: 'km10scal',
   style: km10scalStyle,
   visible: true,
   minResolution: 0,
@@ -345,7 +346,7 @@ const km10scal_layer = new VectorLayer({
 const km100scal_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/km_100_scal.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'km100scal',
-  name: 'km100cal',
+  name: 'km100scal',
   style: function(feature, resolution) {return km100scalStyle(feature, feature.get('km'), resolution);  },
   visible: true,
   minResolution: 0,
@@ -354,7 +355,7 @@ const km100scal_layer = new VectorLayer({
 const km500scal_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/km_500_scal.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'km500scal',
-  name: 'km500cal',
+  name: 'km500scal',
   style: function(feature, resolution) {return km500scalStyle(feature, feature.get('km'), resolution);  },
   visible: true  
 });
@@ -989,9 +990,7 @@ var popup = new Overlay({
   duration: 250
   }
 });
-
 map.addOverlay(popup);
-
 closer.onclick = function()
 {
   popup.setPosition(undefined);
@@ -999,25 +998,42 @@ closer.onclick = function()
   return false;
 };
 var closer = document.getElementById('popup-closer');
-
-
-var closer = document.getElementById('popup-closer');
 //-------------------------------------------------------Funktionen für Text im Popup
 map.on('click', function (evt) {
+  // 🔁 Vorherige Ergebnisse ausblenden und leeren
+  document.getElementById("search-results-container").style.display = "none";
+  document.getElementById("search-results").innerHTML = '';
   
-  
-  if (editBarAnAus===false ){
-    
+  var matchingFeatures = [];
+  if (editBarAnAus === false) {
     var coordinates = evt.coordinate;
-    var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) 
-    {
-      var layname = layer.get('name');
-      //console.log(layname);
-      var beschreibLangValue = feature.get('beschreib_lang');
-      var beschreibLangHtml = '';
-      if (beschreibLangValue && beschreibLangValue.trim() !== '') {
+     // ❌ Diese Layernamen ausschließen
+    const excludedLayers = ['gew', 'km10scal', 'km100scal', 'km500scal'];
+    map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
+      if (layer && !excludedLayers.includes(layer.get('name'))) {
+        matchingFeatures.push(feature);
+      }
+    });
+
+    if (matchingFeatures.length > 1) {
+      let wrappedFeatures = matchingFeatures.map(f => ({ feature: f }));
+      displaySearchResultsBw(wrappedFeatures);
+      document.getElementById("search-results-container").style.display = "block";
+      document.getElementById("close-search-results").addEventListener("click", function() {
+        document.getElementById("search-results-container").style.display = "none";
+      });
+    }
+  
+
+
+    var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
+    var layname = layer.get('name');
+    var beschreibLangValue = feature.get('beschreib_lang');
+    var beschreibLangHtml = '';
+    if (layname !== 'gew' && layname !== 'km10scal' && layname !== 'km100scal' && layname !== 'km500scal'  ) {
+    if (beschreibLangValue && beschreibLangValue.trim() !== '') {
       beschreibLangHtml = '<br>' + '<u>' + "Beschreib (lang): " + '</u>' + beschreibLangValue + '</p>';
-      };
+    };
     // Popup soll nur für bestimmte Layernamen angezeigt werden
     if (layname !== 'gew' && layname !== 'km10scal' && layname !== 'km100scal' && layname !== 'km500scal' && layname !== 'fsk' && layname !== 'sle' && layname !== 'weh' && layname !== 'son_lin' && layname !== 'exp_gew_fla' ) {
         if (feature) {
@@ -1484,14 +1500,13 @@ map.on('click', function (evt) {
       contentHtml += `<p><a href="https://www.google.com/maps?q=${result}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>`;
       content.innerHTML = contentHtml;
     }
+  }
     }
-    
   );
-} else if(editBarAnAus===true) {  
+  } else if(editBarAnAus===true) {  
   //alert('EditBar ist '+ editBarAnAus + 'map on');
   //placeMarkerAndShowCoordinates(evt);
-}
-
+  }
 });
 
 
@@ -1525,13 +1540,10 @@ map.addControl (search);
 // Select feature when click on the reference index
 search.on('select', function(e){
   sLayer.getSource().clear();
- 
-  // Check if we get a geojson to describe the search
+ // Check if we get a geojson to describe the search
   if (e.search.geojson) {
-    
     var format = new GeoJSON();
     var f = format.readFeature(e.search.geojson, { dataProjection: "EPSG:4326", featureProjection: map.getView().getProjection() });
-   
     sLayer.getSource().addFeature(f);
     var view = map.getView();
     var resolution = view.getResolutionForExtent(f.getGeometry().getExtent(), map.getSize());
@@ -1571,8 +1583,6 @@ function addMarker(coordinates) {
   sLayer.getSource().clear(); // Löscht vorherige Marker
   sLayer.getSource().addFeature(marker);
 };
-
-
 
 //---------------------------------------------------------------------------------------------Menü mit Submenü
 var userInput = ""; // Globale Variable zur Speicherung der Nutzereingabe
@@ -1628,9 +1638,7 @@ function searchFeaturesByTextEig(searchText) {
   features.forEach(feature => {
     let properties = feature.getProperties();
     let name = properties.Eig1 ? properties.Eig1.toLowerCase() : '';
-    
     let searchTextLower = searchText.toLowerCase(); // Suchtext ebenfalls in Kleinbuchstaben umwandeln
-    
     if (name.includes(searchTextLower)) {
       matchingFeatures.push({ feature }); // Layer explizit hinzugefügt
     }
@@ -1640,72 +1648,80 @@ function searchFeaturesByTextEig(searchText) {
   displaySearchResultsEig(matchingFeatures);
   document.getElementById("close-search-results").addEventListener("click", function() {
     document.getElementById("search-results-container").style.display = "none";
-    
-    // Hervorhebung zurücksetzen
+     // Hervorhebung zurücksetzen
     if (currentlyHighlightedFeature) {
       currentlyHighlightedFeature.setStyle(null);
       currentlyHighlightedFeature = null;
     }
   });
 }
-//Display Ergebnis Suche Bw
+// Anzeige der Suchergebnisse
 function displaySearchResultsBw(results) {
-  let resultContainer = document.getElementById('search-results');
+  const resultContainer = document.getElementById('search-results');
   resultContainer.innerHTML = ''; // Alte Ergebnisse löschen
-  if (results.length === 0) {
-      resultContainer.innerHTML = '<li>Layer eingeschaltet??? Keine Treffer</li>';
-      
-      return;
+  if (!results || results.length === 0) {
+    resultContainer.innerHTML = '<li>Layer eingeschaltet??? Keine Treffer</li>';
+    return;
   }
-  // 🔹 Alphanumerische Sortierung nach bw_id
-  results.sort((a, b) => {
-      let idA = a.feature.getProperties().bw_id || '';
-      let idB = b.feature.getProperties().bw_id || '';
-      return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
+  // Duplikate entfernen basierend auf bw_id
+  const seen = new Set();
+  results = results.filter(item => {
+    const id = item.feature?.get?.('bw_id');
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
   });
+
+  // Alphanumerische Sortierung nach bw_id
+  results.sort((a, b) => {
+    const idA = a.feature.get('bw_id') || '';
+    const idB = b.feature.get('bw_id') || '';
+    return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
+  });
+
+  // Ergebnisliste aufbauen
   results.forEach((item) => {
-      let feature = item.feature;
-      let properties = feature.getProperties();
-      let id = properties.bw_id;
-      let name = properties.name || 'Unbekannt';
-      let listItem = document.createElement('li');
-      listItem.textContent = id + ": " + name; // Nur den Namen anzeigen
-      listItem.onclick = () => zoomToFeature(feature);
-      resultContainer.appendChild(listItem);
+    const feature = item.feature;
+    const props = feature.getProperties();
+    const id = props.bw_id;
+    const name = props.name || 'Unbekannt';
+
+    // Sicherstellen, dass id da ist
+    if (!id) return;
+
+    const listItem = document.createElement('li');
+    listItem.textContent = `${id}: ${name}`;
+    listItem.onclick = () => zoomToFeature(feature);
+    resultContainer.appendChild(listItem);
   });
 }
 //Display Ergebnis Suche Eig
 function displaySearchResultsEig(results) {
   let resultContainer = document.getElementById('search-results');
   resultContainer.innerHTML = ''; // Alte Ergebnisse löschen
-
   if (results.length === 0) {
     resultContainer.innerHTML = '<li>FSK-Layer sichtbar?? Keine Treffer</li>';
     return;
   }
-
-  
   results.sort((a, b) => {
     let idA = a.feature?.getProperties()?.Eig1?.trim() || '';
     let idB = b.feature?.getProperties()?.Eig1?.trim() || '';
     return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' }); 
   });
-
   results.forEach((item) => {
     let feature = item.feature;
     let properties = feature.getProperties();
     let name = properties.Eig1 || 'Unbekannt';
     let suche = properties.Suche || 'Unbekannt';
-
     let listItem = document.createElement('li');
     listItem.textContent = name + "/ FSK: " + suche; // Nur den Namen anzeigen
     listItem.onclick = () => highlightFeatureEig1(feature); // Beim Klicken hervorheben
-
     resultContainer.appendChild(listItem);
   });
 }
 //-------------------------------------------------------Hervorhebung Suche FSK
 function highlightFeatureFSK(searchText) {
+  console.log('angekommen')
   const source = exp_allgm_fsk_layer.getSource();
   const features = source.getFeatures();
   let found = false;
@@ -2419,19 +2435,72 @@ edit.element.style.bottom = '160px';
 var tooltip = new Tooltip();
 map.addOverlay(tooltip);
 
-edit.getInteraction('Select').on('select', function(e){
-  //if (this.getFeatures().getLength()) {
-  //   tooltip.setInfo('Punkte ziehen');
-  // }
-  // else tooltip.setInfo();
- });
-edit.getInteraction('Select').on('change:active', function(e){
-  tooltip.setInfo('');
+edit.getInteraction('Select').on('select', function(e) {
+  const selectInteraction = this;
+  const excludedLayers = ['gew', 'km10scal', 'km100scal', 'km500scal'];
+  e.selected.forEach(feature => {
+   let isExcluded = false;
+    map.getLayers().forEach(layer => {
+      if (
+        layer.get('name') && excludedLayers.includes(layer.get('name')) && layer.getSource && typeof layer.getSource().getFeatures === 'function'
+      ) {
+        console.log('angekommen true')
+        const sourceFeatures = layer.getSource().getFeatures();
+        if (sourceFeatures.includes(feature)) {
+          isExcluded = true;
+        }
+      }
+    });
+
+    if (isExcluded) {
+      
+      // Entferne das Feature direkt aus der Auswahl
+      selectInteraction.getFeatures().remove(feature);
+      console.log('wurde entfernt');
+    }
+  });
+
+  // Optional: Tooltip oder Info setzen für gültige Features
+  const validCount = selectInteraction.getFeatures().getLength();
+  if (validCount > 0) {
+    // tooltip.setInfo('Punkte ziehen');
+  } else {
+    // tooltip.setInfo('');
+  }
 });
+
+
+edit.getInteraction('Select').on('select', function(e) {
+  // Nur Features behalten, die **nicht** aus dem Layer 'gew' stammen
+  const validFeatures = e.selected.filter(feature => {
+    // Layer herausfinden
+    let found = false;
+    map.forEachLayerAtPixel(map.getPixelFromCoordinate(feature.getGeometry().getCoordinates()), function(layer) {
+      if (layer.getSource && layer.getSource().hasFeature && layer.getSource().hasFeature(feature)) {
+        const lname = layer.get('name');
+        if (lname && (lname === 'gew' || lname === 'km500scal')) {
+          console.log('gefunden');
+          found = true;
+        }
+      }
+    });
+    return !found;
+  });
+
+  // Nur wenn gültige Features ausgewählt sind, was machen
+  if (validFeatures.length > 0) {
+    // z. B. Tooltip setzen
+    // tooltip.setInfo('Punkte ziehen');
+  } else {
+    // tooltip.setInfo('');
+  }
+});
+
 edit.getInteraction('ModifySelect').on('modifystart', function(e){
   if (e.features.length===1) tooltip.setFeature(e.features[0]);
 });
 edit.getInteraction('ModifySelect').on('modifyend', function(e){
+
   tooltip.setFeature();
 });
 edit.getInteraction('DrawPoint').on('change:active', function(e){
