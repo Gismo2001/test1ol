@@ -1006,7 +1006,6 @@ map.on('click', function (evt) {
   var matchingFeatures = [];
   if (editBarAnAus === false) {
     var coordinates = evt.coordinate;
-
     // ❌ Diese Layernamen ausschließen
     const excludedLayers = ['gew', 'km10scal', 'km100scal', 'km500scal'];
 
@@ -1020,13 +1019,12 @@ map.on('click', function (evt) {
       let wrappedFeatures = matchingFeatures.map(f => ({ feature: f }));
       displaySearchResultsBw(wrappedFeatures);
       document.getElementById("search-results-container").style.display = "block";
+
       document.getElementById("close-search-results").addEventListener("click", function() {
         document.getElementById("search-results-container").style.display = "none";
+
       });
     }
-  
-
-
     var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
     var layname = layer.get('name');
     var beschreibLangValue = feature.get('beschreib_lang');
@@ -1510,7 +1508,6 @@ map.on('click', function (evt) {
   }
 });
 
-
 //--------------------------------------------------------------------------------------------- Photon search control 
 var sLayer = new VectorLayer({
   title: "Search_Photon",
@@ -1656,14 +1653,15 @@ function searchFeaturesByTextEig(searchText) {
     }
   });
 }
-// Anzeige der Suchergebnisse
 function displaySearchResultsBw(results) {
   const resultContainer = document.getElementById('search-results');
   resultContainer.innerHTML = ''; // Alte Ergebnisse löschen
+
   if (!results || results.length === 0) {
     resultContainer.innerHTML = '<li>Layer eingeschaltet??? Keine Treffer</li>';
     return;
   }
+
   // Duplikate entfernen basierend auf bw_id
   const seen = new Set();
   results = results.filter(item => {
@@ -1683,16 +1681,29 @@ function displaySearchResultsBw(results) {
   // Ergebnisliste aufbauen
   results.forEach((item) => {
     const feature = item.feature;
+    const layer = item.layer; // 👈 Layer kommt jetzt mit
     const props = feature.getProperties();
     const id = props.bw_id;
     const name = props.name || 'Unbekannt';
 
-    // Sicherstellen, dass id da ist
     if (!id) return;
 
     const listItem = document.createElement('li');
+    listItem.classList.add('search-result-item'); // 👈 Damit du sie bei Bedarf wieder selektieren kannst
     listItem.textContent = `${id}: ${name}`;
-    listItem.onclick = () => zoomToFeature(feature);
+
+    // Klickverhalten inkl. Layername
+    listItem.addEventListener('click', () => {
+      zoomToFeature(feature);
+      if (layer) {
+        const layname = layer.get('name');
+        console.log('Geklickter Layername:', layname);
+        // Weitere Aktionen mit layname hier möglich
+      } else {
+        console.log('Kein Layer für dieses Feature gefunden.');
+      }
+    });
+
     resultContainer.appendChild(listItem);
   });
 }
@@ -2435,6 +2446,8 @@ edit.element.style.bottom = '160px';
 
 var tooltip = new Tooltip();
 map.addOverlay(tooltip);
+
+
 edit.getInteraction('Select').on('select', function(e) {
   // Nur Features behalten, die **nicht** aus dem Layer 'gew' stammen
   const validFeatures = e.selected.filter(feature => {

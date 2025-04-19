@@ -110,6 +110,7 @@ html {
   border-radius: 3px;
   font-size: 12px;
   position: absolute;
+  width: 250;
   display: none;
 }
 
