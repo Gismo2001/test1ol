@@ -41,7 +41,8 @@ import {bbox as bboxStrategy, tile} from 'ol/loadingstrategy.js';
 import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style.js';
 import { circular } from 'ol/geom/Polygon';
 
-import { UTMToLatLon_Fix } from './myNewFunc';
+
+
 
 import * as proj from 'ol/proj';
 
@@ -101,8 +102,17 @@ import {
   machWasMitFSK,
   geojsonStyle,
   getStyleForArtSonLin,
-  getStyleForArtGewInfo
+  getStyleForArtGewInfo,
+  
 } from './extStyle';
+
+
+
+import { 
+  calcAddition,
+  calcAddition2,
+  UTMToLatLon_Fix
+} from './myFunktions';
 
 import proj4 from 'proj4';
 import { register } from 'ol/proj/proj4';
@@ -120,7 +130,6 @@ const attribution = new Attribution({
   collapsible: false,
   html: '<a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
 });
-
 
 
 const mapView = new View({
@@ -153,6 +162,11 @@ var note = new Notification(
 );
 map.addControl(note)
 
+let result = calcAddition(10, 15);
+console.log(result);
+
+let result2 = calcAddition2(40, 15);
+console.log(result2);
 
 
 //----------------------------------------------------------------------------------------------------------APrint
@@ -172,6 +186,8 @@ var printControl = new PrintDialog({
  });
 printControl.setSize('A4');
 printControl.setOrientation('portrait');
+
+
 printControl.on(['print', 'error'], function(e) {
   if (e.image) {
     if (e.pdf) {
@@ -2042,7 +2058,8 @@ var sub2 = new Bar({
       }
     }),
     new Toggle({
-      html: '<i class="fa fa-ruler-horizontal" aria-hidden="true"></i>',
+      //<i class="fa-solid fa-ruler"></i>
+      html: '  <i class="fa fa-font-awesome"></i>  ',
       title: "Messung",
       onToggle: function (b) {
         const isEditing = edit.get('edition');

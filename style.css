@@ -332,9 +332,6 @@ html {
   display: none;
 }
 
-.ol-control button { 
-  background-color: white !important;  
-}
 
 .ol-button i {
   color: inherit;

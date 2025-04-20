@@ -522,6 +522,10 @@ function searchFeaturesByText(searchText, layer1,layer2, layer3) {
     return matchingFeatures;
   }
 
+export function calcAddition(a, b) {
+    return a + b;
+}
+
 
  export { 
     bru_nlwknStyle,
