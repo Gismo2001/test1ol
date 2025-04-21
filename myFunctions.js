@@ -1,9 +1,9 @@
 
+
+
 export function calcAddition(a, b) {
     return a + b;
 }
-
-
 
 export function calcAddition2(a, b) {
     return a + b;
@@ -43,3 +43,75 @@ export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
 
     return `${lat.toFixed(6)},${lon.toFixed(6)}`;
 }
+
+
+export function myFuncInfoDiv(features, layers, map) {
+    console.log('--- Neue Ausgabe ---');
+    const resultsContainer = document.getElementById('search-results-container');
+    const resultsList = document.getElementById('search-results');
+    
+    resultsList.innerHTML = ''; // Vorherige Einträge löschen
+    resultsContainer.style.display = 'block';
+    
+    for (let i = 0; i < features.length; i++) {
+      const feature = features[i];
+      const layer = layers[i];
+  
+      const layerTitle = layer.get('title') || layer.get('name') || 'Unbekannter Layer';
+      const name = feature.get('name') || feature.get('beschreibung') || 'Unbenanntes Objekt';
+      const bwId = feature.get('bw_id') || '—';
+  
+      const listItem = document.createElement('li');
+      listItem.innerHTML = `
+        <strong>${layerTitle}</strong><br>
+        <em>Name:</em> ${name}<br>
+        <em>BW-ID:</em> ${bwId}
+      `;
+  
+      // ✅ Klick zum Zoomen auf das Feature
+      listItem.style.cursor = 'pointer';
+      listItem.addEventListener('click', () => {
+        zoomToFeature(feature, map);
+      });
+  
+      resultsList.appendChild(listItem);
+    }
+  }
+
+import { Style, Stroke, Fill } from 'ol/style';
+export function zoomToFeature(feature, map) {
+  const geometry = feature.getGeometry();
+  const extent = geometry.getExtent();
+
+  // Zoomen auf das Feature
+  map.getView().fit(extent, {
+    duration: 1000,
+    padding: [50, 50, 50, 50],
+    maxZoom: 20
+  });
+
+  // Temporärer Highlight-Stil
+  const highlightStyle = new Style({
+    stroke: new Stroke({
+      color: 'yellow',
+      width: 4,
+    }),
+    fill: new Fill({
+      color: 'rgba(255, 255, 0, 0.3)',
+    }),
+  });
+
+  const originalStyle = feature.getStyle?.(); // Falls vorhanden
+
+  feature.setStyle(highlightStyle);
+
+  // Nach 1,5 Sekunden wieder auf den ursprünglichen Stil zurück
+  setTimeout(() => {
+    feature.setStyle(originalStyle || null); // null verwendet den Layer-Stil
+  }, 1500);
+}
+
+
+
+
+  

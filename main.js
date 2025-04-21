@@ -111,13 +111,19 @@ import {
 import { 
   calcAddition,
   calcAddition2,
+  myFuncInfoDiv,
   UTMToLatLon_Fix
-} from './myFunktions';
+} from './myFunctions';
 
 import proj4 from 'proj4';
 import { register } from 'ol/proj/proj4';
 import SearchPhoton from 'ol-ext/control/SearchPhoton';
 import WMSCapabilities from'ol-ext/control/WMSCapabilities';
+
+
+
+
+
 
 
 
@@ -150,6 +156,11 @@ const map = new Map({
   interactions: defaultInteractions().extend([new DragRotateAndZoom()])
 });
 
+
+
+
+
+
 var note = new Notification(
   {
     //className: 'ol-notification',
@@ -161,14 +172,6 @@ var note = new Notification(
   }
 );
 map.addControl(note)
-
-let result = calcAddition(10, 15);
-console.log(result);
-
-let result2 = calcAddition2(40, 15);
-console.log(result2);
-
-
 //----------------------------------------------------------------------------------------------------------APrint
 map.addControl(new CanvasAttribution());
 map.addControl(new CanvasTitle({ 
@@ -269,6 +272,7 @@ const exp_bw_son_lin_layer = new VectorLayer({
   style: getStyleForArtSonLin,
   visible: false
 });
+
 const exp_gew_umn_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_gew_umn.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'U-Maßnahmen', 
@@ -881,8 +885,9 @@ var selectFeat = new Select({
 });
 
 let layer_selected = null; 
+/* 
 
-/* selectFeat.on('select', function (e) {
+selectFeat.on('select', function (e) {
   if (editBarAnAus===false ){
   e.selected.forEach(function (featureSelected) {
       const layerName = selectFeat.getLayer(featureSelected).get('name');
@@ -898,12 +903,17 @@ let layer_selected = null;
   );
   }
 });
- */map.addInteraction(selectFeat);
+
+
+map.addInteraction(selectFeat);
+ */
+
 //map.addOverlay(popup);
 
 
 
 // ---------------------------------------------------------------------------------------WMS
+
 function getLayersInGroup(layerGroup) {
   const layers = [];
   layerGroup.getLayers().forEach(layer => {
@@ -1013,8 +1023,42 @@ closer.onclick = function()
   return false;
 };
 var closer = document.getElementById('popup-closer');
+
+
+
+
+
+
+
+
 //-------------------------------------------------------Funktionen für Text im Popup
 map.on('click', function (evt) {
+  console.log('click');
+  console.log(editBarAnAus);
+  var foundFeatures = [];
+  var foundLayers = [];
+
+  map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
+    const lyname = layer.get('name');
+    if (editBarAnAus === false) {
+      if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500scal') {
+        foundFeatures.push(feature);
+        foundLayers.push(layer);
+      }
+    }
+  });
+
+  if (foundFeatures.length > 0) {
+    //myFuncInfoDiv(foundFeatures, foundLayers, evt.coordinate, map); // <-- coordinate übergeben!
+    myFuncInfoDiv(foundFeatures, foundLayers, map); // <-- coordinate übergeben!
+  } else {
+    popup.setPosition(undefined);
+  }
+    
+});
+
+  /* 
+  
   // 🔁 Vorherige Ergebnisse ausblenden und leeren
   document.getElementById("search-results-container").style.display = "none";
   document.getElementById("search-results").innerHTML = '';
@@ -1026,6 +1070,7 @@ map.on('click', function (evt) {
     const excludedLayers = ['gew', 'km10scal', 'km100scal', 'km500scal'];
 
     map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
+
       if (layer && !excludedLayers.includes(layer.get('name'))) {
         matchingFeatures.push(feature);
       }
@@ -1524,6 +1569,8 @@ map.on('click', function (evt) {
   }
 });
 
+
+ */
 //--------------------------------------------------------------------------------------------- Photon search control 
 var sLayer = new VectorLayer({
   title: "Search_Photon",
@@ -1790,17 +1837,7 @@ function highlightFeatureEig1(feature) {
     maxZoom: 18 
   });
 }
-function zoomToFeature(feature) {
-    let geometry = feature.getGeometry();
-    let extent = geometry.getExtent();
-    map.getView().fit(extent, { 
-      duration: 1000, 
-      padding: [50, 50, 50, 50], 
-      maxZoom: 20// Verhindert zu starkes Hineinzoomen
-    });
-    
-    
-}
+
 
 window.closeSearchResults = function () {
   document.getElementById("search-results-container").style.display = "none";
