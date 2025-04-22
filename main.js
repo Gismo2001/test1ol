@@ -1031,40 +1031,45 @@ var closer = document.getElementById('popup-closer');
 
 
 
-//-------------------------------------------------------Funktionen für Text im Popup
 map.on('click', function (evt) {
-  //console.log('click');
-  //console.log(editBarAnAus);
   var foundFeatures = [];
   var foundLayers = [];
+  var seenFeatureIds = new Set();
+
   var ul = document.getElementById('search-results');
-  
-    if (ul) {
-      while (ul.firstChild) {
-      
-        ul.removeChild(ul.firstChild);
-      }
+  if (ul) {
+    while (ul.firstChild) {
+      ul.removeChild(ul.firstChild);
     }
-    
+  }
 
   map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
     const lyname = layer.get('name');
     if (editBarAnAus === false) {
-      if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500scal') {
-        foundFeatures.push(feature);
-        foundLayers.push(layer);
+      if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500cal') {
+        // Feature-ID verwenden, wenn vorhanden
+        let fid = feature.getId('bw_id ');
+        if (!fid) {
+          // Fallback: hash über Properties
+          fid = JSON.stringify(feature.getProperties());
+        }
+
+        if (!seenFeatureIds.has(fid)) {
+          foundFeatures.push(feature);
+          foundLayers.push(layer);
+          seenFeatureIds.add(fid);
+        }
       }
     }
   });
 
   if (foundFeatures.length > 0) {
-    //myFuncInfoDiv(foundFeatures, foundLayers, evt.coordinate, map); // <-- coordinate übergeben!
-    myFuncInfoDiv(foundFeatures, foundLayers, map); // <-- coordinate übergeben!
+    myFuncInfoDiv(foundFeatures, foundLayers, map);
   } else {
     popup.setPosition(undefined);
   }
-    
 });
+
 
   /* 
   

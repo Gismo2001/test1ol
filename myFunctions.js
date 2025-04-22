@@ -47,37 +47,27 @@ export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
 
 export function myFuncInfoDiv(features, layers, map) {
     console.log('--- Neue Ausgabe ---');
-   
-    
-    
-
     const resultsContainer = document.getElementById('search-results-container');
     const resultsList = document.getElementById('search-results');
-    
-    resultsList.innerHTML = ''; // Vorherige Einträge löschen
+    resultsList.innerHTML = ''; 
     resultsContainer.style.display = 'block';
-    
     for (let i = 0; i < features.length; i++) {
       const feature = features[i];
       const layer = layers[i];
-  
       const layerTitle = layer.get('title') || layer.get('name') || 'Unbekannter Layer';
       const name = feature.get('name') || feature.get('beschreibung') || 'Unbenanntes Objekt';
       const bwId = feature.get('bw_id') || '—';
-  
       const listItem = document.createElement('li');
       listItem.innerHTML = `
         <strong>${layerTitle}</strong><br>
         <em>Name:</em> ${name}<br>
         <em>BW-ID:</em> ${bwId}
       `;
-  
-      // ✅ Klick zum Zoomen auf das Feature
+    // ✅ Klick zum Zoomen auf das Feature
       listItem.style.cursor = 'pointer';
       listItem.addEventListener('click', () => {
         zoomToFeature(feature, map);
       });
-  
       resultsList.appendChild(listItem);
     }
   }
