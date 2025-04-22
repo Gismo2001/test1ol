@@ -1033,10 +1033,19 @@ var closer = document.getElementById('popup-closer');
 
 //-------------------------------------------------------Funktionen für Text im Popup
 map.on('click', function (evt) {
-  console.log('click');
-  console.log(editBarAnAus);
+  //console.log('click');
+  //console.log(editBarAnAus);
   var foundFeatures = [];
   var foundLayers = [];
+  var ul = document.getElementById('search-results');
+  
+    if (ul) {
+      while (ul.firstChild) {
+      
+        ul.removeChild(ul.firstChild);
+      }
+    }
+    
 
   map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
     const lyname = layer.get('name');

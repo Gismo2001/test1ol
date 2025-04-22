@@ -47,6 +47,10 @@ export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
 
 export function myFuncInfoDiv(features, layers, map) {
     console.log('--- Neue Ausgabe ---');
+   
+    
+    
+
     const resultsContainer = document.getElementById('search-results-container');
     const resultsList = document.getElementById('search-results');
     
