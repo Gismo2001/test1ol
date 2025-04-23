@@ -1048,7 +1048,7 @@ map.on('click', function (evt) {
     if (editBarAnAus === false) {
       if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500cal') {
         // Feature-ID verwenden, wenn vorhanden
-        let fid = feature.getId('bw_id ');
+        let fid = feature.getId('ID_con');
         if (!fid) {
           // Fallback: hash über Properties
           fid = JSON.stringify(feature.getProperties());
@@ -1064,7 +1064,7 @@ map.on('click', function (evt) {
   });
 
   if (foundFeatures.length > 0) {
-    myFuncInfoDiv(foundFeatures, foundLayers, map);
+    myFuncInfoDiv(foundFeatures, foundLayers, map, popup, content);
   } else {
     popup.setPosition(undefined);
   }

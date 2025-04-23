@@ -298,6 +298,7 @@ html {
   z-index: 1009; /* Stellt sicher, dass es über anderen Elementen liegt */
   display: none; /* Startet unsichtbar */
   max-height: 300px; /* Begrenzte Höhe, damit die Scrollbar erscheint */
+  max-width: 250px;
   overflow-y: auto; /* Scrollbar hinzufügen, wenn nötig */
 }
 #search-results li {

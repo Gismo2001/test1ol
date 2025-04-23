@@ -45,8 +45,7 @@ export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
 }
 
 
-export function myFuncInfoDiv(features, layers, map) {
-    console.log('--- Neue Ausgabe ---');
+export function myFuncInfoDiv(features, layers, map,  popup, content) {
     const resultsContainer = document.getElementById('search-results-container');
     const resultsList = document.getElementById('search-results');
     resultsList.innerHTML = ''; 
@@ -58,14 +57,73 @@ export function myFuncInfoDiv(features, layers, map) {
       const name = feature.get('name') || feature.get('beschreibung') || 'Unbenanntes Objekt';
       const bwId = feature.get('bw_id') || '—';
       const listItem = document.createElement('li');
-      listItem.innerHTML = `
+      var beschreibLangValue = feature.get('beschreib_lang');
+      var beschreibLangHtml = '';
+      if (beschreibLangValue && beschreibLangValue.trim() !== '') {
+        beschreibLangHtml = '<br>' + '<u>' + "Beschreib (lang): " + '</u>' + beschreibLangValue + '</p>';
+      };
+      
+      if (feature) {
+        var coordinates = feature.getGeometry().getCoordinates();
+        popup.setPosition(coordinates);
+        var foto1Value = feature.get('foto1');
+        var foto1Html = '';
+        var foto2Value = feature.get('foto2');
+        var foto2Html = '';
+        var foto3Value = feature.get('foto3');
+        var foto3Html = '';
+        var foto4Value = feature.get('foto4');
+        var foto4Html = '';
+        
+        if (foto1Value && foto1Value.trim() !== '') {
+          foto1Html = '<a href="' + foto1Value + '" onclick="window.open(\'' + foto1Value + '\', \'_blank\'); return false;">Foto 1</a>';
+        } else {
+          foto1Html =   " Foto 1 ";
+        }
+        if (foto2Value && foto2Value.trim() !== '') {
+          foto2Html = '<a href="' + foto2Value + '" onclick="window.open(\'' + foto2Value + '\', \'_blank\'); return false;">Foto 2</a>';
+        } else {
+          foto2Html = " Foto 2 ";
+        }
+        if (foto3Value && foto3Value.trim() !== '') {
+          foto3Html = '<a href="' + foto3Value + '" onclick="window.open(\'' + foto3Value + '\', \'_blank\'); return false;">Foto 3</a>';
+        } else {
+          foto3Html = " Foto 3 ";
+        }
+        if (foto4Value && foto4Value.trim() !== '') {
+          foto4Html = '<a href="' + foto4Value + '" onclick="window.open(\'' + foto4Value + '\', \'_blank\'); return false;">Foto 4</a>';
+        } else {
+          foto4Html = " Foto 4 ";
+        }
+        var rwert = feature.get('rwert');
+        var hwert = feature.get('hwert');
+        var result = UTMToLatLon_Fix(rwert, hwert, 32, true);
+        content.innerHTML =
+         '<div style="max-height: 200px; overflow-y: auto;">' +
+         '<p style="font-weight: bold; text-decoration: underline;">' + feature.get('name') + '</p>' +
+         '<p>' + "Id = " + feature.get('bw_id') +  ' (' + (feature.get('KTR') ? feature.get('KTR') : 'k.A.') + ')' +  '</p>' +
+         '<p>' + "U-Pflicht = " + feature.get('upflicht') + '</p>' +
+         //'<p>' + "Bemerk = " + feature.get('bemerk') + '</p>' +
+         '<p>' + "Bemerk = " + (feature.get('bemerk') ? feature.get('bemerk') : 'k.A.')  +  '</p>' +
+         '<p>' + "Bauj. = " + (feature.get('baujahr') ? feature.get('baujahr') : 'k.A.') + '</p>' +
+         `<p><a href="https://www.google.com/maps?q=${result}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>` +
+         `<p><a href="https://www.google.com/maps?q=&layer=c&cbll=${result}&cbp=12,90,0,0,1" target="_blank" rel="noopener noreferrer">streetview</a></p>` +
+         '<p>' + foto1Html + " " + foto2Html + " " + foto3Html + " " + foto4Html + 
+          '<br>' + '<u>' + "Beschreibung (kurz): " + '</u>' + feature.get('beschreib') + '</p>' +
+          '<p>' + beschreibLangHtml + '</p>' +
+         '</div>';
+         
+        
+      }
+
+        listItem.innerHTML = `
         <strong>${layerTitle}</strong><br>
         <em>Name:</em> ${name}<br>
         <em>BW-ID:</em> ${bwId}
-      `;
-    // ✅ Klick zum Zoomen auf das Feature
-      listItem.style.cursor = 'pointer';
-      listItem.addEventListener('click', () => {
+        `;
+        // ✅ Klick zum Zoomen auf das Feature
+        listItem.style.cursor = 'pointer';
+        listItem.addEventListener('click', () => {
         zoomToFeature(feature, map);
       });
       resultsList.appendChild(listItem);
