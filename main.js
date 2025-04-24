@@ -118,7 +118,7 @@ import proj4 from 'proj4';
 import { register } from 'ol/proj/proj4';
 import SearchPhoton from 'ol-ext/control/SearchPhoton';
 import WMSCapabilities from'ol-ext/control/WMSCapabilities';
-
+import { getCenter } from 'ol/extent'; // ❗ WICHTIG: oben importieren
 
 
 
@@ -871,7 +871,7 @@ toggleButtonU.element.classList.add('active');
 toggleButtonU.element.querySelector('.icon').classList.add('active');
 
 
-
+/* 
 var selectInteraction = new Select({
   layers: [vector],
   hitTolerance: 5,
@@ -882,8 +882,9 @@ var selectFeat = new Select({
   multi: true,
   condition: singleClick,
 });
+ */
+//let layer_selected = null; 
 
-let layer_selected = null; 
 /* 
 
 selectFeat.on('select', function (e) {
@@ -1029,66 +1030,82 @@ var closer = document.getElementById('popup-closer');
 
 
 
-// Klick auf Karte analysieren'
-map.on('click', function (evt) {
-  
-  var foundFeatures = [];
-  var foundLayers = [];
-  var seenFeatureIds = new Set();
-  
-  //Liste leeren  
-  var ul = document.getElementById('search-results');
-  if (ul) {
-    while (ul.firstChild) {
-      ul.removeChild(ul.firstChild);
-    }
-  }
-
-  // bei jedem Pixel analysieren, ob ein Feature vorhanden ist
-  // und die ID des Features in der Liste speichern
-  map.forEachFeatureAtPixel(evt.pixel, 
-    function (feature, layer) {
-      const lyname = layer.get('name');
-      //if (editBarAnAus === false) {
-      
-      if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500cal') {
-          // Feature-ID verwenden, wenn vorhanden
-          let fid = feature.getId('ID_con');
-          if (!fid) {
-            // Fallback: hash über Properties
-            fid = JSON.stringify(feature.getProperties());
-          }
-          
-          if (!seenFeatureIds.has(fid)) {
-            foundFeatures.push(feature);
-            foundLayers.push(layer);
-            seenFeatureIds.add(fid);
-          }
-        }
-      }
-
-    //}
-  );
-
-  if (foundFeatures.length > 0) {
-    if (foundFeatures.length === 1) {
-      // Nur ein Feature: direktes Popup anzeigen
-      document.getElementById('search-results-container').style.display = 'none';
-      const feature = foundFeatures[0];
-      const layer = foundLayers[0];
-      const coordinates = feature.getGeometry().getCoordinates();
-      popup.setPosition(coordinates);
-      content.innerHTML = generatePopupHTML(feature, coordinates, popup); 
-    } else {
-      // Mehrere Features: Liste anzeigen
-      myFuncInfoDiv(foundFeatures, foundLayers, map, popup, content, selectInteraction);
-    }
-  } else {
-    popup.setPosition(undefined);
-  }
-  
+// Nur eine Select-Interaktion verwenden
+var selectInteraction = new Select({
+  layers: [vector],
+  hitTolerance: 5,
+  multi: true,  // Falls du mehrere Features gleichzeitig auswählen möchtest
 });
 
+// In den Map-Event einfügen
+map.on('click', function (evt) {
+  console.log(editBarAnAus);
+  if (editBarAnAus === false) {
+    var foundFeatures = [];
+    var foundLayers = [];
+    var seenFeatureIds = new Set();
+    
+    // Liste leeren  
+    var ul = document.getElementById('search-results');
+    if (ul) {
+      while (ul.firstChild) {
+        ul.removeChild(ul.firstChild);
+      }
+    }
+
+    // Bei jedem Pixel analysieren, ob ein Feature vorhanden ist
+    map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
+      if (!layer) return; // Sicherheitsprüfung hinzufügen
+
+      const lyname = layer.get('name');
+      if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500cal') {
+        let fid = feature.getId() || JSON.stringify(feature.getProperties());
+
+        if (!seenFeatureIds.has(fid)) {
+          foundFeatures.push(feature);
+          foundLayers.push(layer);
+          seenFeatureIds.add(fid);
+        }
+      }
+    });
+
+    if (foundFeatures.length > 0) {
+      if (foundFeatures.length === 1) {
+        document.getElementById('search-results-container').style.display = 'none';
+        
+        const feature = foundFeatures[0];
+        const layer = foundLayers[0];
+        const geometry = feature.getGeometry();
+        const geomType = geometry.getType();
+
+        let coordinates;
+
+        if (geomType === 'Point' || geomType === 'MultiPoint') {
+          coordinates = geometry.getCoordinates(); // oder evt.coordinate
+        } else {
+          const extent = geometry.getExtent();
+          coordinates = getCenter(extent); // zentriert z. B. bei Linien/Flächen
+        }
+
+        popup.setPosition(coordinates);
+        content.innerHTML = generatePopupHTML(feature, coordinates, popup); 
+
+        // Visuelle Markierung über selectInteraction
+        selectInteraction.getFeatures().clear();
+        selectInteraction.getFeatures().push(feature);
+
+      } else {
+        // Mehrere Features: Liste anzeigen
+        myFuncInfoDiv(foundFeatures, foundLayers, map, popup, content, selectInteraction);
+      }
+    } else {
+      popup.setPosition(undefined);
+    }
+  }
+});
+
+// Der Select-Interaktions-Handler wird hier in die Karte eingefügt
+map.addInteraction(selectInteraction);
 
 
 
@@ -2678,7 +2695,7 @@ edit.addControl(save);
 
 var editBarAnAus = false;
 
-/* 
+ 
 window.onload = function() {
   editBarAnAus = false
   const select = edit.getInteraction('Select');
@@ -2687,4 +2704,4 @@ window.onload = function() {
   if (interaction) {
     interaction.setActive(false);
   }
-} */
+} 

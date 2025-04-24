@@ -76,9 +76,24 @@ function getBeschreibLangHTML(value) {
 
 
 export function generatePopupHTML(feature, coordinates, popup) {
+  let latLonResult;
+
   const rwert = feature.get('rwert');
   const hwert = feature.get('hwert');
-  const result = UTMToLatLon_Fix(rwert, hwert, 32, true);
+
+  if (rwert && hwert) {
+    // Punkte mit Messwerten (z. B. aus ALKIS-Daten o. ä.)
+    latLonResult = UTMToLatLon_Fix(rwert, hwert, 32, true);
+  } else {
+    // Linien und Flächen → Mittelpunkt der Geometrie berechnen
+    const geom = feature.getGeometry();
+    const center = geom.getType() === 'Point' ? geom.getCoordinates() : geom.getExtent();
+    const coordinate = geom.getType() === 'Point'
+      ? center
+      : ol.extent.getCenter(center);
+    const [lon, lat] = ol.proj.toLonLat(coordinate);
+    latLonResult = `${lat},${lon}`;
+  }
 
   return `
     <div style="max-height: 200px; overflow-y: auto;">
@@ -87,8 +102,8 @@ export function generatePopupHTML(feature, coordinates, popup) {
       <p>U-Pflicht = ${feature.get('upflicht')}</p>
       <p>Bemerk = ${feature.get('bemerk') || 'k.A.'}</p>
       <p>Bauj. = ${feature.get('baujahr') || 'k.A.'}</p>
-      <p><a href="https://www.google.com/maps?q=${result}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>
-      <p><a href="https://www.google.com/maps?q=&layer=c&cbll=${result}&cbp=12,90,0,0,1" target="_blank" rel="noopener noreferrer">streetview</a></p>
+      <p><a href="https://www.google.com/maps?q=${latLonResult}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>
+      <p><a href="https://www.google.com/maps?q=&layer=c&cbll=${latLonResult}&cbp=12,90,0,0,1" target="_blank" rel="noopener noreferrer">Streetview</a></p>
       <p>
         ${createFotoLink(feature.get('foto1'), 'Foto 1')} 
         ${createFotoLink(feature.get('foto2'), 'Foto 2')} 
@@ -100,7 +115,6 @@ export function generatePopupHTML(feature, coordinates, popup) {
     </div>
   `;
 }
-
 
 function createResultListItem(layerTitle, name, bwId, feature, map, popup, content, selectInteraction) {
 
@@ -114,24 +128,36 @@ function createResultListItem(layerTitle, name, bwId, feature, map, popup, conte
   listItem.style.cursor = 'pointer';
   // Einfacher Klick → Popup anzeigen
 
- listItem.addEventListener('click', () => {
-  const coordinates = feature.getGeometry().getCoordinates();
-  popup.setPosition(coordinates);
-  content.innerHTML = generatePopupHTML(feature, coordinates);
-
-  // 🔴 Feature visuell markieren
-  selectInteraction.getFeatures().clear();
-  selectInteraction.getFeatures().push(feature);
-});
-
+  listItem.addEventListener('click', () => {
+    const geometry = feature.getGeometry();
+    let coordinates;
+  
+    // 🔍 Geometrie-Typ prüfen
+    const type = geometry.getType();
+    if (type === 'Point') {
+      coordinates = geometry.getCoordinates();
+    } else {
+      // 📍 Bei Linien oder Flächen: Schwerpunkt verwenden
+      const extent = geometry.getExtent();
+      coordinates = [
+        (extent[0] + extent[2]) / 2, // Mittelpunkt X
+        (extent[1] + extent[3]) / 2  // Mittelpunkt Y
+      ];
+    }
+  
+    popup.setPosition(coordinates);
+    content.innerHTML = generatePopupHTML(feature, coordinates);
+  
+    // 🔴 Feature visuell markieren
+    selectInteraction.getFeatures().clear();
+    selectInteraction.getFeatures().push(feature);
+  });
+  
 
   
   listItem.addEventListener('dblclick', () => zoomToFeature(feature, map));
   return listItem;
 }
-
-
-
 
 
 import { Style, Stroke, Fill } from 'ol/style';
