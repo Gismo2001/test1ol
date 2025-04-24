@@ -1,14 +1,4 @@
 
-
-
-export function calcAddition(a, b) {
-    return a + b;
-}
-
-export function calcAddition2(a, b) {
-    return a + b;
-}
-
 export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
     const a = 6378137;
     const e = 0.081819191;
@@ -44,91 +34,105 @@ export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
     return `${lat.toFixed(6)},${lon.toFixed(6)}`;
 }
 
+export function myFuncInfoDiv(features, layers, map, popup, content, selectInteraction) {
 
-export function myFuncInfoDiv(features, layers, map,  popup, content) {
-    const resultsContainer = document.getElementById('search-results-container');
-    const resultsList = document.getElementById('search-results');
-    resultsList.innerHTML = ''; 
-    resultsContainer.style.display = 'block';
-    for (let i = 0; i < features.length; i++) {
-      const feature = features[i];
-      const layer = layers[i];
-      const layerTitle = layer.get('title') || layer.get('name') || 'Unbekannter Layer';
-      const name = feature.get('name') || feature.get('beschreibung') || 'Unbenanntes Objekt';
-      const bwId = feature.get('bw_id') || '—';
-      const listItem = document.createElement('li');
-      var beschreibLangValue = feature.get('beschreib_lang');
-      var beschreibLangHtml = '';
-      if (beschreibLangValue && beschreibLangValue.trim() !== '') {
-        beschreibLangHtml = '<br>' + '<u>' + "Beschreib (lang): " + '</u>' + beschreibLangValue + '</p>';
-      };
-      
-      if (feature) {
-        var coordinates = feature.getGeometry().getCoordinates();
-        popup.setPosition(coordinates);
-        var foto1Value = feature.get('foto1');
-        var foto1Html = '';
-        var foto2Value = feature.get('foto2');
-        var foto2Html = '';
-        var foto3Value = feature.get('foto3');
-        var foto3Html = '';
-        var foto4Value = feature.get('foto4');
-        var foto4Html = '';
-        
-        if (foto1Value && foto1Value.trim() !== '') {
-          foto1Html = '<a href="' + foto1Value + '" onclick="window.open(\'' + foto1Value + '\', \'_blank\'); return false;">Foto 1</a>';
-        } else {
-          foto1Html =   " Foto 1 ";
-        }
-        if (foto2Value && foto2Value.trim() !== '') {
-          foto2Html = '<a href="' + foto2Value + '" onclick="window.open(\'' + foto2Value + '\', \'_blank\'); return false;">Foto 2</a>';
-        } else {
-          foto2Html = " Foto 2 ";
-        }
-        if (foto3Value && foto3Value.trim() !== '') {
-          foto3Html = '<a href="' + foto3Value + '" onclick="window.open(\'' + foto3Value + '\', \'_blank\'); return false;">Foto 3</a>';
-        } else {
-          foto3Html = " Foto 3 ";
-        }
-        if (foto4Value && foto4Value.trim() !== '') {
-          foto4Html = '<a href="' + foto4Value + '" onclick="window.open(\'' + foto4Value + '\', \'_blank\'); return false;">Foto 4</a>';
-        } else {
-          foto4Html = " Foto 4 ";
-        }
-        var rwert = feature.get('rwert');
-        var hwert = feature.get('hwert');
-        var result = UTMToLatLon_Fix(rwert, hwert, 32, true);
-        content.innerHTML =
-         '<div style="max-height: 200px; overflow-y: auto;">' +
-         '<p style="font-weight: bold; text-decoration: underline;">' + feature.get('name') + '</p>' +
-         '<p>' + "Id = " + feature.get('bw_id') +  ' (' + (feature.get('KTR') ? feature.get('KTR') : 'k.A.') + ')' +  '</p>' +
-         '<p>' + "U-Pflicht = " + feature.get('upflicht') + '</p>' +
-         //'<p>' + "Bemerk = " + feature.get('bemerk') + '</p>' +
-         '<p>' + "Bemerk = " + (feature.get('bemerk') ? feature.get('bemerk') : 'k.A.')  +  '</p>' +
-         '<p>' + "Bauj. = " + (feature.get('baujahr') ? feature.get('baujahr') : 'k.A.') + '</p>' +
-         `<p><a href="https://www.google.com/maps?q=${result}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>` +
-         `<p><a href="https://www.google.com/maps?q=&layer=c&cbll=${result}&cbp=12,90,0,0,1" target="_blank" rel="noopener noreferrer">streetview</a></p>` +
-         '<p>' + foto1Html + " " + foto2Html + " " + foto3Html + " " + foto4Html + 
-          '<br>' + '<u>' + "Beschreibung (kurz): " + '</u>' + feature.get('beschreib') + '</p>' +
-          '<p>' + beschreibLangHtml + '</p>' +
-         '</div>';
-         
-        
-      }
+  const resultsContainer = document.getElementById('search-results-container');
+  const resultsList = document.getElementById('search-results');
+  resultsList.innerHTML = '';
+  resultsContainer.style.display = 'block';
 
-        listItem.innerHTML = `
-        <strong>${layerTitle}</strong><br>
-        <em>Name:</em> ${name}<br>
-        <em>BW-ID:</em> ${bwId}
-        `;
-        // ✅ Klick zum Zoomen auf das Feature
-        listItem.style.cursor = 'pointer';
-        listItem.addEventListener('click', () => {
-        zoomToFeature(feature, map);
-      });
-      resultsList.appendChild(listItem);
+  for (let i = 0; i < features.length; i++) {
+    const feature = features[i];
+    const layer = layers[i];
+    const layerTitle = layer.get('title') || layer.get('name') || 'Unbekannter Layer';
+    const name = feature.get('name') || feature.get('beschreibung') || 'Unbenanntes Objekt';
+    const bwId = feature.get('bw_id') || '—';
+
+    if (feature) {
+      const coordinates = feature.getGeometry().getCoordinates();
+      popup.setPosition(coordinates);
+      content.innerHTML = generatePopupHTML(feature, coordinates);
     }
+
+    const listItem = createResultListItem(layerTitle, name, bwId, feature, map, popup, content, selectInteraction);
+
+    resultsList.appendChild(listItem);
   }
+}
+
+function createFotoLink(url, label) {
+  if (url && url.trim() !== '') {
+    return `<a href="${url}" onclick="window.open('${url}', '_blank'); return false;">${label}</a>`;
+  }
+  return label;
+}
+
+function getBeschreibLangHTML(value) {
+  if (value && value.trim() !== '') {
+    return `<br><u>Beschreib (lang): </u>${value}`;
+  }
+  return '';
+}
+
+
+export function generatePopupHTML(feature, coordinates, popup) {
+  const rwert = feature.get('rwert');
+  const hwert = feature.get('hwert');
+  const result = UTMToLatLon_Fix(rwert, hwert, 32, true);
+
+  return `
+    <div style="max-height: 200px; overflow-y: auto;">
+      <p style="font-weight: bold; text-decoration: underline;">${feature.get('name')}</p>
+      <p>Id = ${feature.get('bw_id')} (${feature.get('KTR') || 'k.A.'})</p>
+      <p>U-Pflicht = ${feature.get('upflicht')}</p>
+      <p>Bemerk = ${feature.get('bemerk') || 'k.A.'}</p>
+      <p>Bauj. = ${feature.get('baujahr') || 'k.A.'}</p>
+      <p><a href="https://www.google.com/maps?q=${result}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>
+      <p><a href="https://www.google.com/maps?q=&layer=c&cbll=${result}&cbp=12,90,0,0,1" target="_blank" rel="noopener noreferrer">streetview</a></p>
+      <p>
+        ${createFotoLink(feature.get('foto1'), 'Foto 1')} 
+        ${createFotoLink(feature.get('foto2'), 'Foto 2')} 
+        ${createFotoLink(feature.get('foto3'), 'Foto 3')} 
+        ${createFotoLink(feature.get('foto4'), 'Foto 4')}
+        <br><u>Beschreibung (kurz): </u>${feature.get('beschreib')}
+        ${getBeschreibLangHTML(feature.get('beschreib_lang'))}
+      </p>
+    </div>
+  `;
+}
+
+
+function createResultListItem(layerTitle, name, bwId, feature, map, popup, content, selectInteraction) {
+
+  const listItem = document.createElement('li');
+  listItem.innerHTML = `
+    <strong>${layerTitle}</strong><br>
+    <em>Name:</em> ${name}<br>
+    <em>BW-ID:</em> ${bwId}
+  `;
+  
+  listItem.style.cursor = 'pointer';
+  // Einfacher Klick → Popup anzeigen
+
+ listItem.addEventListener('click', () => {
+  const coordinates = feature.getGeometry().getCoordinates();
+  popup.setPosition(coordinates);
+  content.innerHTML = generatePopupHTML(feature, coordinates);
+
+  // 🔴 Feature visuell markieren
+  selectInteraction.getFeatures().clear();
+  selectInteraction.getFeatures().push(feature);
+});
+
+
+  
+  listItem.addEventListener('dblclick', () => zoomToFeature(feature, map));
+  return listItem;
+}
+
+
+
+
 
 import { Style, Stroke, Fill } from 'ol/style';
 export function zoomToFeature(feature, map) {
