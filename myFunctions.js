@@ -82,7 +82,7 @@ export function generatePopupHTML(feature, coordinates, popup) {
   const hwert = feature.get('hwert');
 
   if (rwert && hwert) {
-    // Punkte mit Messwerten (z. B. aus ALKIS-Daten o. ä.)
+    
     latLonResult = UTMToLatLon_Fix(rwert, hwert, 32, true);
   } else {
     // Linien und Flächen → Mittelpunkt der Geometrie berechnen

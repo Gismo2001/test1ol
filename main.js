@@ -160,6 +160,7 @@ const map = new Map({
 
 
 
+
 var note = new Notification(
   {
     //className: 'ol-notification',
@@ -823,7 +824,18 @@ map.addLayer(BwGroupL);
 map.addLayer(BwGroupP);
 map.addLayer(vector); 
 
+const excludedLayerNames = ['gew', 'km10scal', 'km100scal', 'km500scal'];
 
+const selectInteraction = new Select({
+  layers: function(layer) {
+    const name = layer.get('name');
+    return !excludedLayerNames.includes(name);
+  },
+  hitTolerance: 5,
+  multi: true
+});
+
+map.addInteraction(selectInteraction);
 
 //Layer für rechtsclick
 /* 
@@ -869,6 +881,8 @@ var toggleButtonU = new Toggle({
 // Klasse 'active' zum Button hinzufügen, um sicherzustellen, dass er beim Start als aktiv dargestellt wird
 toggleButtonU.element.classList.add('active');
 toggleButtonU.element.querySelector('.icon').classList.add('active');
+
+
 
 
 /* 
@@ -1026,17 +1040,6 @@ var closer = document.getElementById('popup-closer');
 
 
 
-
-
-
-
-// Nur eine Select-Interaktion verwenden
-var selectInteraction = new Select({
-  layers: [vector],
-  hitTolerance: 5,
-  multi: true,  // Falls du mehrere Features gleichzeitig auswählen möchtest
-});
-
 // In den Map-Event einfügen
 map.on('click', function (evt) {
   console.log(editBarAnAus);
@@ -1053,14 +1056,16 @@ map.on('click', function (evt) {
       }
     }
 
-    // Bei jedem Pixel analysieren, ob ein Feature vorhanden ist
     map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
-      if (!layer) return; // Sicherheitsprüfung hinzufügen
-
+      if (!layer) return;
+    
       const lyname = layer.get('name');
-      if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500cal') {
+      if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500scal') {
+        // Speichere den Layernamen direkt am Feature
+        feature.set('layerName', lyname);
+    
         let fid = feature.getId() || JSON.stringify(feature.getProperties());
-
+    
         if (!seenFeatureIds.has(fid)) {
           foundFeatures.push(feature);
           foundLayers.push(layer);
@@ -1068,11 +1073,11 @@ map.on('click', function (evt) {
         }
       }
     });
+    
 
     if (foundFeatures.length > 0) {
       if (foundFeatures.length === 1) {
         document.getElementById('search-results-container').style.display = 'none';
-        
         const feature = foundFeatures[0];
         const layer = foundLayers[0];
         const geometry = feature.getGeometry();
@@ -1086,7 +1091,6 @@ map.on('click', function (evt) {
           const extent = geometry.getExtent();
           coordinates = getCenter(extent); // zentriert z. B. bei Linien/Flächen
         }
-
         popup.setPosition(coordinates);
         content.innerHTML = generatePopupHTML(feature, coordinates, popup); 
 
@@ -1104,8 +1108,7 @@ map.on('click', function (evt) {
   }
 });
 
-// Der Select-Interaktions-Handler wird hier in die Karte eingefügt
-map.addInteraction(selectInteraction);
+
 
 
 
