@@ -1038,14 +1038,10 @@ closer.onclick = function()
 };
 var closer = document.getElementById('popup-closer');
 
-
-
-// In den Map-Event einfügen
 map.on('click', function (evt) {
   console.log(editBarAnAus);
   if (editBarAnAus === false) {
-    var foundFeatures = [];
-    var foundLayers = [];
+    var foundResults = [];
     var seenFeatureIds = new Set();
     
     // Liste leeren  
@@ -1058,50 +1054,41 @@ map.on('click', function (evt) {
 
     map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
       if (!layer) return;
-    
+
       const lyname = layer.get('name');
       if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500scal') {
-        // Speichere den Layernamen direkt am Feature
         feature.set('layerName', lyname);
-    
         let fid = feature.getId() || JSON.stringify(feature.getProperties());
-    
         if (!seenFeatureIds.has(fid)) {
-          foundFeatures.push(feature);
-          foundLayers.push(layer);
+          foundResults.push({feature, layer});
           seenFeatureIds.add(fid);
         }
       }
     });
-    
+    //Wenn nur ein Layer oder Feature gefunden wurde
+    if (foundResults.length === 1) {
+      const { feature, layer } = foundResults[0];
+      document.getElementById('search-results-container').style.display = 'none';
 
-    if (foundFeatures.length > 0) {
-      if (foundFeatures.length === 1) {
-        document.getElementById('search-results-container').style.display = 'none';
-        const feature = foundFeatures[0];
-        const layer = foundLayers[0];
-        const geometry = feature.getGeometry();
-        const geomType = geometry.getType();
+      const geometry = feature.getGeometry();
+      const geomType = geometry.getType();
 
-        let coordinates;
-
-        if (geomType === 'Point' || geomType === 'MultiPoint') {
-          coordinates = geometry.getCoordinates(); // oder evt.coordinate
-        } else {
-          const extent = geometry.getExtent();
-          coordinates = getCenter(extent); // zentriert z. B. bei Linien/Flächen
-        }
-        popup.setPosition(coordinates);
-        content.innerHTML = generatePopupHTML(feature, coordinates, popup); 
-
-        // Visuelle Markierung über selectInteraction
-        selectInteraction.getFeatures().clear();
-        selectInteraction.getFeatures().push(feature);
-
+      let coordinates;
+      if (geomType === 'Point' || geomType === 'MultiPoint') {
+        coordinates = geometry.getCoordinates();
       } else {
-        // Mehrere Features: Liste anzeigen
-        myFuncInfoDiv(foundFeatures, foundLayers, map, popup, content, selectInteraction);
+        const extent = geometry.getExtent();
+        coordinates = getCenter(extent);
       }
+
+      popup.setPosition(coordinates);
+      content.innerHTML = generatePopupHTML(feature, layer, coordinates, popup);
+
+      selectInteraction.getFeatures().clear();
+      selectInteraction.getFeatures().push(feature);
+
+    } else if (foundResults.length > 1) {
+      myFuncInfoDiv(foundResults, map, popup, content, selectInteraction);
     } else {
       popup.setPosition(undefined);
     }

@@ -34,28 +34,27 @@ export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
     return `${lat.toFixed(6)},${lon.toFixed(6)}`;
 }
 
-export function myFuncInfoDiv(features, layers, map, popup, content, selectInteraction) {
-
+export function myFuncInfoDiv(results, map, popup, content, selectInteraction) {
   const resultsContainer = document.getElementById('search-results-container');
   const resultsList = document.getElementById('search-results');
   resultsList.innerHTML = '';
   resultsContainer.style.display = 'block';
 
-  for (let i = 0; i < features.length; i++) {
-    const feature = features[i];
-    const layer = layers[i];
-    const layerTitle = layer.get('title') || layer.get('name') || 'Unbekannter Layer';
+  for (let i = 0; i < results.length; i++) {
+    const { feature, layer } = results[i];
+    console.log('durchlauf Nr: ' + i + '; Mit Layer: ' + layer?.get?.('name'));
+
+    const layerTitle = layer?.get?.('title') || layer?.get?.('name') || 'Unbekannter Layer';
     const name = feature.get('name') || feature.get('beschreibung') || 'Unbenanntes Objekt';
     const bwId = feature.get('bw_id') || '—';
 
-    if (feature) {
-      const coordinates = feature.getGeometry().getCoordinates();
-      popup.setPosition(coordinates);
-      content.innerHTML = generatePopupHTML(feature, coordinates);
-    }
+    const coordinates = feature.getGeometry().getCoordinates();
+    popup.setPosition(coordinates);
+
+    content.innerHTML = generatePopupHTML(feature, layer, coordinates, popup);
+
 
     const listItem = createResultListItem(layerTitle, name, bwId, feature, map, popup, content, selectInteraction);
-
     resultsList.appendChild(listItem);
   }
 }
@@ -74,47 +73,220 @@ function getBeschreibLangHTML(value) {
   return '';
 }
 
-
-export function generatePopupHTML(feature, coordinates, popup) {
+export function generatePopupHTML(feature, layer, coordinates, popup) {
+  const layerName = layer?.get?.('name') || 'unbekannt';
   let latLonResult;
-
   const rwert = feature.get('rwert');
   const hwert = feature.get('hwert');
-
   if (rwert && hwert) {
-    
     latLonResult = UTMToLatLon_Fix(rwert, hwert, 32, true);
   } else {
-    // Linien und Flächen → Mittelpunkt der Geometrie berechnen
     const geom = feature.getGeometry();
-    const center = geom.getType() === 'Point' ? geom.getCoordinates() : geom.getExtent();
-    const coordinate = geom.getType() === 'Point'
-      ? center
-      : ol.extent.getCenter(center);
-    const [lon, lat] = ol.proj.toLonLat(coordinate);
-    latLonResult = `${lat},${lon}`;
+    const center = geom.getType() === 'Point'
+      ? geom.getCoordinates()
+      : ol.extent.getCenter(geom.getExtent());
+    const [lon, lat] = ol.proj.toLonLat(center);
+    latLonResult = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+  }
+ // Spezialfall FSK, editbar, geojson und kml: Nur spezieller Inhalt, kein allgemeiner Block
+ if (layerName === 'fsk') {
+  const eigenschaft = (feature.get('Art') === 'o' || feature.get('Art') === 'l') ? 'öffentl.' : 'privat';
+  return `
+    <div style="max-height: 300px; overflow-y: auto;">
+      <p><strong>gemark Flur Flurstück:</strong><br>${feature.get('Suche')}</p>
+      <p>FSK: ${feature.get('fsk')}</p>
+      <p>FSK(ASL): ${feature.get('FSK_ASL')}</p>
+      <p>Eig.(${eigenschaft}): ${feature.get('Eig1')}</p>
+    </div>
+  `;
+} else if (layerName.toLowerCase().startsWith('geojson')) {
+  const geom = feature.getGeometry();
+  const type = geom.getType();
+  let html = `<p><strong>Geometrie-Typ:</strong> ${type}</p>`;
+
+  if (type === 'Point') {
+    const coords = ol.proj.toLonLat(geom.getCoordinates());
+    html += `<p><strong>Koordinaten:</strong> ${coords[1].toFixed(5)}, ${coords[0].toFixed(5)}</p>`;
+  } else if (type === 'LineString') {
+    const length = ol.sphere.getLength(geom);
+    html += `<p><strong>Länge:</strong> ${length.toFixed(2)} m</p>`;
+  } else if (type === 'Polygon') {
+    const area = ol.sphere.getArea(geom);
+    html += `<p><strong>Fläche:</strong> ${area.toFixed(2)} m²</p>`;
+  }
+  // Attributliste erzeugen
+  const att = feature.getProperties();
+  html += `<strong>Attributwerte:</strong><br><ul>`;
+  for (let key in att) {
+    if (key !== 'geometry') {
+      html += `<li><strong>${key}:</strong> ${att[key]}</li>`;
+    }
+  }
+  html += `</ul>`;
+
+  return `
+    <div style="max-height: 300px; overflow-y: auto;">
+      ${html}
+    </div>
+  `;
+} else if (layerName.toLowerCase().startsWith('kml')) {
+  const geom = feature.getGeometry();
+  const type = geom.getType();
+  let html = `<p><strong>Geometrie-Typ:</strong> ${type}</p>`;
+
+  if (type === 'Point') {
+    const coords = ol.proj.toLonLat(geom.getCoordinates());
+    html += `<p><strong>Koordinaten:</strong> ${coords[1].toFixed(5)}, ${coords[0].toFixed(5)}</p>`;
+  } else if (type === 'LineString') {
+    const length = ol.sphere.getLength(geom); // in Metern
+    html += `<p><strong>Länge:</strong> ${length.toFixed(2)} m</p>`;
+  } else if (type === 'Polygon') {
+    const area = ol.sphere.getArea(geom); // in m²
+    html += `<p><strong>Fläche:</strong> ${area.toFixed(2)} m²</p>`;
+  }
+
+  // Attributwerte ausgeben
+  const att = feature.getProperties();
+  html += `<strong>Attributwerte:</strong><br><ul>`;
+  for (let key in att) {
+    if (key !== 'geometry') {
+      html += `<li><strong>${key}:</strong> ${att[key]}</li>`;
+    }
+  }
+  html += `</ul>`;
+
+  return `
+    <div style="max-height: 300px; overflow-y: auto;">
+      ${html}
+    </div>
+  `;
+} else if (layerName === 'editbar') {  
+  const geom = feature.getGeometry();
+  const type = geom.getType();
+  let content = `<p><strong>Geometrie-Typ:</strong> ${type}</p>`;
+
+  if (type === 'Point') {
+    const coords = ol.proj.toLonLat(geom.getCoordinates());
+    content += `<p><strong>Koordinaten:</strong> ${coords[1].toFixed(5)}, ${coords[0].toFixed(5)}</p>`;
+  } else if (type === 'LineString') {
+    const length = ol.sphere.getLength(geom); // in Metern
+    content += `<p><strong>Länge:</strong> ${length.toFixed(2)} m</p>`;
+  } else if (type === 'Polygon') {
+    const area = ol.sphere.getArea(geom); // in m²
+    content += `<p><strong>Fläche:</strong> ${area.toFixed(2)} m²</p>`;
   }
 
   return `
-    <div style="max-height: 200px; overflow-y: auto;">
-      <p style="font-weight: bold; text-decoration: underline;">${feature.get('name')}</p>
+    <div style="max-height: 300px; overflow-y: auto;">
+      ${content}
+    </div>
+  `;
+}
+
+
+
+
+
+  // Erster allgemeiner Block
+  let html = `
+    <div style="max-height:200px;overflow-y:auto;">
+      <p style="font-weight:bold;text-decoration:underline;">
+        ${feature.get('name')}
+      </p>
       <p>Id = ${feature.get('bw_id')} (${feature.get('KTR') || 'k.A.'})</p>
       <p>U-Pflicht = ${feature.get('upflicht')}</p>
       <p>Bemerk = ${feature.get('bemerk') || 'k.A.'}</p>
       <p>Bauj. = ${feature.get('baujahr') || 'k.A.'}</p>
-      <p><a href="https://www.google.com/maps?q=${latLonResult}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>
-      <p><a href="https://www.google.com/maps?q=&layer=c&cbll=${latLonResult}&cbp=12,90,0,0,1" target="_blank" rel="noopener noreferrer">Streetview</a></p>
       <p>
-        ${createFotoLink(feature.get('foto1'), 'Foto 1')} 
-        ${createFotoLink(feature.get('foto2'), 'Foto 2')} 
-        ${createFotoLink(feature.get('foto3'), 'Foto 3')} 
-        ${createFotoLink(feature.get('foto4'), 'Foto 4')}
-        <br><u>Beschreibung (kurz): </u>${feature.get('beschreib')}
-        ${getBeschreibLangHTML(feature.get('beschreib_lang'))}
+        <a href="https://www.google.com/maps?q=${latLonResult}"
+          target="_blank" rel="noopener noreferrer">
+          Google Maps link
+        </a>
       </p>
+      <p>
+        <a href="https://www.google.com/maps?q=&layer=c&cbll=${latLonResult}&cbp=12,90,0,0,1"
+          target="_blank" rel="noopener noreferrer">
+          Streetview
+        </a>
+      </p>
+      <p>
+        ${createFotoLink(feature.get('foto1'), 'Foto 1')}
+        ${createFotoLink(feature.get('foto2'), 'Foto 2')}
+        ${createFotoLink(feature.get('foto3'), 'Foto 3')}
+        ${createFotoLink(feature.get('foto4'), 'Foto 4')}
+        
+      </p>
+  `;
+
+  // Layer-spezifischer Zusatz
+  switch (layerName) {
+    case 'weh':
+      html += `
+         <br><p>WSP1 (OW)=  ${feature.get('Ziel_OW1')} m; WSP2 (OW)= ${feature.get('Ziel_OW2')} m</p>
+         
+      `;
+      break;
+    case 'bru_nlwkn':
+      html += `
+        <p style="color:blue;">NLWKN-Brücke: Diese Brücke wird vom NLWKN betreut.</p>
+      `;
+      break;
+    case 'bru_andere':
+      html += `
+        <p style="color:orange;">Andere Brücke: Nicht dem NLWKN zugeordnet.</p>
+      `;
+      break;
+    case 'sle':
+      html += `
+        <br><p>WSP (OW)=  ${feature.get('WSP_OW')}; WSP (UW)= ${feature.get('WSP_UW')}</p>
+      `;
+      break;
+    case 'ein':
+      html += `
+        <p style="color:purple;">Einlassbauwerk: Infos zu Einlassanlagen.</p>
+      `;
+      break;
+    case 'que':
+      html += `
+        <p style="color:teal;">Querbauwerk: Technische Details und Nutzung.</p>
+      `;
+      break;
+    case 'due':
+      html += `
+        <p style="color:brown;">Düker: Informationen zum unterirdischen Durchfluss.</p>
+      `;
+      break;
+    case 'son_lin':
+      html += `
+        <p style="color:gray;">Sonstiges linienförmiges Objekt.</p>
+      `;
+      break;
+    case 'son_pun':
+      html += `
+        <p style="color:gray;">Sonstiges punktförmiges Objekt.</p>
+      `;
+      break;
+    case 'gew_info':
+      html += `
+        <p style="color:gray;">Sonstiges gew-info Objekt.</p>
+      `;
+      break;
+    default:
+      html += `
+        <p style="font-style:italic;">Kein spezifischer Zusatzinhalt für diesen Layer.</p>
+      `;
+  }
+
+  // Zweiter allgemeiner Block
+  html += `
+      <br><u>Beschreibung (kurz):</u> ${feature.get('beschreib')}
+      <p>${getBeschreibLangHTML(feature.get('beschreib_lang'))}</p>
     </div>
   `;
+
+  return html;
 }
+
 
 function createResultListItem(layerTitle, name, bwId, feature, map, popup, content, selectInteraction) {
 
