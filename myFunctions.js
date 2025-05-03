@@ -54,7 +54,7 @@ export function myFuncInfoDiv(results, map, popup, content, selectInteraction) {
     content.innerHTML = generatePopupHTML(feature, layer, coordinates, popup);
 
 
-    const listItem = createResultListItem(layerTitle, name, bwId, feature, map, popup, content, selectInteraction);
+    const listItem = createResultListItem(layer, layerTitle, name, bwId, feature, map, popup, content, selectInteraction);
     resultsList.appendChild(listItem);
   }
 }
@@ -72,6 +72,7 @@ function getBeschreibLangHTML(value) {
   }
   return '';
 }
+
 
 export function generatePopupHTML(feature, layer, coordinates, popup) {
   const layerName = layer?.get?.('name') || 'unbekannt';
@@ -182,11 +183,6 @@ export function generatePopupHTML(feature, layer, coordinates, popup) {
     </div>
   `;
 }
-
-
-
-
-
   // Erster allgemeiner Block
   let html = `
     <div style="max-height:200px;overflow-y:auto;">
@@ -197,6 +193,7 @@ export function generatePopupHTML(feature, layer, coordinates, popup) {
       <p>U-Pflicht = ${feature.get('upflicht')}</p>
       <p>Bemerk = ${feature.get('bemerk') || 'k.A.'}</p>
       <p>Bauj. = ${feature.get('baujahr') || 'k.A.'}</p>
+      <p>Art = ${feature.get('bauart') || 'k.A.'}</p>
       <p>
         <a href="https://www.google.com/maps?q=${latLonResult}"
           target="_blank" rel="noopener noreferrer">
@@ -217,53 +214,51 @@ export function generatePopupHTML(feature, layer, coordinates, popup) {
         
       </p>
   `;
-
   // Layer-spezifischer Zusatz
   switch (layerName) {
     case 'weh':
       html += `
-         <br><p>WSP1 (OW)=  ${feature.get('Ziel_OW1')} m; WSP2 (OW)= ${feature.get('Ziel_OW2')} m</p>
-         
+         <br><p>Art:WSP1 (OW)= ${feature.get('Ziel_OW1')} m; WSP2 (OW)= ${feature.get('Ziel_OW2')} m</p>         
       `;
       break;
     case 'bru_nlwkn':
       html += `
-        <p style="color:blue;">NLWKN-Brücke: Diese Brücke wird vom NLWKN betreut.</p>
+        <br><p>Klasse: ${feature.get('bw_bru_bruklasse')}</p>
       `;
       break;
     case 'bru_andere':
       html += `
-        <p style="color:orange;">Andere Brücke: Nicht dem NLWKN zugeordnet.</p>
+        <br><p>Klasse: ${feature.get('bw_bru_bruklasse') || '(k.A.)'}</p>        
       `;
       break;
     case 'sle':
       html += `
-        <br><p>WSP (OW)=  ${feature.get('WSP_OW')}; WSP (UW)= ${feature.get('WSP_UW')}</p>
+        <br><p>WSP (OW)= ${feature.get('WSP_OW')}; WSP (UW)= ${feature.get('WSP_UW')}</p>
       `;
       break;
     case 'ein':
       html += `
-        <p style="color:purple;">Einlassbauwerk: Infos zu Einlassanlagen.</p>
+        <br><p>Ordn.: ${feature.get('Ein_ord')|| '(k.A.)'}; DN: ${feature.get('Ein_DN')|| '(k.A.)'}; Br: ${feature.get('Breite')|| '(k.A.)'}; H: ${feature.get('Hoehe')|| '(k.A.)'}; Sohlhöhe: ${feature.get('NN_Sohle') || '(k.A.)'}; GWZ: ${feature.get('Ein_GWZ') || '(k.A.)'} </p>               
       `;
       break;
     case 'que':
       html += `
-        <p style="color:teal;">Querbauwerk: Technische Details und Nutzung.</p>
+        <br><p>DN: ${feature.get('Bw_QUE_DN')|| '(k.A.)'}; Sohlhöhe: ${feature.get('BW_QUE_Shoehe_nn') || '(k.A.)'}; Schild: ${feature.get('Schild') || '(k.A.)'} </p>               
       `;
       break;
     case 'due':
-      html += `
-        <p style="color:brown;">Düker: Informationen zum unterirdischen Durchfluss.</p>
+      html += `        
+        <br><p>Höhe: ${feature.get('Hoehe')|| '(k.A.)'}; Breite: ${feature.get('Breite') || '(k.A.)'}; DN: ${feature.get('DN') || '(k.A.)'} </p>               
       `;
       break;
     case 'son_lin':
       html += `
-        <p style="color:gray;">Sonstiges linienförmiges Objekt.</p>
+        <br><p>von km: ${feature.get('stat_von')|| '(k.A.)'}; bis km: ${feature.get('stat_bis') || '(k.A.)'} </p> 
       `;
       break;
     case 'son_pun':
       html += `
-        <p style="color:gray;">Sonstiges punktförmiges Objekt.</p>
+        <br><p>sonstiger punkt </p>               
       `;
       break;
     case 'gew_info':
@@ -283,18 +278,17 @@ export function generatePopupHTML(feature, layer, coordinates, popup) {
       <p>${getBeschreibLangHTML(feature.get('beschreib_lang'))}</p>
     </div>
   `;
-
   return html;
 }
 
 
-function createResultListItem(layerTitle, name, bwId, feature, map, popup, content, selectInteraction) {
+function createResultListItem(layer, layerTitle, name, bwId, feature, map, popup, content, selectInteraction) {
 
   const listItem = document.createElement('li');
   listItem.innerHTML = `
     <strong>${layerTitle}</strong><br>
-    <em>Name:</em> ${name}<br>
-    <em>BW-ID:</em> ${bwId}
+    ${name}<br>
+    <em>ID:</em> ${bwId}
   `;
   
   listItem.style.cursor = 'pointer';
@@ -318,7 +312,7 @@ function createResultListItem(layerTitle, name, bwId, feature, map, popup, conte
     }
   
     popup.setPosition(coordinates);
-    content.innerHTML = generatePopupHTML(feature, coordinates);
+    content.innerHTML = generatePopupHTML(feature, layer, coordinates, popup);
   
     // 🔴 Feature visuell markieren
     selectInteraction.getFeatures().clear();

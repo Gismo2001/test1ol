@@ -111,7 +111,8 @@ import {
 import { 
   myFuncInfoDiv,
   UTMToLatLon_Fix,
-  generatePopupHTML
+  generatePopupHTML,
+  zoomToFeature
 } from './myFunctions';
 
 import proj4 from 'proj4';
@@ -1799,7 +1800,8 @@ function displaySearchResultsBw(results) {
 
     // Klickverhalten inkl. Layername
     listItem.addEventListener('click', () => {
-      zoomToFeature(feature);
+      zoomToFeature(feature, map);
+      
       if (layer) {
         const layname = layer.get('name');
         console.log('Geklickter Layername:', layname);
