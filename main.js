@@ -122,10 +122,15 @@ import WMSCapabilities from'ol-ext/control/WMSCapabilities';
 import { getCenter } from 'ol/extent'; // ❗ WICHTIG: oben importieren
 
 
+function isMobileDevice() {
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
 
-
-
-
+if (isMobileDevice()) {
+  console.log("Mobilgerät erkannt");
+} else {
+  console.log("Desktopgerät erkannt");
+}
 
 
 proj4.defs("EPSG:32632", "+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs");
@@ -1066,22 +1071,23 @@ map.on('click', function (evt) {
         }
       }
     });
+    const coordinates = evt.coordinate;
     //Wenn nur ein Layer oder Feature gefunden wurde
     if (foundResults.length === 1) {
       const { feature, layer } = foundResults[0];
       document.getElementById('search-results-container').style.display = 'none';
-
+      
+       /*
       const geometry = feature.getGeometry();
       const geomType = geometry.getType();
-
       let coordinates;
       if (geomType === 'Point' || geomType === 'MultiPoint') {
         coordinates = geometry.getCoordinates();
       } else {
         const extent = geometry.getExtent();
         coordinates = getCenter(extent);
-      }
-
+      } */
+      
       popup.setPosition(coordinates);
       content.innerHTML = generatePopupHTML(feature, layer, coordinates, popup);
 
@@ -1089,7 +1095,7 @@ map.on('click', function (evt) {
       selectInteraction.getFeatures().push(feature);
 
     } else if (foundResults.length > 1) {
-      myFuncInfoDiv(foundResults, map, popup, content, selectInteraction);
+      myFuncInfoDiv(foundResults, map, popup, content, selectInteraction, coordinates);
     } else {
       popup.setPosition(undefined);
     }
@@ -2144,22 +2150,17 @@ var sub2 = new Bar({
       title: "Messung",
       onToggle: function (b) {
         const isEditing = edit.get('edition');
-
         if (!isEditing) {
           edit.set('edition', true);
           edit.setActive(true);
-
-          
           if (!edit.getInteraction('ModifySelect')) {
             edit.addInteraction('ModifySelect');
           }
           editBarAnAus = true;
-          
           editBarElement.style.display = ''; 
         } else {
           edit.set('edition', false);
           editBarAnAus = false;
-          
           editBarElement.style.display = 'none';
           edit.setActive(false);
           edit.deactivateControls(); 
@@ -2541,6 +2542,50 @@ var edit = new EditBar({
 map.addControl(edit);
 edit.setPosition('bottom-left');
 edit.element.style.bottom = '160px';
+
+
+
+// Benutzerdefinierter Button
+const textButton = new Button({
+  html: '✎', // oder ein Icon
+  title: 'Text hinzufügen',
+  handleClick: function () {
+    const clickListener = function (evt) {
+      const text = prompt('Text eingeben:');
+      if (!text) return;
+
+      const feature = new ol.Feature({
+        geometry: new ol.geom.Point(evt.coordinate),
+        name: text
+      });
+
+      feature.setStyle(new ol.style.Style({
+        text: new ol.style.Text({
+          text: text,
+          font: '14px Calibri,sans-serif',
+          fill: new ol.style.Fill({ color: '#000' }),
+          stroke: new ol.style.Stroke({ color: '#fff', width: 2 }),
+          offsetY: -15
+        }),
+        image: new ol.style.Circle({
+          radius: 4,
+          fill: new ol.style.Fill({ color: '#ffcc33' }),
+          stroke: new ol.style.Stroke({ color: '#333', width: 1 })
+        })
+      }));
+
+      vectorEdit.getSource().addFeature(feature);
+      map.un('singleclick', clickListener);
+    };
+
+    map.once('singleclick', clickListener);
+  }
+});
+
+// Button zur EditBar hinzufügen
+edit.addControl(textButton);
+
+
 
 var tooltip = new Tooltip();
 map.addOverlay(tooltip);

@@ -34,28 +34,32 @@ export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
     return `${lat.toFixed(6)},${lon.toFixed(6)}`;
 }
 
-export function myFuncInfoDiv(results, map, popup, content, selectInteraction) {
+export function myFuncInfoDiv(results, map, popup, content, selectInteraction, coordinates) {
   const resultsContainer = document.getElementById('search-results-container');
   const resultsList = document.getElementById('search-results');
   resultsList.innerHTML = '';
   resultsContainer.style.display = 'block';
-
   for (let i = 0; i < results.length; i++) {
     const { feature, layer } = results[i];
     console.log('durchlauf Nr: ' + i + '; Mit Layer: ' + layer?.get?.('name'));
+    const layerTitle = layer?.get?.('title') || 'Unbekannter Layer';
+    console.log(feature)
+    const name = feature.get('name') || feature.get('ID_Umn') || '-';
 
-    const layerTitle = layer?.get?.('title') || layer?.get?.('name') || 'Unbekannter Layer';
-    const name = feature.get('name') || feature.get('beschreibung') || 'Unbenanntes Objekt';
-    const bwId = feature.get('bw_id') || '—';
+    let bwId;
 
-    const coordinates = feature.getGeometry().getCoordinates();
+    if (layer?.get?.('name') === 'gew_umn') {
+      bwId = feature.get('IDUabschn') || '—';
+    } else {
+      bwId = feature.get('bw_id') || '—';
+    }
+
+    //const coordinates = feature.getGeometry().getCoordinates();
     popup.setPosition(coordinates);
-
     content.innerHTML = generatePopupHTML(feature, layer, coordinates, popup);
-
-
     const listItem = createResultListItem(layer, layerTitle, name, bwId, feature, map, popup, content, selectInteraction);
     resultsList.appendChild(listItem);
+    
   }
 }
 
@@ -89,7 +93,7 @@ export function generatePopupHTML(feature, layer, coordinates, popup) {
     const [lon, lat] = ol.proj.toLonLat(center);
     latLonResult = `${lat.toFixed(5)},${lon.toFixed(5)}`;
   }
- // Spezialfall FSK, editbar, geojson und kml: Nur spezieller Inhalt, kein allgemeiner Block
+ // Spezialfälle FSK, UMN, editbar, geojson und kml: Nur spezieller Inhalt, kein allgemeiner Block
  if (layerName === 'fsk') {
   const eigenschaft = (feature.get('Art') === 'o' || feature.get('Art') === 'l') ? 'öffentl.' : 'privat';
   return `
@@ -100,6 +104,20 @@ export function generatePopupHTML(feature, layer, coordinates, popup) {
       <p>Eig.(${eigenschaft}): ${feature.get('Eig1')}</p>
     </div>
   `;
+
+} else if (layerName === 'gew_umn') {
+  const Bezeichnung = feature.get('UMnArtBez');
+  return `
+    <div style="max-height: 300px; overflow-y: auto;">
+      <p><strong>Abschnitt:</strong><br>${feature.get('IDUabschn')} (${feature.get('gew_seite')})</p>
+      <p>von km:${feature.get('Von_km')} bis km: (${feature.get('Bis_km')})</p>
+      <p><u>Bezeichnung:</u> ${feature.get('UMnArtBez')}</p>
+      <p><u>Gruppe:</u> ${feature.get('UMNGrBez')}</p>
+      <p><u>Bemerkung:</u>: ${feature.get('UMn_Bemerk')}</p>
+      <p><u><strong>Beschreibung:</strong></u> ${feature.get('UAbschn_beschr')}</p>
+    </div>
+  `;
+  
 } else if (layerName.toLowerCase().startsWith('geojson')) {
   const geom = feature.getGeometry();
   const type = geom.getType();
@@ -261,11 +279,34 @@ export function generatePopupHTML(feature, layer, coordinates, popup) {
         <br><p>sonstiger punkt </p>               
       `;
       break;
-    case 'gew_info':
+      case 'gew_info':  
+      const urlWKDB = feature.get('URL_WKDB');
+      const url_wk_sb = feature.get('URL_WKSB');
+    
+      const urlWKDBHtml = (urlWKDB && urlWKDB.trim() !== '') 
+        ? `<a href="${urlWKDB}" onclick="window.open('${urlWKDB}', '_blank'); return false;">NLWKN-WK</a>` 
+        : 'NLWKN-WK';
+    
+      const url_wk_sb_Html = (url_wk_sb && url_wk_sb.trim() !== '') 
+        ? `<a href="${url_wk_sb}" onclick="window.open('${url_wk_sb}', '_blank'); return false;">BfG-WK</a>` 
+        : 'BfG-WK';
+    
       html += `
-        <p style="color:gray;">Sonstiges gew-info Objekt.</p>
+        <p>Name: ${feature.get('IDUabschn')}<br>
+        von ${feature.get('Bez_Anfang')} bis ${feature.get('Bez_Ende')}</p>
+        <p>
+          <a href="${feature.get('U_Steckbrief')}" onclick="window.open('${feature.get('U_Steckbrief')}', '_blank'); return false;">NLWKN-SB</a> 
+          ${url_wk_sb_Html} ${urlWKDBHtml}
+        </p>
+        <p>
+          <a href="${feature.get('BSB')}" onclick="window.open('${feature.get('BSB')}', '_blank'); return false;">BSB</a>
+          <a href="${feature.get('MNB')}" onclick="window.open('${feature.get('MNB')}', '_blank'); return false;">MNB</a><br>
+          Kat: ${feature.get('Kat')}
+        </p>
       `;
       break;
+    
+    
     default:
       html += `
         <p style="font-style:italic;">Kein spezifischer Zusatzinhalt für diesen Layer.</p>
