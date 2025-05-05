@@ -2273,7 +2273,7 @@ var mainBar1 = new Bar({
 });
 map.addControl ( mainBar1 );
 mainBar1.setPosition('bottom-left');
-mainBar1.element.style.bottom = '80px';
+mainBar1.element.style.bottom = '60px';
 
 var mainbar2 = new Bar();
 map.addControl(mainbar2);
@@ -2541,7 +2541,7 @@ var edit = new EditBar({
 });
 map.addControl(edit);
 edit.setPosition('bottom-left');
-edit.element.style.bottom = '160px';
+edit.element.style.bottom = '140px';
 
 /* 
 select.on('select', function (e) {
