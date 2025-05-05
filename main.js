@@ -2273,7 +2273,7 @@ var mainBar1 = new Bar({
 });
 map.addControl ( mainBar1 );
 mainBar1.setPosition('bottom-left');
-mainBar1.element.style.bottom = '60px';
+mainBar1.element.style.bottom = '80px';
 
 var mainbar2 = new Bar();
 map.addControl(mainbar2);
@@ -2543,9 +2543,30 @@ map.addControl(edit);
 edit.setPosition('bottom-left');
 edit.element.style.bottom = '160px';
 
+/* 
+select.on('select', function (e) {
+  const selected = e.selected;
+  const featuresToUnselect = [];
 
+  selected.forEach(function (feature) {
+    const layer = select.getLayer(feature); // ← Layer des Features
+    
+    if (layer?.get('name') === 'gew' || layer?.get('name') === 'sle') {
+      console.log('Feature aus "gew"  oder "sle" wurde ausgewählt – wird entfernt');
+      featuresToUnselect.push(feature);
+    } else {
+      console.log('Feature behalten:', feature);
+    }
+  });
 
-// Benutzerdefinierter Button
+  // Entferne unerwünschte Features aus der Auswahl
+  if (featuresToUnselect.length > 0) {
+    featuresToUnselect.forEach(f => select.getFeatures().remove(f));
+  }
+});
+
+ */
+// Benutzerdefinierter Button für Text hinzufügen
 const textButton = new Button({
   html: '✎', // oder ein Icon
   title: 'Text hinzufügen',
@@ -2581,11 +2602,8 @@ const textButton = new Button({
     map.once('singleclick', clickListener);
   }
 });
-
 // Button zur EditBar hinzufügen
 edit.addControl(textButton);
-
-
 
 var tooltip = new Tooltip();
 map.addOverlay(tooltip);
@@ -2614,11 +2632,14 @@ edit.getInteraction('Select').on('select', function(e) {
     // tooltip.setInfo('');
   }
 });
+
+
 edit.getInteraction('Select').on('change:active', function(e){
   tooltip.setInfo('');
-  console.log('angekommen edit change');
+ 
 });
 edit.getInteraction('ModifySelect').on('modifystart', function(e){
+  
   if (e.features.length===1) tooltip.setFeature(e.features[0]);
 });
 edit.getInteraction('ModifySelect').on('modifyend', function(e){
@@ -2653,11 +2674,13 @@ edit.getInteraction('DrawHole').on(['change:active','drawend'], function(e){
   tooltip.setInfo(e.oldValue ? '' : 'Click polygon to start drawing hole...');
 });
 edit.on('info', function(e) {
+  
   const features = e.features;
   let message = '<i class="fa fa-info-circle"></i> ' + features.getLength() + ' feature(s) selected';
 
   if (features.getLength() === 1) {
     const feature = features.item(0);
+    
     const geometry = feature.getGeometry();
     const type = geometry.getType();
 
@@ -2694,6 +2717,7 @@ edit.on('info', function(e) {
     //note.setPosition('bottom');
   
 });
+
 
 const editBarElement = edit.element;
 editBarElement.style.display = 'none'; 
