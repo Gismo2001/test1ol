@@ -805,7 +805,7 @@ const BaseGroup = new LayerGroup({
 
 const source = new VectorSource();
 const vector = new VectorLayer({
-  displayInLayerSwitcher: true,
+  displayInLayerSwitcher: false,
   title: "tmp_Layer1",
   name: "tmp_Layer1",
   source: source,

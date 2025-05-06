@@ -106,15 +106,18 @@ export function generatePopupHTML(feature, layer, coordinates, popup) {
   `;
 
 } else if (layerName === 'gew_umn') {
-  const Bezeichnung = feature.get('UMnArtBez');
+  
   return `
     <div style="max-height: 300px; overflow-y: auto;">
       <p><strong>Abschnitt:</strong><br>${feature.get('IDUabschn')} (${feature.get('gew_seite')})</p>
       <p>von km:${feature.get('Von_km')} bis km: (${feature.get('Bis_km')})</p>
       <p><u>Bezeichnung:</u> ${feature.get('UMnArtBez')}</p>
       <p><u>Gruppe:</u> ${feature.get('UMNGrBez')}</p>
+      <a href="${feature.get('BSB')}" onclick="window.open('${feature.get('BSB')}', '_blank'); return false;">BSB</a>
+      <a href="${feature.get('MNB')}" onclick="window.open('${feature.get('MNB')}', '_blank'); return false;">MNB</a><br>
+      <p>Kat: ${feature.get('Kat')}</p>
       <p><u>Bemerkung:</u>: ${feature.get('UMn_Bemerk')}</p>
-      <p><u><strong>Beschreibung:</strong></u> ${feature.get('UAbschn_beschr')}</p>
+      <p><u><strong>Beschreibung:</strong></u> ${feature.get('beschreib')}</p>
     </div>
   `;
   
