@@ -83,6 +83,8 @@ export function generatePopupHTML(feature, layer, coordinates, popup) {
   let latLonResult;
   const rwert = feature.get('rwert');
   const hwert = feature.get('hwert');
+  console.log('rwert: ' + rwert);
+  console.log('hwert: ' + hwert);
   if (rwert && hwert) {
     latLonResult = UTMToLatLon_Fix(rwert, hwert, 32, true);
   } else {
@@ -93,7 +95,7 @@ export function generatePopupHTML(feature, layer, coordinates, popup) {
     const [lon, lat] = ol.proj.toLonLat(center);
     latLonResult = `${lat.toFixed(5)},${lon.toFixed(5)}`;
   }
- // Spezialfälle FSK, UMN, editbar, geojson und kml: Nur spezieller Inhalt, kein allgemeiner Block
+ // Spezialfälle FSK, UMN, editbar, geojson, fot und kml: Nur spezieller Inhalt, kein allgemeiner Block
  if (layerName === 'fsk') {
   const eigenschaft = (feature.get('Art') === 'o' || feature.get('Art') === 'l') ? 'öffentl.' : 'privat';
   return `
@@ -146,6 +148,39 @@ export function generatePopupHTML(feature, layer, coordinates, popup) {
   }
   html += `</ul>`;
 
+  return `
+    <div style="max-height: 300px; overflow-y: auto;">
+      ${html}
+    </div>
+  `;
+} else if (layerName.toLowerCase().startsWith('fot')) {
+  const geom = feature.getGeometry();
+  const type = geom.getType();
+  let rwert = feature.get('RWert');
+  let hwert = feature.get('HWert');
+  let result = UTMToLatLon_Fix(rwert, hwert, 32, true);  // result = "lat,lon" ?
+  let html = `<p><strong>Foto:</strong></p>`;
+  html += `<p>Foto-Ordner: ${feature.get('BOrdner')}</p>`;
+  html += `<p><a href="https://www.google.com/maps?q=${result}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>`;
+  html += `<p><a href="https://www.google.com/maps?q=&layer=c&cbll=${result}&cbp=12,90,0,0,1" target="_blank" rel="noopener noreferrer">streetview</a></p>`;
+  html += `<p>ID: ${feature.get('REFOBJ_ID')}</p>`;
+  html += `<p><strong>Koordinaten:</strong> ${result}</p>`;
+  html += `<p>Datum Uhrzeit: ${feature.get('DateTime_')}</p>`;
+  html += `
+    <p>
+      ${createFotoLink(feature.get('Path'), 'Foto 1')}
+      ${createFotoLink(feature.get('tmp'), 'Foto 2')}
+    </p>
+  `;
+  html += `<p>Foto Dateiname: ${feature.get('BName')}</p>`;
+  // Optional: Attributliste (nicht abgeschlossen im Code)
+  // const att = feature.getProperties();
+  // html += '<ul>';
+  // for (let key in att) {
+  //   html += `<li>${key}: ${att[key]}</li>`;
+  // }
+  // html += '</ul>';
+  
   return `
     <div style="max-height: 300px; overflow-y: auto;">
       ${html}

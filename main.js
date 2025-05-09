@@ -2071,8 +2071,10 @@ geojsonInput.addEventListener('change', function (event) {
   const files = event.target.files; // Alle ausgewählten Dateien
   if (!files.length) return;
 
+   console.log(Array.from(files));
   // Iteriere über alle ausgewählten Dateien
   Array.from(files).forEach(file => {
+   
     const reader = new FileReader();
 
     reader.onload = function (e) {
@@ -2089,44 +2091,38 @@ geojsonInput.addEventListener('change', function (event) {
         });
 
         const fileName = file.name.replace(/\.[^/.]+$/, "");
-    const fileEnd = file.name.split('.').pop().toLowerCase();
-    let sourceName;
-    if ((fileEnd === 'geojson' || fileEnd === 'json') && fileName !== 'fot') {
-      sourceName = "GeoJson: " + zaehlerGeojson + " " + fileName;
-    } else if (fileEnd === 'kml') {
-      sourceName = "KML: " + zaehlerKML + " " + fileName;
-    } else if (fileName === 'fot') {
-      sourceName = "fot";
-    } else {
-      sourceName = "Unbekannt: " + fileName;
-    }
-    const layerStyle = fileName === 'fot' ? arrowStyle : geojsonStyle;
- 
-    
-    const vectorLayer = new VectorLayer({
-      source: vectorSource,
-      name: sourceName,
-      title: sourceName,
-      style: layerStyle,
-    });
-    
-    map.addLayer(vectorLayer);
-    zaehlerGeojson++;
-    zaehlerKML++;
+        const fileEnd = file.name.split('.').pop().toLowerCase();
+        let sourceName;
+        if ((fileEnd === 'geojson' || fileEnd === 'json') && fileName !== 'fot') {
+          sourceName = "GeoJson: " + zaehlerGeojson + " " + fileName;
+        } else if (fileEnd === 'kml') {
+          sourceName = "KML: " + zaehlerKML + " " + fileName;
+        } else if (fileName === 'fot') {
+          sourceName = "fot";
+        } else {
+          sourceName = "Unbekannt: " + fileName;
+        }
+        const layerStyle = fileName === 'fot' ? arrowStyle : geojsonStyle;
+        const vectorLayer = new VectorLayer({
+          source: vectorSource,
+          name: sourceName,
+          title: sourceName, 
+          style: layerStyle,  
+        });
+        map.addLayer(vectorLayer);
+        zaehlerGeojson++;
+        zaehlerKML++;
         // Zoom zur geladenen GeoJSON
         map.getView().fit(vectorSource.getExtent(), {
           padding: [20, 20, 20, 20],
           maxZoom: 16
         });
-
         // Zähler erhöhen für die nächste Datei
         geojsonCounter++;
-
       } catch (err) {
         alert("Fehler beim Laden der GeoJSON-Datei: " + err.message);
       }
     };
-
     reader.readAsText(file); // Datei einlesen
   });
 });
