@@ -1044,8 +1044,13 @@ closer.onclick = function()
 };
 var closer = document.getElementById('popup-closer');
 
+let clickCooldown = false;
+
 map.on('click', function (evt) {
-  console.log(editBarAnAus);
+  if (clickCooldown) return;
+  clickCooldown = true;
+  setTimeout(() => clickCooldown = false, 300); // Sperre für 300ms
+
   if (editBarAnAus === false) {
     var foundResults = [];
     var seenFeatureIds = new Set();
@@ -1065,29 +1070,20 @@ map.on('click', function (evt) {
       if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500scal') {
         feature.set('layerName', lyname);
         let fid = feature.getId() || JSON.stringify(feature.getProperties());
+        
         if (!seenFeatureIds.has(fid)) {
           foundResults.push({feature, layer});
           seenFeatureIds.add(fid);
         }
       }
     });
+
     const coordinates = evt.coordinate;
-    //Wenn nur ein Layer oder Feature gefunden wurde
+
     if (foundResults.length === 1) {
       const { feature, layer } = foundResults[0];
       document.getElementById('search-results-container').style.display = 'none';
-      
-       /*
-      const geometry = feature.getGeometry();
-      const geomType = geometry.getType();
-      let coordinates;
-      if (geomType === 'Point' || geomType === 'MultiPoint') {
-        coordinates = geometry.getCoordinates();
-      } else {
-        const extent = geometry.getExtent();
-        coordinates = getCenter(extent);
-      } */
-      
+
       popup.setPosition(coordinates);
       content.innerHTML = generatePopupHTML(feature, layer, coordinates, popup);
 
@@ -1101,6 +1097,7 @@ map.on('click', function (evt) {
     }
   }
 });
+
 
 
 

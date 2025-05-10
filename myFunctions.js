@@ -364,12 +364,18 @@ export function generatePopupHTML(feature, layer, coordinates, popup) {
 function createResultListItem(layer, layerTitle, name, bwId, feature, map, popup, content, selectInteraction) {
 
   const listItem = document.createElement('li');
+  if (layerTitle === 'fot') {
+  listItem.innerHTML = `
+    <strong>${layerTitle}</strong>
+    <em>ID:</em> ${feature.get('BName')}
+  `;
+  } else {
   listItem.innerHTML = `
     <strong>${layerTitle}</strong><br>
     ${name}<br>
     <em>ID:</em> ${bwId}
   `;
-  
+  }
   listItem.style.cursor = 'pointer';
   // Einfacher Klick → Popup anzeigen
 
