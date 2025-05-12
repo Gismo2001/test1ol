@@ -2078,10 +2078,12 @@ geojsonInput.addEventListener('change', function (event) {
           sourceName = "KML: " + zaehlerKML + " " + fileName;
         } else if (fileName === 'fot') {
           sourceName = "fot";
+          console.log("Fotodatei erkannt");
         } else {
           sourceName = "Unbekannt: " + fileName;
         }
         const layerStyle = fileName === 'fot' ? arrowStyle : geojsonStyle;
+        console.log("LayerStyle: " + layerStyle);
         const vectorLayer = new VectorLayer({
           source: vectorSource,
           name: sourceName,
