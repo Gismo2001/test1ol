@@ -2046,10 +2046,11 @@ var sub1 = new Bar({
 
 //Event-Handler für Datei-Upload
 geojsonInput.addEventListener('change', function (event) {
+  
   const files = event.target.files; // Alle ausgewählten Dateien
   if (!files.length) return;
 
-   console.log(Array.from(files));
+  console.log(Array.from(files));
   // Iteriere über alle ausgewählten Dateien
   Array.from(files).forEach(file => {
    
