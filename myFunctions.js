@@ -34,16 +34,16 @@ export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
     return `${lat.toFixed(6)},${lon.toFixed(6)}`;
 }
 
-export function myFuncInfoDiv(results, map, popup, content, selectInteraction, coordinates) {
+export function myFuncInfoDiv(results, popup, content, selectInteraction, coordinates) {
   const resultsContainer = document.getElementById('search-results-container');
   const resultsList = document.getElementById('search-results');
   resultsList.innerHTML = '';
   resultsContainer.style.display = 'block';
   for (let i = 0; i < results.length; i++) {
     const { feature, layer } = results[i];
-    console.log('durchlauf Nr: ' + i + '; Mit Layer: ' + layer?.get?.('name'));
+   // console.log('durchlauf Nr: ' + i + '; Mit Layer: ' + layer?.get?.('name'));
     const layerTitle = layer?.get?.('title') || 'Unbekannter Layer';
-    console.log(feature)
+   //console.log(feature)
     const name = feature.get('name') || feature.get('ID_Umn') || '-';
 
     let bwId;
@@ -78,13 +78,13 @@ function getBeschreibLangHTML(value) {
 }
 
 
-export function generatePopupHTML(feature, layer, coordinates, popup) {
+export function generatePopupHTML(feature, layer) {
   const layerName = layer?.get?.('name') || 'unbekannt';
   let latLonResult;
   const rwert = feature.get('rwert');
   const hwert = feature.get('hwert');
-  console.log('rwert: ' + rwert);
-  console.log('hwert: ' + hwert);
+  //console.log('rwert: ' + rwert);
+  //console.log('hwert: ' + hwert);
   if (rwert && hwert) {
     latLonResult = UTMToLatLon_Fix(rwert, hwert, 32, true);
   } else {
@@ -403,13 +403,10 @@ function createResultListItem(layer, layerTitle, name, bwId, feature, map, popup
     selectInteraction.getFeatures().clear();
     selectInteraction.getFeatures().push(feature);
   });
-  
-
-  
+    
   listItem.addEventListener('dblclick', () => zoomToFeature(feature, map));
   return listItem;
 }
-
 
 import { Style, Stroke, Fill } from 'ol/style';
 export function zoomToFeature(feature, map) {

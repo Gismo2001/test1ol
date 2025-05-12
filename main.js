@@ -843,19 +843,8 @@ const selectInteraction = new Select({
 
 map.addInteraction(selectInteraction);
 
-//Layer für rechtsclick
-/* 
-const vectorLayerMark = new VectorLayer({
-  source: new VectorSource({  }),
-  title: "rechtsClick",
-  name: "rechtsClick",
-  displayInLayerSwitcher : false,
-  
-});
-map.addLayer(vectorLayerMark);
 
- */
-//Ende Layer hinzufügen---------------------------------------
+
 //--------------------------------------------------------------------------------------------------Info für WMS-Layer
 var toggleButtonU = new Toggle({
   html: '<i class="icon fa-fw fa fa-arrow-circle-down" aria-hidden="true"></i>',
@@ -888,15 +877,11 @@ var toggleButtonU = new Toggle({
 toggleButtonU.element.classList.add('active');
 toggleButtonU.element.querySelector('.icon').classList.add('active');
 
-
-
-
 /* 
 var selectInteraction = new Select({
   layers: [vector],
   hitTolerance: 5,
 });
-
 var selectFeat = new Select({
   hitTolerance: 5,
   multi: true,
@@ -904,9 +889,7 @@ var selectFeat = new Select({
 });
  */
 //let layer_selected = null; 
-
 /* 
-
 selectFeat.on('select', function (e) {
   if (editBarAnAus===false ){
   e.selected.forEach(function (featureSelected) {
@@ -923,24 +906,17 @@ selectFeat.on('select', function (e) {
   );
   }
 });
-
-
 map.addInteraction(selectFeat);
  */
-
 //map.addOverlay(popup);
 
-
-
 // ---------------------------------------------------------------------------------------WMS
-
 function getLayersInGroup(layerGroup) {
   const layers = [];
   layerGroup.getLayers().forEach(layer => {
       if (layer instanceof LayerGroup) {
           // Wenn der Layer ein LayerGroup ist, rufe die Funktion rekursiv auf
           layers.push(...getLayersInGroup(layer));
-          
       } else {
           // Füge den Layer zur Liste hinzu, wenn e ein TileLayer ist
           layers.push(layer);
@@ -950,20 +926,20 @@ function getLayersInGroup(layerGroup) {
 }
 
 function singleClickHandler(evt) {
+  console.log ('singleClickHandler');
   const visibleLayers = [];
   map.getLayers().forEach(layer => {
-      
-      const layerName = layer.get('name');
-      if (layer.getVisible()) {
-        if (layer instanceof LayerGroup) {
-          if (layerName !== 'GN-DOPs' && layerName !== 'Base' && layerName !== 'Station' && layerName !== 'BauwP' && layerName !== 'BauwL' && layerName !== undefined){
-            visibleLayers.push(...getLayersInGroup(layer));
-          }
-        } else if (layerName !== 'fsk')
-        {
-          visibleLayers.push(layer);
+    const layerName = layer.get('name');
+    if (layer.getVisible()) {
+      if (layer instanceof LayerGroup) {
+        if (layerName !== 'GN-DOPs' && layerName !== 'Base' && layerName !== 'Station' && layerName !== 'BauwP' && layerName !== 'BauwL' && layerName !== undefined){
+          visibleLayers.push(...getLayersInGroup(layer));
         }
+      } else if (layerName !== 'fsk')
+      {
+        visibleLayers.push(layer);
       }
+    }
   });
   const viewResolution = map.getView().getResolution();
   const viewProjection = map.getView().getProjection();
@@ -979,7 +955,7 @@ function singleClickHandler(evt) {
           .then((html) => {
             //console.log(html)
             if (html.trim() !== '') {
-             //removeExistingInfoDiv();
+              removeExistingInfoDiv();
               var bodyIsEmpty = /<body[^>]*>\s*<\/body>/i.test(html);
               if (bodyIsEmpty === false) {
                 var modifiedHTML = checkForLinkInTH(html);
@@ -1066,7 +1042,8 @@ map.on('click', function (evt) {
     map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
       if (!layer) return;
 
-      const lyname = layer.get('name');
+      const lyname = layer.get('name') || '';
+
       if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500scal') {
         feature.set('layerName', lyname);
         let fid = feature.getId() || JSON.stringify(feature.getProperties());
@@ -1080,27 +1057,46 @@ map.on('click', function (evt) {
 
     const coordinates = evt.coordinate;
 
-    if (foundResults.length === 1) {
-      const { feature, layer } = foundResults[0];
+    const uniqueResults = getUniqueFeatures(foundResults);
+
+    if (uniqueResults.length === 1) {
+      const { feature, layer } = uniqueResults[0];
       document.getElementById('search-results-container').style.display = 'none';
 
       popup.setPosition(coordinates);
-      content.innerHTML = generatePopupHTML(feature, layer, coordinates, popup);
+      content.innerHTML = generatePopupHTML(feature, layer);
 
       selectInteraction.getFeatures().clear();
       selectInteraction.getFeatures().push(feature);
 
-    } else if (foundResults.length > 1) {
-      myFuncInfoDiv(foundResults, map, popup, content, selectInteraction, coordinates);
+    } else if (uniqueResults.length > 1) {
+      myFuncInfoDiv(uniqueResults, popup, content, selectInteraction, coordinates);
     } else {
       popup.setPosition(undefined);
     }
+
   }
 });
 
+function getUniqueFeatures(results) {
+  const seen = new Set();
+  const unique = [];
 
+  results.forEach(({ feature, layer }) => {
+    const layerName = layer.get('name') || 'unknown';
+    const fid = feature.getId() || JSON.stringify(feature.getProperties());
 
+    // Kombiniere ID und Layername als eindeutigen Schlüssel
+    const key = `${fid}__${layerName}`;
 
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push({ feature, layer });
+    }
+  });
+
+  return unique;
+}
 
 
   /* 
@@ -1734,8 +1730,6 @@ function searchFeaturesByTextBw(searchText) {
 //-----------------------------------------------------------------Suche Eig
 function searchFeaturesByTextEig(searchText) {
   let matchingFeatures = [];
-  console.log('Suche gestartet Eigentümer');
-
   const source = exp_allgm_fsk_layer.getSource();
   if (!source) {
     console.error("Fehler: Die Layer-Quelle ist nicht verfügbar.");
@@ -1765,12 +1759,10 @@ function searchFeaturesByTextEig(searchText) {
 function displaySearchResultsBw(results) {
   const resultContainer = document.getElementById('search-results');
   resultContainer.innerHTML = ''; // Alte Ergebnisse löschen
-
   if (!results || results.length === 0) {
     resultContainer.innerHTML = '<li>Layer eingeschaltet??? Keine Treffer</li>';
     return;
   }
-
   // Duplikate entfernen basierend auf bw_id
   const seen = new Set();
   results = results.filter(item => {
@@ -1779,14 +1771,12 @@ function displaySearchResultsBw(results) {
     seen.add(id);
     return true;
   });
-
   // Alphanumerische Sortierung nach bw_id
   results.sort((a, b) => {
     const idA = a.feature.get('bw_id') || '';
     const idB = b.feature.get('bw_id') || '';
     return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' });
   });
-
   // Ergebnisliste aufbauen
   results.forEach((item) => {
     const feature = item.feature;
@@ -1794,17 +1784,13 @@ function displaySearchResultsBw(results) {
     const props = feature.getProperties();
     const id = props.bw_id;
     const name = props.name || 'Unbekannt';
-
     if (!id) return;
-
     const listItem = document.createElement('li');
     listItem.classList.add('search-result-item'); // 👈 Damit du sie bei Bedarf wieder selektieren kannst
     listItem.textContent = `${id}: ${name}`;
-
     // Klickverhalten inkl. Layername
     listItem.addEventListener('click', () => {
       zoomToFeature(feature, map);
-      
       if (layer) {
         const layname = layer.get('name');
         console.log('Geklickter Layername:', layname);
@@ -1884,14 +1870,10 @@ function highlightFeatureEig1(feature) {
     maxZoom: 18 
   });
 }
-
-
 window.closeSearchResults = function () {
   document.getElementById("search-results-container").style.display = "none";
 };
-
 let jsonButtonState = false; // Initialer Zustand
-
 /* Nested subbar */
 var sub2 = new Bar({
   toggleOne: true,
@@ -1945,7 +1927,6 @@ var sub2 = new Bar({
   })
   ]
  });
-
 //Das Untermenü mit drei buttons
 var sub1 = new Bar({
   toggleOne: true,
