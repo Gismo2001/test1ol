@@ -96,16 +96,34 @@ export function generatePopupHTML(feature, layer) {
     latLonResult = `${lat.toFixed(5)},${lon.toFixed(5)}`;
   }
  // Spezialfälle FSK, UMN, editbar, geojson, fot und kml: Nur spezieller Inhalt, kein allgemeiner Block
- if (layerName === 'fsk') {
+if (layerName === 'fsk') {
   const eigenschaft = (feature.get('Art') === 'o' || feature.get('Art') === 'l') ? 'öffentl.' : 'privat';
+
+  let flaeche = feature.getGeometry().getArea();
+  let flaecheText = '';
+
+  if (flaeche > 1000000) {
+    // > 1.000.000 m² → km²
+    flaecheText = (flaeche / 1_000_000).toFixed(4).replace('.', ',') + ' km²';
+  } else if (flaeche > 10000) {
+    // > 10.000 m² → ha
+    flaecheText = (flaeche / 10_000).toFixed(4).replace('.', ',') + ' ha';
+  } else {
+    // sonst m²
+    flaecheText = flaeche.toFixed(2).replace('.', ',') + ' m²';
+  }
+
   return `
     <div style="max-height: 300px; overflow-y: auto;">
       <p><strong>gemark Flur Flurstück:</strong><br>${feature.get('Suche')}</p>
       <p>FSK: ${feature.get('fsk')}</p>
       <p>FSK(ASL): ${feature.get('FSK_ASL')}</p>
       <p>Eig.(${eigenschaft}): ${feature.get('Eig1')}</p>
+      <p>Fläche: ${flaecheText}</p>
     </div>
   `;
+
+
 
 } else if (layerName === 'gew_umn') {
   

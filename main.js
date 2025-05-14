@@ -2084,6 +2084,7 @@ geojsonInput.addEventListener('change', function (event) {
         }
         const layerStyle = fileName === 'fot' ? arrowStyle : geojsonStyle;
         console.log("LayerStyle: " + layerStyle);
+        
         const vectorLayer = new VectorLayer({
           source: vectorSource,
           name: sourceName,
@@ -2107,8 +2108,6 @@ geojsonInput.addEventListener('change', function (event) {
     reader.readAsText(file); // Datei einlesen
   });
 });
-
-
 
 var sub2 = new Bar({
   toggleOne: true,
