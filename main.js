@@ -112,7 +112,8 @@ import {
   myFuncInfoDiv,
   UTMToLatLon_Fix,
   generatePopupHTML,
-  zoomToFeature
+  zoomToFeature,
+  makeDivDraggable
 } from './myFunctions';
 
 import proj4 from 'proj4';
@@ -447,7 +448,7 @@ const wmsWrrlFgLayer = new TileLayer({
 });
 const wmsGewWmsFgLayer = new TileLayer({
   title: "GewWms",
-  name: "GewWms",
+  name: "Gewässer",
   source: new TileWMS({
     url:  'https://www.umweltkarten-niedersachsen.de/arcgis/services/Hydro_wms/MapServer/WMSServer',
     params: {
@@ -1022,57 +1023,9 @@ function createInfoDiv(name, html) {
 
   // Drag-Funktion aktivieren
   makeDivDraggable(infoDiv, header);
+  
 
   return infoDiv;
-}
-
-function makeDivDraggable(div, handle) {
-  let offsetX = 0, offsetY = 0, startX = 0, startY = 0;
-
-  function dragStart(e) {
-    // Nicht starten, wenn auf das close-icon geklickt wurde
-    if (e.target.closest('.close-icon')) return;
-
-    e.preventDefault();
-
-    if (e.type === 'touchstart') {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-    } else {
-      startX = e.clientX;
-      startY = e.clientY;
-    }
-
-    document.addEventListener('mousemove', dragMove);
-    document.addEventListener('mouseup', dragEnd);
-    document.addEventListener('touchmove', dragMove, { passive: false });
-    document.addEventListener('touchend', dragEnd);
-  }
-
-  function dragMove(e) {
-    e.preventDefault();
-
-    let clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-    let clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-
-    offsetX = clientX - startX;
-    offsetY = clientY - startY;
-    startX = clientX;
-    startY = clientY;
-
-    div.style.top = (div.offsetTop + offsetY) + "px";
-    div.style.left = (div.offsetLeft + offsetX) + "px";
-  }
-
-  function dragEnd() {
-    document.removeEventListener('mousemove', dragMove);
-    document.removeEventListener('mouseup', dragEnd);
-    document.removeEventListener('touchmove', dragMove);
-    document.removeEventListener('touchend', dragEnd);
-  }
-
-  handle.addEventListener('mousedown', dragStart);
-  handle.addEventListener('touchstart', dragStart, { passive: false });
 }
 
 
@@ -2603,6 +2556,7 @@ var edit = new EditBar({
 map.addControl(edit);
 edit.setPosition('bottom-left');
 edit.element.style.bottom = '140px';
+edit.element.style.left = '15px';
 
 /* 
 select.on('select', function (e) {

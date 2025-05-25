@@ -472,6 +472,49 @@ export function zoomToFeature(feature, map) {
 }
 
 
+export function makeDivDraggable(div, handle) {
+  let offsetX = 0, offsetY = 0, startX = 0, startY = 0;
+
+  function dragStart(e) {
+    // Nicht starten, wenn auf das close-icon geklickt wurde
+    if (e.target.closest('.close-icon')) return;
+    e.preventDefault();
+    if (e.type === 'touchstart') {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    } else {
+      startX = e.clientX;
+      startY = e.clientY;
+    }
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('mouseup', dragEnd);
+    document.addEventListener('touchmove', dragMove, { passive: false });
+    document.addEventListener('touchend', dragEnd);
+  }
+
+  function dragMove(e) {
+    e.preventDefault();
+    let clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    let clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+    offsetX = clientX - startX;
+    offsetY = clientY - startY;
+    startX = clientX;
+    startY = clientY;
+    div.style.top = (div.offsetTop + offsetY) + "px";
+    div.style.left = (div.offsetLeft + offsetX) + "px";
+  }
+
+  function dragEnd() {
+    document.removeEventListener('mousemove', dragMove);
+    document.removeEventListener('mouseup', dragEnd);
+    document.removeEventListener('touchmove', dragMove);
+    document.removeEventListener('touchend', dragEnd);
+  }
+
+  handle.addEventListener('mousedown', dragStart);
+  handle.addEventListener('touchstart', dragStart, { passive: false });
+}
+
 
 
   
