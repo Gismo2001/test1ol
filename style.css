@@ -271,10 +271,15 @@ html {
   position: absolute;
   top: 5px;
   right: 10px;
+  z-index: 1010; /* wichtig, damit es oben liegt */
   cursor: pointer;
   font-size: 18px;
   font-weight: bold;
+  background: white; /* optional: besserer Kontrast */
+  padding: 0 6px;
+  border-radius: 3px;
 }
+
 
 
 .select {

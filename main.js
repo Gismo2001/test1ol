@@ -1029,8 +1029,10 @@ function createInfoDiv(name, html) {
 function makeDivDraggable(div, handle) {
   let offsetX = 0, offsetY = 0, startX = 0, startY = 0;
 
-  // Start Drag: Maus und Touch
   function dragStart(e) {
+    // Nicht starten, wenn auf das close-icon geklickt wurde
+    if (e.target.closest('.close-icon')) return;
+
     e.preventDefault();
 
     if (e.type === 'touchstart') {
@@ -1043,22 +1045,15 @@ function makeDivDraggable(div, handle) {
 
     document.addEventListener('mousemove', dragMove);
     document.addEventListener('mouseup', dragEnd);
-    document.addEventListener('touchmove', dragMove);
+    document.addEventListener('touchmove', dragMove, { passive: false });
     document.addEventListener('touchend', dragEnd);
   }
 
-  // Move
   function dragMove(e) {
     e.preventDefault();
 
-    let clientX, clientY;
-    if (e.type === 'touchmove') {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
+    let clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    let clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
 
     offsetX = clientX - startX;
     offsetY = clientY - startY;
@@ -1069,7 +1064,6 @@ function makeDivDraggable(div, handle) {
     div.style.left = (div.offsetLeft + offsetX) + "px";
   }
 
-  // End Drag
   function dragEnd() {
     document.removeEventListener('mousemove', dragMove);
     document.removeEventListener('mouseup', dragEnd);
@@ -1077,7 +1071,6 @@ function makeDivDraggable(div, handle) {
     document.removeEventListener('touchend', dragEnd);
   }
 
-  // Events registrieren
   handle.addEventListener('mousedown', dragStart);
   handle.addEventListener('touchstart', dragStart, { passive: false });
 }
