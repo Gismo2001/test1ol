@@ -461,6 +461,23 @@ const wmsGewWmsFgLayer = new TileLayer({
   opacity: 1,
 });
 
+
+const wmsBiotopeEL = new TileLayer({
+  title: "Biotope_EL",
+  name: "Biotope_EL",
+  source: new TileWMS({
+  url:  'https://geodaten.emsland.de/core-services/services/lkel_fb67_naturschutz_und_forsten_wms',
+  params: {
+      'LAYERS': 'lkel_fb67_p30biotope',
+      'FORMAT': 'image/png',
+      'TRANSPARENT': true,
+      'TILED': true,
+    }, 
+  }),
+  visible: false,
+  opacity: 1,
+});
+
 const gnAtlas2023 = new TileLayer({
   title: "2023_NI",
   name: "2023_NI",
@@ -775,7 +792,7 @@ const wmsLayerGroup = new LayerGroup({
   fold: true,
   fold: 'close',
   visible: false,
-  layers: [ Alkis_layer, wmsLsgLayer, wmsNsgLayer, wmsUesgLayer, wmsWrrlFgLayer, wmsGewWmsFgLayer ]
+  layers: [ Alkis_layer, wmsLsgLayer, wmsNsgLayer, wmsBiotopeEL, wmsUesgLayer, wmsWrrlFgLayer, wmsGewWmsFgLayer ]
 });
 const GNAtlasGroup = new LayerGroup({
   title: "Luftbilder",
@@ -947,7 +964,8 @@ function singleClickHandler(evt) {
     if (layer.getVisible()) {
     const source = layer.getSource();
       if (source instanceof TileWMS && typeof source.getFeatureInfoUrl === 'function') {
-        const layerName = layer.get('name');      
+        const layerName = layer.get('name');
+        
         const url = source.getFeatureInfoUrl(evt.coordinate, viewResolution, viewProjection, {'INFO_FORMAT': 'text/html'});
         if (url) {
           fetch(url)
@@ -1070,7 +1088,7 @@ map.on('click', function (evt) {
       selectInteraction.getFeatures().push(feature);
 
     } else if (uniqueResults.length > 1) {
-      myFuncInfoDiv(uniqueResults, popup, content, selectInteraction, coordinates);
+      myFuncInfoDiv(uniqueResults, popup, content, selectInteraction, coordinates, map);
     } else {
       popup.setPosition(undefined);
     }

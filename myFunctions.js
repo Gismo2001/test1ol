@@ -1,4 +1,13 @@
 
+import proj4 from 'proj4';
+import { register } from 'ol/proj/proj4';
+import { getArea } from 'ol/sphere';
+import { transform } from 'ol/proj';
+
+proj4.defs('EPSG:25832', '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs');
+register(proj4); // OpenLayers weiß jetzt, wie EPSG:25832 funktioniert
+
+
 export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
     const a = 6378137;
     const e = 0.081819191;
@@ -34,16 +43,17 @@ export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
     return `${lat.toFixed(6)},${lon.toFixed(6)}`;
 }
 
-export function myFuncInfoDiv(results, popup, content, selectInteraction, coordinates) {
+export function myFuncInfoDiv(results, popup, content, selectInteraction, coordinates, map) {
+                  
   const resultsContainer = document.getElementById('search-results-container');
   const resultsList = document.getElementById('search-results');
   resultsList.innerHTML = '';
   resultsContainer.style.display = 'block';
   for (let i = 0; i < results.length; i++) {
     const { feature, layer } = results[i];
-   // console.log('durchlauf Nr: ' + i + '; Mit Layer: ' + layer?.get?.('name'));
+   
     const layerTitle = layer?.get?.('title') || 'Unbekannter Layer';
-   //console.log(feature)
+   
     const name = feature.get('name') || feature.get('ID_Umn') || '-';
 
     let bwId;
@@ -54,8 +64,9 @@ export function myFuncInfoDiv(results, popup, content, selectInteraction, coordi
       bwId = feature.get('bw_id') || '—';
     }
 
-    //const coordinates = feature.getGeometry().getCoordinates();
+   
     popup.setPosition(coordinates);
+    console.log('Map:', map);
     content.innerHTML = generatePopupHTML(feature, layer, coordinates, popup);
     const listItem = createResultListItem(layer, layerTitle, name, bwId, feature, map, popup, content, selectInteraction);
     resultsList.appendChild(listItem);
@@ -83,8 +94,7 @@ export function generatePopupHTML(feature, layer) {
   let latLonResult;
   const rwert = feature.get('rwert');
   const hwert = feature.get('hwert');
-  //console.log('rwert: ' + rwert);
-  //console.log('hwert: ' + hwert);
+  
   if (rwert && hwert) {
     latLonResult = UTMToLatLon_Fix(rwert, hwert, 32, true);
   } else {
@@ -98,18 +108,21 @@ export function generatePopupHTML(feature, layer) {
  // Spezialfälle FSK, UMN, editbar, geojson, fot und kml: Nur spezieller Inhalt, kein allgemeiner Block
 if (layerName === 'fsk') {
   const eigenschaft = (feature.get('Art') === 'o' || feature.get('Art') === 'l') ? 'öffentl.' : 'privat';
+  const geometry = feature.getGeometry();
 
-  let flaeche = feature.getGeometry().getArea();
+  // Variante A: getArea (EPSG:25832 – flächentreu)
+  const geom25832 = geometry.clone().transform('EPSG:3857', 'EPSG:25832');
+  const flaeche = geom25832.getArea();
+
+  // Variante B (Vergleich): getArea über Sphere-Methode (EPSG:3857 – brauchbar, aber ungenauer)
+  // const flaeche = getAreaSphere(geometry, { projection: 'EPSG:3857' });
+
   let flaecheText = '';
-
-  if (flaeche > 1000000) {
-    // > 1.000.000 m² → km²
+  if (flaeche > 1_000_000) {
     flaecheText = (flaeche / 1_000_000).toFixed(4).replace('.', ',') + ' km²';
-  } else if (flaeche > 10000) {
-    // > 10.000 m² → ha
+  } else if (flaeche > 10_000) {
     flaecheText = (flaeche / 10_000).toFixed(4).replace('.', ',') + ' ha';
   } else {
-    // sonst m²
     flaecheText = flaeche.toFixed(2).replace('.', ',') + ' m²';
   }
 
@@ -380,7 +393,6 @@ if (layerName === 'fsk') {
 
 
 function createResultListItem(layer, layerTitle, name, bwId, feature, map, popup, content, selectInteraction) {
-
   const listItem = document.createElement('li');
   if (layerTitle === 'fot') {
   listItem.innerHTML = `
@@ -426,8 +438,8 @@ function createResultListItem(layer, layerTitle, name, bwId, feature, map, popup
   return listItem;
 }
 
-import { Style, Stroke, Fill } from 'ol/style';
 export function zoomToFeature(feature, map) {
+  console.log('Map:', map);
   const geometry = feature.getGeometry();
   const extent = geometry.getExtent();
 
