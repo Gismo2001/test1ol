@@ -996,21 +996,92 @@ function singleClickHandler(evt) {
     }   
   }
 )};
-
 function createInfoDiv(name, html) {
-  const infoDiv = document.createElement('p');
+  const infoDiv = document.createElement('div');
   infoDiv.id = 'info';
   infoDiv.classList.add('Info');
-  infoDiv.innerHTML = `${html}`;
-  const closeIcon = document.createElement('p');
+
+  const header = document.createElement('div');
+  header.classList.add('info-header');
+  header.textContent = name || 'Info';
+
+  const closeIcon = document.createElement('span');
   closeIcon.innerHTML = '&times;';
   closeIcon.classList.add('close-icon');
   closeIcon.addEventListener('click', function () {
     infoDiv.style.display = 'none';
   });
-  infoDiv.appendChild(closeIcon);
+
+  header.appendChild(closeIcon);
+
+  const content = document.createElement('div');
+  content.innerHTML = html;
+
+  infoDiv.appendChild(header);
+  infoDiv.appendChild(content);
+
+  // Drag-Funktion aktivieren
+  makeDivDraggable(infoDiv, header);
+
   return infoDiv;
 }
+
+function makeDivDraggable(div, handle) {
+  let offsetX = 0, offsetY = 0, startX = 0, startY = 0;
+
+  // Start Drag: Maus und Touch
+  function dragStart(e) {
+    e.preventDefault();
+
+    if (e.type === 'touchstart') {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    } else {
+      startX = e.clientX;
+      startY = e.clientY;
+    }
+
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('mouseup', dragEnd);
+    document.addEventListener('touchmove', dragMove);
+    document.addEventListener('touchend', dragEnd);
+  }
+
+  // Move
+  function dragMove(e) {
+    e.preventDefault();
+
+    let clientX, clientY;
+    if (e.type === 'touchmove') {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    offsetX = clientX - startX;
+    offsetY = clientY - startY;
+    startX = clientX;
+    startY = clientY;
+
+    div.style.top = (div.offsetTop + offsetY) + "px";
+    div.style.left = (div.offsetLeft + offsetX) + "px";
+  }
+
+  // End Drag
+  function dragEnd() {
+    document.removeEventListener('mousemove', dragMove);
+    document.removeEventListener('mouseup', dragEnd);
+    document.removeEventListener('touchmove', dragMove);
+    document.removeEventListener('touchend', dragEnd);
+  }
+
+  // Events registrieren
+  handle.addEventListener('mousedown', dragStart);
+  handle.addEventListener('touchstart', dragStart, { passive: false });
+}
+
 
 function removeExistingInfoDiv() {
   const existingInfoDiv = document.getElementById('info');
@@ -2325,6 +2396,8 @@ function initializeWMS(WMSCapabilities,map ) {
   'EU-Waterbodies 3rd RBMP': 'https://water.discomap.eea.europa.eu/arcgis/services/WISE_WFD/WFD2022_SurfaceWaterBody_WM/MapServer/WMSServer?request=GetCapabilities&service=WMS',
   'Luft u. Lärm': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Luft_Laerm_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
   'Boden, Umweltkarten NI': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Boden_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
+  'Pegelonline, DE': 'https://www.pegelonline.wsv.de/webservices/gis/wms/aktuell/mnwmhw?request=GetCapabilities&service=WMS&version=1.3.0',
+  
   'Inspire Hydro': 'https://sg.geodatenzentrum.de/wms_dlm250_inspire?Request=GetCapabilities&SERVICE=WMS',
   'TopPlusOpen': 'https://sgx.geodatenzentrum.de/wms_topplus_open?request=GetCapabilities&service=wms'
       },
