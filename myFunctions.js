@@ -3,6 +3,9 @@ import proj4 from 'proj4';
 import { register } from 'ol/proj/proj4';
 import { getArea } from 'ol/sphere';
 import { transform } from 'ol/proj';
+import Style from 'ol/style/Style';
+import Stroke from 'ol/style/Stroke';
+import Fill from 'ol/style/Fill';
 
 proj4.defs('EPSG:25832', '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs');
 register(proj4); // OpenLayers weiß jetzt, wie EPSG:25832 funktioniert
