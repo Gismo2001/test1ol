@@ -966,7 +966,7 @@ function singleClickHandler(evt) {
     const source = layer.getSource();
       if (source instanceof TileWMS && typeof source.getFeatureInfoUrl === 'function') {
         const layerName = layer.get('name');
-        
+        console.log('Layer Name:', layerName);
         const url = source.getFeatureInfoUrl(evt.coordinate, viewResolution, viewProjection, {'INFO_FORMAT': 'text/html'});
         if (url) {
           fetch(url)
@@ -1112,6 +1112,8 @@ map.on('click', function (evt) {
 
   }
 });
+
+
 
 function getUniqueFeatures(results) {
   const seen = new Set();

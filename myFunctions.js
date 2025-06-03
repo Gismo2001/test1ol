@@ -69,7 +69,7 @@ export function myFuncInfoDiv(results, popup, content, selectInteraction, coordi
 
    
     popup.setPosition(coordinates);
-    console.log('Map:', map);
+    //console.log('Map:', map);
     content.innerHTML = generatePopupHTML(feature, layer, coordinates, popup);
     const listItem = createResultListItem(layer, layerTitle, name, bwId, feature, map, popup, content, selectInteraction);
     resultsList.appendChild(listItem);
@@ -93,6 +93,7 @@ function getBeschreibLangHTML(value) {
 
 
 export function generatePopupHTML(feature, layer) {
+  console.log('Feature:', feature);
   const layerName = layer?.get?.('name') || 'unbekannt';
   let latLonResult;
   const rwert = feature.get('rwert');
@@ -112,7 +113,7 @@ export function generatePopupHTML(feature, layer) {
 if (layerName === 'fsk') {
   const eigenschaft = (feature.get('Art') === 'o' || feature.get('Art') === 'l') ? 'öffentl.' : 'privat';
   const geometry = feature.getGeometry();
-
+  const fsk_bemerk = feature.get('fsk_bemerk');
   // Variante A: getArea (EPSG:25832 – flächentreu)
   const geom25832 = geometry.clone().transform('EPSG:3857', 'EPSG:25832');
   const flaeche = geom25832.getArea();
@@ -129,16 +130,16 @@ if (layerName === 'fsk') {
     flaecheText = flaeche.toFixed(2).replace('.', ',') + ' m²';
   }
 
-  return `
-    <div style="max-height: 300px; overflow-y: auto;">
-      <p><strong>gemark Flur Flurstück:</strong><br>${feature.get('Suche')}</p>
-      <p>FSK: ${feature.get('fsk')}</p>
-      <p>FSK(ASL): ${feature.get('FSK_ASL')}</p>
-      <p>Eig.(${eigenschaft}): ${feature.get('Eig1')}</p>
-      <p>Fläche: ${flaecheText}</p>
-    </div>
-  `;
-
+return `
+  <div style="max-height: 300px; overflow-y: auto;">
+    <p><strong>gemark Flur Flurstück:</strong><br>${feature.get('Suche')}</p>
+    <p>FSK: ${feature.get('fsk')}</p>
+    <p>FSK(ASL): ${feature.get('FSK_ASL')}</p>
+    <p>Eig.(${eigenschaft}): ${feature.get('Eig1')}</p>
+    ${fsk_bemerk != null && fsk_bemerk !== '' ? `<p>fsk_bemerk: ${fsk_bemerk}</p>` : ''}
+    <p>Fläche: ${flaecheText}</p>
+  </div>
+`;
 
 
 } else if (layerName === 'gew_umn') {
@@ -442,7 +443,7 @@ function createResultListItem(layer, layerTitle, name, bwId, feature, map, popup
 }
 
 export function zoomToFeature(feature, map) {
-  console.log('Map:', map);
+  
   const geometry = feature.getGeometry();
   const extent = geometry.getExtent();
 
