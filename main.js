@@ -863,7 +863,7 @@ map.addInteraction(selectInteraction);
 
 
 
-//--------------------------------------------------------------------------------------------------Info für WMS-Layer
+//------------------------------------------------------------------------------Info für WMS-Layer
 var toggleButtonU = new Toggle({
   html: '<i class="icon fa-fw fa fa-arrow-circle-down" aria-hidden="true"></i>',
   className: "select",
@@ -1034,7 +1034,7 @@ function removeExistingInfoDiv() {
   if (existingInfoDiv) { existingInfoDiv.remove(); }
 }
 
-//--------------------------------------------------------------------------------------------------Funktionen für Popup
+//--------------------------------------------------------------------------Funktionen für Popup
 var container = document.getElementById('popup');
 var content = document.getElementById('popup-content');
 var closer = document.getElementById('popup-closer');
@@ -2131,11 +2131,14 @@ geojsonInput.addEventListener('change', function (event) {
         map.addLayer(vectorLayer);
         zaehlerGeojson++;
         zaehlerKML++;
+       
         // Zoom zur geladenen GeoJSON
-        map.getView().fit(vectorSource.getExtent(), {
+        /*map.getView().fit(vectorSource.getExtent(), {
           padding: [20, 20, 20, 20],
           maxZoom: 16
         });
+        */
+
         // Zähler erhöhen für die nächste Datei
         geojsonCounter++;
       } catch (err) {
@@ -2246,7 +2249,7 @@ function setInteraction()
     map.addLayer(vectorLayer);
     // **Direkt nach dem Hinzufügen Features ausgeben**
     vectorSource.once('change', function () {
-      console.log("Das 'change'-Ereignis wurde ausgelöst.");
+      console.log("MOIN");
       const features = vectorSource.getFeatures();
       if (features.length > 0) {
         const properties = features[0].getProperties();
@@ -2260,7 +2263,7 @@ function setInteraction()
           alert("Keine Features im Layer gefunden.");
         }
     });
-    map.getView().fit(vectorSource.getExtent(), { padding: [20, 20, 20, 20] });
+    //map.getView().fit(vectorSource.getExtent(), { padding: [20, 20, 20, 20] });
   });
   map.addInteraction(dragAndDropInteraction);
 }
