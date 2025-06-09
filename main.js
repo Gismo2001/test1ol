@@ -807,7 +807,7 @@ const BaseGroup = new LayerGroup({
 
 const source = new VectorSource();
 const vector = new VectorLayer({
-  displayInLayerSwitcher: true,
+  displayInLayerSwitcher: false,
   title: "tmp_Layer1",
   name: "tmp_Layer1",
   source: source,
@@ -2146,6 +2146,8 @@ var sub2 = new Bar({
       html: '  <i class="fa fa-font-awesome"></i>  ',
       title: "Messung",
       onToggle: function (b) {
+        vectorEdit.set('displayInLayerSwitcher', true);
+        vectorEdit.setVisible(true); // Optional: direkt einblenden
         const isEditing = edit.get('edition');
         if (!isEditing) {
           edit.set('edition', true);
@@ -2387,25 +2389,16 @@ var contextmenuItems = [
     callback: center
   },
   {
-    text: 'Sonstiges',
+    text: 'Navigate',
+    classname: 'bold',
     icon: 'data/center.png',
-    items: [
-      {
-        text: 'Navigate',
-        icon: 'data/center.png',
-        callback: navigate
-      },
-      {
-        text: 'Marker',
-        icon: 'data/center.png',
-        callback: marker
-      }
-    ]
+    callback: navigate
   },
-  {
-    text: 'Marker',
+   {
+    text: 'Koordinaten',
+    classname: 'bold',
     icon: 'data/center.png',
-    callback: marker
+    callback: logCoordinates32632
   },
   '-' // this is a separator
 ];
@@ -2416,20 +2409,13 @@ var contextmenu = new ContextMenu({
 });
 map.addControl(contextmenu);
 
-var removeMarkerItem = {
-  text: 'Remove this Marker',
-  //classname: 'marker',
-  callback: removeMarker
-};
-
 
 contextmenu.on('open', function (evt) {
     
   var contextFeature =	map.forEachFeatureAtPixel(evt.pixel, ft => ft);
   if (contextFeature && contextFeature.get('type') === 'removable') {
     contextmenu.clear();
-    removeMarkerItem.data = { marker: contextFeature };
-    contextmenu.push(removeMarkerItem);
+    
   } else {
     contextmenu.clear();
     contextmenu.extend(contextmenuItems);
@@ -2466,54 +2452,25 @@ function navigate(obj) {
   window.open(url, '_blank');
 }
 
-
-function removeMarker(obj) {
-  vector.getSource().removeFeature(obj.data.marker);
+function logCoordinates32632(obj) {
+  let message;
+  var coord32632 = transform(obj.coordinate, 'EPSG:3857', 'EPSG:32632');
+  var x = coord32632[0].toFixed(3);
+  var y = coord32632[1].toFixed(3);
+  message= `Koordinaten in EPSG:32632: ${x}, ${y}`;
+  note.show(message, { 
+    duration: -1,
+    className: 'ol-notification'
+  });
+  note.element.style.bottom = '50px';
+  
 }
-
-function marker(obj) {
-  var coord4326 = transform(obj.coordinate, 'EPSG:3857', 'EPSG:4326'),
-      coord3857 = obj.coordinate, // Original-Koordinaten in EPSG:3857
-      coord32632 = transform(obj.coordinate, 'EPSG:3857', 'EPSG:32632'),
-
-      template1 = 'Koordinate (3857): {x}, {y}',
-      template2 = 'Koordinate (4326): {x}, {y}',
-      template3 = 'Koordinate (32632): {x}, {y}',
-
-      iconStyle = new Style({
-        image: new Icon({ scale: .5, src: 'data/center.png', }),
-        text: new Text({
-          offsetY: 40, // Etwas mehr Abstand für zwei Zeilen
-          //text: format(coord3857, template1, 2) + '\n' + format(coord4326, template2, 6) + '\n' + format(coord32632, template3, 6),
-          //font: 'bold 15px Arial, sans-serif',
-          //textAlign: 'center',
-          //justify: 'center',
-          //fill: new Fill({ color: '#111' }),
-          //stroke: new Stroke({ color: '#eee', width: 2 })
-        })
-      }),
-      feature = new contextFeature({
-        type: 'removable',
-        geometry: new Point(obj.coordinate),
-        x_3857: coord3857[0].toFixed(3),
-        y_3857: coord3857[1].toFixed(3), // X,Y Koordinaten in EPSG:3857
-        x_4326: coord4326[0].toFixed(3), // X Koordinate in EPSG:4326
-        y_4326: coord4326[1].toFixed(3),  // Y Koordinate in EPSG:4326
-        x_32632: coord32632[0].toFixed(3), // X Koordinate in EPSG:32632
-        y_32632: coord32632[1].toFixed(3),  // Y Koordinate in EPSG:32632
-
-      });
-
-  feature.setStyle(iconStyle);
-  vector.getSource().addFeature(feature);
-}
-
 
 
 // Add the editbar
 const sourceEdit = new VectorSource();
 const vectorEdit = new VectorLayer({
-  displayInLayerSwitcher: true,
+  displayInLayerSwitcher: false,
   title: "editbar",
   name: "editbar",
   source: sourceEdit,
