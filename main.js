@@ -1,13 +1,7 @@
-
 import './style.css';
 import {Map, View} from 'ol';
 import * as LoadingStrategy from 'ol/loadingstrategy';
-
-import KML from 'ol/format/KML.js';
-
-//import jsPDF from "jspdf";
-//import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style.js';
-//import Text from 'ol/style/Text';
+//import {bbox as bboxStrategy, tile} from 'ol/loadingstrategy.js';
 import jsPDF from 'jspdf';
 import Feature from 'ol/Feature';
 import Overlay from 'ol/Overlay.js';
@@ -23,26 +17,26 @@ import EditBar from 'ol-ext/control/EditBar';
 import Tooltip from 'ol-ext/overlay/Tooltip';
 import Notification from 'ol-ext/control/Notification';
 import {ScaleLine} from 'ol/control.js';
-
 import TextButton from 'ol-ext/control/TextButton';
 import Button from 'ol-ext/control/Button';
 import Toggle from 'ol-ext/control/Toggle';
+
 import {Select} from 'ol/interaction.js';
 import {Draw} from 'ol/interaction.js';
 import {getLength as getLengthLine, getArea as getAreaPolygon} from 'ol/sphere.js';   
 import LayerSwitcher from 'ol-ext/control/LayerSwitcher';
 
 
-import { FullScreen, Attribution, defaults as defaultControls, ZoomToExtent, Control, Rotate } from 'ol/control.js';
-
-import {Group, Vector as VectorLayer} from 'ol/layer.js';
+import {FullScreen, Attribution, defaults as defaultControls, ZoomToExtent, Control, Rotate } from 'ol/control.js';
+import {Vector as VectorLayer} from 'ol/layer.js';
 import GeoJSON from 'ol/format/GeoJSON.js';
-import {bbox as bboxStrategy, tile} from 'ol/loadingstrategy.js';
+import KML from 'ol/format/KML.js';
+
 import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style.js';
-import { circular } from 'ol/geom/Polygon';
 
 
-
+import {circular} from 'ol/geom/Polygon';
+import {LineString, Polygon, Point, Circle} from 'ol/geom.js';
 
 import * as proj from 'ol/proj';
 
@@ -60,23 +54,23 @@ import CanvasAttribution from 'ol-ext/control/CanvasAttribution';
 import CanvasTitle from 'ol-ext/control/CanvasTitle';
 import CanvasScaleLine from 'ol-ext/control/CanvasScaleLine';
 import PrintDialog from 'ol-ext/control/PrintDialog';
-
+import Legend from 'ol-ext/control/Legend';
 
 import { toLonLat, transform } from 'ol/proj';
 import { format } from 'ol/coordinate';
-import {LineString, Polygon, Point, Circle} from 'ol/geom.js';
 
-/* 
+
+ 
 import contextFeature from 'ol/Feature';
 import ContextMenu from 'ol-contextmenu';
 import pinIcon from './data/pin.png';
 import centerIcon from 'ol-contextmenu';
 import listIcon from 'ol-contextmenu';
- */
+
 
 import { Text } from 'ol/style';
 import { Icon } from 'ol/style';
-import Legend from 'ol-ext/control/Legend';
+
 //import saveAs from 'file-saver';
 
 
@@ -162,12 +156,6 @@ const map = new Map({
   interactions: defaultInteractions().extend([new DragRotateAndZoom()])
 });
 
-
-
-
-
-
-
 var note = new Notification(
   {
     //className: 'ol-notification',
@@ -179,7 +167,8 @@ var note = new Notification(
   }
 );
 map.addControl(note)
-//----------------------------------------------------------------------------------------------------------APrint
+
+//_____-----------------------------------------------------------------APrint
 map.addControl(new CanvasAttribution());
 map.addControl(new CanvasTitle({ 
   title: '', 
@@ -189,14 +178,9 @@ map.addControl(new CanvasTitle({
   }),
 }));
 map.addControl(new CanvasScaleLine());
-
-var printControl = new PrintDialog({ 
-  title: 'Drucken',
-  lang: 'de',
- });
+var printControl = new PrintDialog({title:'Drucken', lang:'de'});
 printControl.setSize('A4');
 printControl.setOrientation('portrait');
-
 
 printControl.on(['print', 'error'], function(e) {
   if (e.image) {
@@ -823,7 +807,7 @@ const BaseGroup = new LayerGroup({
 
 const source = new VectorSource();
 const vector = new VectorLayer({
-  displayInLayerSwitcher: false,
+  displayInLayerSwitcher: true,
   title: "tmp_Layer1",
   name: "tmp_Layer1",
   source: source,
@@ -1027,8 +1011,6 @@ function createInfoDiv(name, html) {
 
   return infoDiv;
 }
-
-
 function removeExistingInfoDiv() {
   const existingInfoDiv = document.getElementById('info');
   if (existingInfoDiv) { existingInfoDiv.remove(); }
@@ -1068,6 +1050,7 @@ map.on('click', function (evt) {
     
     // Liste leeren  
     var ul = document.getElementById('search-results');
+    
     if (ul) {
       while (ul.firstChild) {
         ul.removeChild(ul.firstChild);
@@ -1112,8 +1095,6 @@ map.on('click', function (evt) {
 
   }
 });
-
-
 
 function getUniqueFeatures(results) {
   const seen = new Set();
@@ -2396,34 +2377,34 @@ function checkForLinkInTH(html) {
 
 
 //--------------------------------------------------------------------------------------------------------------------ContextMenu
-/* 
+ 
 
 var contextmenuItems = [
   {
     text: 'Karte zentrieren',
     classname: 'bold',
-    icon: centerIcon,
+    icon: 'data/center.png',
     callback: center
   },
   {
     text: 'Sonstiges',
-    icon: listIcon,
+    icon: 'data/center.png',
     items: [
       {
-        text: 'Zentrieren',
-        icon: centerIcon,
-        callback: center
+        text: 'Navigate',
+        icon: 'data/center.png',
+        callback: navigate
       },
       {
         text: 'Marker',
-        icon: pinIcon,
+        icon: 'data/center.png',
         callback: marker
       }
     ]
   },
   {
     text: 'Marker',
-    icon: pinIcon,
+    icon: 'data/center.png',
     callback: marker
   },
   '-' // this is a separator
@@ -2476,8 +2457,18 @@ function center(obj) {
   });
 }
 
+function navigate(obj) {
+  var coord4326 = transform(obj.coordinate, 'EPSG:3857', 'EPSG:4326');
+  var lat = coord4326[1];
+  var lon = coord4326[0];
+
+  var url = `https://www.google.com/maps?q=${lat},${lon}`;
+  window.open(url, '_blank');
+}
+
+
 function removeMarker(obj) {
-  vectorLayerMark.getSource().removeFeature(obj.data.marker);
+  vector.getSource().removeFeature(obj.data.marker);
 }
 
 function marker(obj) {
@@ -2490,7 +2481,7 @@ function marker(obj) {
       template3 = 'Koordinate (32632): {x}, {y}',
 
       iconStyle = new Style({
-        image: new Icon({ scale: .5, src: pinIcon }),
+        image: new Icon({ scale: .5, src: 'data/center.png', }),
         text: new Text({
           offsetY: 40, // Etwas mehr Abstand für zwei Zeilen
           //text: format(coord3857, template1, 2) + '\n' + format(coord4326, template2, 6) + '\n' + format(coord32632, template3, 6),
@@ -2514,10 +2505,10 @@ function marker(obj) {
       });
 
   feature.setStyle(iconStyle);
-  vectorLayerMark.getSource().addFeature(feature);
+  vector.getSource().addFeature(feature);
 }
 
- */
+
 
 // Add the editbar
 const sourceEdit = new VectorSource();
@@ -2563,29 +2554,6 @@ edit.setPosition('bottom-left');
 edit.element.style.bottom = '140px';
 edit.element.style.left = '15px';
 
-/* 
-select.on('select', function (e) {
-  const selected = e.selected;
-  const featuresToUnselect = [];
-
-  selected.forEach(function (feature) {
-    const layer = select.getLayer(feature); // ← Layer des Features
-    
-    if (layer?.get('name') === 'gew' || layer?.get('name') === 'sle') {
-      console.log('Feature aus "gew"  oder "sle" wurde ausgewählt – wird entfernt');
-      featuresToUnselect.push(feature);
-    } else {
-      console.log('Feature behalten:', feature);
-    }
-  });
-
-  // Entferne unerwünschte Features aus der Auswahl
-  if (featuresToUnselect.length > 0) {
-    featuresToUnselect.forEach(f => select.getFeatures().remove(f));
-  }
-});
-
- */
 // Benutzerdefinierter Button für Text hinzufügen
 const textButton = new Button({
   html: '✎', // oder ein Icon
@@ -2652,8 +2620,6 @@ edit.getInteraction('Select').on('select', function(e) {
     // tooltip.setInfo('');
   }
 });
-
-
 edit.getInteraction('Select').on('change:active', function(e){
   tooltip.setInfo('');
  
@@ -2738,7 +2704,6 @@ edit.on('info', function(e) {
   
 });
 
-
 const editBarElement = edit.element;
 editBarElement.style.display = 'none'; 
 
@@ -2771,11 +2736,8 @@ var save = new Button({
     link.click();
   }
 });
-
 edit.addControl(save);
-
 var editBarAnAus = false;
-
  
 window.onload = function() {
   editBarAnAus = false

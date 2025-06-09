@@ -93,7 +93,7 @@ function getBeschreibLangHTML(value) {
 
 
 export function generatePopupHTML(feature, layer) {
-  console.log('Feature:', feature);
+  
   const layerName = layer?.get?.('name') || 'unbekannt';
   let latLonResult;
   const rwert = feature.get('rwert');
