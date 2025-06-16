@@ -2326,14 +2326,14 @@ function initializeWMS(WMSCapabilities,map ) {
   'Natur, LK':'https://geodaten.emsland.de:443/core-services/services/lkel_fb67_naturschutz_und_forsten_wms?',
   'HW-Schutz, Umwelkarten NI':'https://www.umweltkarten-niedersachsen.de/arcgis/services/HWSchutz_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
   'schutzgebiete, NL': 'https://service.pdok.nl/provincies/aardkundige-waarden/wms/v1_0?request=GetCapabilities&service=WMS',
-  'wateren, NL': 'https://service.pdok.nl/kadaster/hy/wms/v1_0?',
+  'krw wateren, NL': 'https://service.pdok.nl/ihw/gebiedsbeheer/krw-oppervlaktewaterlichamen/wms/v1_0?SERVICE=WMS&VERSION=1.3.0&request=getcapabilities',
   'EU-Waterbodies 3rd RBMP': 'https://water.discomap.eea.europa.eu/arcgis/services/WISE_WFD/WFD2022_SurfaceWaterBody_WM/MapServer/WMSServer?request=GetCapabilities&service=WMS',
   'Luft u. Lärm': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Luft_Laerm_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
   'Boden, Umweltkarten NI': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Boden_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
   'Pegelonline, DE': 'https://www.pegelonline.wsv.de/webservices/gis/wms/aktuell/mnwmhw?request=GetCapabilities&service=WMS&version=1.3.0',
-  
   'Inspire Hydro': 'https://sg.geodatenzentrum.de/wms_dlm250_inspire?Request=GetCapabilities&SERVICE=WMS',
-  'TopPlusOpen': 'https://sgx.geodatenzentrum.de/wms_topplus_open?request=GetCapabilities&service=wms'
+  'TopPlusOpen': 'https://sgx.geodatenzentrum.de/wms_topplus_open?request=GetCapabilities&service=wms',
+  'Drenthe Geodata': 'https://services.geodataoverijssel.nl/geoserver/ows?'
       },
       trace: true
   });
@@ -2697,11 +2697,20 @@ edit.addControl(save);
 var editBarAnAus = false;
  
 window.onload = function() {
-  editBarAnAus = false
+  editBarAnAus = false;
   const select = edit.getInteraction('Select');
   if (select) select.getFeatures().clear();
   const interaction = edit.getInteraction('ModifySelect');
   if (interaction) {
     interaction.setActive(false);
   }
-} 
+
+  // Prüfen ob PC oder Mobilgerät
+  /* if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    console.log("Mobilgerät erkannt");
+  } else {
+    console.log("Desktopgerät erkannt");
+    alert("Bitte auf einem Mobilgerät öffnen, um die volle Funktionalität zu nutzen.");c
+  } */
+}
+
