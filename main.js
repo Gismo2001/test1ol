@@ -2252,38 +2252,49 @@ function setInteraction()
 }
 
 
-var mainBar1 = new Bar({
-  controls: [
-    new Toggle({
-      html: '<i class="fa fa-info"></i>',
-      title: "Weitere Funktionen",
-      // Untermenü mit zwei Buttons
-      bar: sub1,
-      onToggle: function() { },
-    }),
-    new Toggle({
-      html: 'W',
-      title: "Weitere Funktionen",
-      // Untermenü mit zwei Buttons
-      bar: sub2,
-      onToggle: function() { },
-    }),
-  ]
+// Zwei Toggle-Buttons vorbereiten
+var toggle1 = new Toggle({
+  html: '<i class="fa fa-info"></i>',
+  title: "Infos",
+  bar: sub1,
+  onToggle: function(active) {
+    if (active) {
+      toggle2.setActive(false); // anderes Toggle schließen
+    }
+  }
 });
-map.addControl ( mainBar1 );
-mainBar1.setPosition('bottom-left');
-mainBar1.element.style.bottom = '60px';
 
-var mainbar2 = new Bar();
-map.addControl(mainbar2);
+var toggle2 = new Toggle({
+  html: 'W',
+  title: "Dateien",
+  bar: sub2,
+  onToggle: function(active) {
+    if (active) {
+      toggle1.setActive(false); // anderes Toggle schließen
+    }
+  }
+});
 
-//mainbar2.addControl (search);
-//mainbar2.addControl (permalinkControl);
-mainbar2.addControl (printControl);
-mainbar2.addControl(toggleButtonU);
+// Hauptbar mit den beiden Toggles
+var containerBar1 = new Bar({
+  controls: [toggle1, toggle2]
+});
 
-mainbar2.setPosition('bottom-right');
-mainbar2.element.style.bottom = '60px';
+map.addControl(containerBar1);
+containerBar1.setPosition('bottom-left');
+containerBar1.element.style.bottom = '60px';
+
+
+var containerBar2 = new Bar();
+map.addControl(containerBar2);
+
+//containerBar2.addControl (search);
+//containerBar2.addControl (permalinkControl);
+containerBar2.addControl (printControl);
+containerBar2.addControl(toggleButtonU);
+
+containerBar2.setPosition('bottom-right');
+containerBar2.element.style.bottom = '60px';
 
 //var mainbar3 = new Bar();
 //map.addControl(mainbar3);
@@ -2319,7 +2330,7 @@ function initializeWMS(WMSCapabilities,map ) {
       searchLabel: 'Suche',
       optional: 'token',
       services: {
-   'Verwaltungsgrenzen NI ': 'https://opendata.lgln.niedersachsen.de/doorman/noauth/verwaltungsgrenzen_wms',            
+  'Verwaltungsgrenzen NI ': 'https://opendata.lgln.niedersachsen.de/doorman/noauth/verwaltungsgrenzen_wms',            
   'Hydro, Umweltkarten NI ': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Hydro_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
   'WRRL, Umweltkarten NI ': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/WRRL_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
   'Natur, Umweltkarten NI': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Natur_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
