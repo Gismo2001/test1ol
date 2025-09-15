@@ -116,6 +116,14 @@ import SearchPhoton from 'ol-ext/control/SearchPhoton';
 import WMSCapabilities from'ol-ext/control/WMSCapabilities';
 import { getCenter } from 'ol/extent'; // ❗ WICHTIG: oben importieren
 
+// von EPSG:32632 (UTM 32N) nach EPSG:3857 (WebMercator)
+var firstProjection = "EPSG:32632";
+var secondProjection = "EPSG:3857";
+
+var resultkoord = proj4(firstProjection, secondProjection, [500000, 5800000]);
+console.log(resultkoord);
+
+
 
 function isMobileDevice() {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -166,7 +174,9 @@ var note = new Notification(
     
   }
 );
+
 map.addControl(note)
+
 
 //_____-----------------------------------------------------------------APrint
 map.addControl(new CanvasAttribution());
@@ -1892,6 +1902,7 @@ window.closeSearchResults = function () {
   document.getElementById("search-results-container").style.display = "none";
 };
 let jsonButtonState = false; // Initialer Zustand
+let punktButtonState = false;
 /* Nested subbar */
 var sub2 = new Bar({
   toggleOne: true,
@@ -2042,6 +2053,21 @@ var sub1 = new Bar({
       jsonButtonState = !jsonButtonState; // Zustand umschalten
       if (jsonButtonState === true) {
         setInteraction(); // Deine Funktion aufrufen, wenn der Zustand true ist
+        } else {
+        map.removeInteraction(dragAndDropInteraction);
+        isActive = false;
+        }
+      },
+    }),
+
+    // Das Untermenü GeoJson
+    new Toggle({
+      html: '<i class="fa fa-file"></i>',
+      title: "Punkt setzen",
+      onToggle: function () {
+      punktButtonState = !punktButtonState; // Zustand umschalten
+      if (punktButtonState === true) {
+        addPointFromInput(); // Deine Funktion aufrufen
         } else {
         map.removeInteraction(dragAndDropInteraction);
         isActive = false;
@@ -2723,5 +2749,59 @@ window.onload = function() {
     console.log("Desktopgerät erkannt");
     alert("Bitte auf einem Mobilgerät öffnen, um die volle Funktionalität zu nutzen.");c
   } */
+}
+
+
+
+const vectorSource = new ol.source.Vector();
+const vectorLayer = new ol.layer.Vector({
+  source: vectorSource,
+  style: new ol.style.Style({
+    image: new ol.style.Circle({
+      radius: 6,
+      fill: new ol.style.Fill({
+        color: 'red',
+      }),
+      stroke: new ol.style.Stroke({
+        color: 'white',
+        width: 2,
+      }),
+    }),
+  }),
+});
+
+map.addLayer(vectorLayer);
+
+
+function addPointFromInput() {
+  const input = prompt('Bitte geben Sie die Koordinaten im Format "x,y" ein (EPSG:3857):');
+  
+  if (input) {
+    const coords = input.split(',').map(Number);
+    
+    // Überprüfen, ob zwei gültige Zahlen eingegeben wurden
+    if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+      drawPoint(coords);
+    } else {
+      alert('Ungültige Eingabe. Bitte verwenden Sie das Format "x,y".');
+    }
+  }
+}
+
+function drawPoint(coords) {
+  // Erstellen eines Punkt-Features
+  const point = new ol.Feature({
+    geometry: new ol.geom.Point(coords),
+  });
+
+  // Hinzufügen des Punktes zum Vektor-Source
+  vectorSource.addFeature(point);
+
+  // Karte auf den neuen Punkt zentrieren und heranzoomen
+  map.getView().animate({
+    center: coords,
+    zoom: 10,
+    duration: 1500
+  });
 }
 
