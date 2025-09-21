@@ -177,22 +177,45 @@ var note = new Notification(
 );
 map.addControl(note);
 
-
+window.location.hash = '';
 
 var permalinkControl = new Permalink({
   title: 'Permalink',
   anchor: true,   // setzt ein # in die URL
   layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
   updateUrl: false,   // wichtig!
-  groups: true
-  // rotation: true // falls du auch Kartenrotation speichern willst
+  urlReplace: false,
+  groups: true,
+  rotation: true // falls du auch Kartenrotation speichern willst
 });
 map.addControl(permalinkControl);
+
+
+// ===== Automatisch für alle Layers mit permalink: Sichtbarkeit + Opacity speichern =====
+map.getLayers().forEach(layer => {
+  const key = layer.get('permalink');
+  if (key) {
+    // Sichtbarkeit wird automatisch von 'layers: true' übernommen
+    // Transparenz speichern
+    permalink.addParam(key + '_opacity', {
+      get: () => layer.getOpacity().toFixed(1),
+      set: val => layer.setOpacity(parseFloat(val))
+    });
+  }
+});
 
 // Direkt nach dem Laden einmal den Hash löschen
 //window.location.hash = '';
 
+
 permalinkControl.element.addEventListener('click', function() {
+  if (!permalinkControl.urlReplace==true) {   
+  permalinkControl.urlReplace = false; // vorher false
+  } else {
+    permalinkControl.urlReplace = true;
+
+  };
+
   console.log('Permalink clicked');
 });
 
@@ -299,6 +322,7 @@ const exp_gew_umn_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_gew_umn.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'U-Maßnahmen', 
   name: 'gew_umn',
+  permalink:"gew_umn",
   style: getStyleForArtUmn,
   visible: false
 });
@@ -413,6 +437,7 @@ const km500scal_layer = new VectorLayer({
 const wmsNsgLayer = new TileLayer({
   title: "NSG",
   name: "NSG",
+  permalink:"NSG",  
   source: new TileWMS({
     url: 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Natur_wms/MapServer/WMSServer',
     params: {
@@ -428,6 +453,7 @@ const wmsNsgLayer = new TileLayer({
 const wmsLsgLayer = new TileLayer({
   title: "LSG",
   name: "LSG",
+  permalink:"LSG",  
   source: new TileWMS({
     url: 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Natur_wms/MapServer/WMSServer',
     params: {
@@ -437,12 +463,14 @@ const wmsLsgLayer = new TileLayer({
       'TILED': true,
     },
   }),
+  
   visible: false,
   opacity: .5,
 });
 const wmsUesgLayer = new TileLayer({
   title: "ÜSG",
-  name: "ÜSG",
+  name: "UESG",
+  permalink:"UESG",
   source: new TileWMS({
     url:  'https://www.umweltkarten-niedersachsen.de/arcgis/services/HWSchutz_wms/MapServer/WMSServer',
     params: {
@@ -457,7 +485,8 @@ const wmsUesgLayer = new TileLayer({
 });
 const wmsWrrlFgLayer = new TileLayer({
   title: "Fließgew.",
-  name: "Fließgew.",
+  name: "Fließgew",
+  permalink:"Fließgew",
   source: new TileWMS({
     url:  'https://www.umweltkarten-niedersachsen.de/arcgis/services/WRRL_wms/MapServer/WMSServer',
     params: {
@@ -472,7 +501,8 @@ const wmsWrrlFgLayer = new TileLayer({
 });
 const wmsGewWmsFgLayer = new TileLayer({
   title: "GewWms",
-  name: "Gewässer",
+  name: "Gewaesser",
+  permalink:"Gewaesser",
   source: new TileWMS({
     url:  'https://www.umweltkarten-niedersachsen.de/arcgis/services/Hydro_wms/MapServer/WMSServer',
     params: {
@@ -482,7 +512,7 @@ const wmsGewWmsFgLayer = new TileLayer({
       'TILED': true,
     },
   }),
-  visible: true,
+  visible: false,
   opacity: 1,
 });
 
@@ -490,6 +520,7 @@ const wmsGewWmsFgLayer = new TileLayer({
 const wmsBiotopeEL = new TileLayer({
   title: "Biotope_EL",
   name: "Biotope_EL",
+  permalink:"Biotope_EL",  
   source: new TileWMS({
   url:  'https://geodaten.emsland.de/core-services/services/lkel_fb67_naturschutz_und_forsten_wms',
   params: {
@@ -662,7 +693,8 @@ const gnAtlas1937 = new TileLayer({
 
 var baseDE_layer = new TileLayer({
   title: "Base-DE",
-  name: "Base-DE",
+  name: "baseDe",
+  permalink:"baseDE",
   type: 'base',
   source: new TileWMS({
     url: "https://sgx.geodatenzentrum.de/wms_basemapde",
@@ -678,7 +710,8 @@ var baseDE_layer = new TileLayer({
 });
 var dop20ni_layer = new TileLayer({
   title: "DOP20 NI",
-  name: "DOP20 NI",
+  name: "dop20ni",
+  permalink:"dop20ni",
   type: 'base',
   source: new TileWMS({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/dop_wms",
@@ -694,7 +727,8 @@ var dop20ni_layer = new TileLayer({
 });
 const googleSatLayer = new TileLayer({
   title: "GoogleSat",
-  name: "GoogleSat",
+  name: "googleSat",
+  permalink:"googleSat",
   type: 'base',
   baseLayer: false,
   source: new TileImage({url: 'http://mt1.google.com/vt/lyrs=s&hl=pl&&x={x}&y={y}&z={z}' }),
@@ -703,7 +737,8 @@ const googleSatLayer = new TileLayer({
 });
 const googleHybLayer = new TileLayer({
   title: "GoogleHybrid",
-  name: "GoogleHybrid",
+  name: "googleHybrid",
+  permalink:"googleHybrid",
   type: 'base',
   baseLayer: false,
   opacity: 1,
@@ -712,7 +747,8 @@ const googleHybLayer = new TileLayer({
 });
 const ESRIWorldImagery = new TileLayer({
   title: 'ESRI-Sat',
-  name: 'ESRI-Sat',
+  name: 'ESRISat',
+  permalink:"ESRISat",
   type: 'base',
   source: new XYZ({
     attributions: 'Powered by Esri',
@@ -723,7 +759,8 @@ const ESRIWorldImagery = new TileLayer({
 });
 const ESRIWorldGrey = new TileLayer({
   title: 'ESRI-Grey',
-  name: 'ESRI-Grey',
+  name: 'ESRIGrey',
+  permalink:"ESRIGrey",
   type: 'base',
   source: new XYZ({
       attributions: 'Powered by Esri',
@@ -735,7 +772,8 @@ const ESRIWorldGrey = new TileLayer({
 
 const osmTileGr = new TileLayer({
   title: "osm-grey",
-  name: "osm-grey",
+  name: "osmgrey",
+  permalink:"osmgrey",
   className: 'bw',
   type: 'base',
   source: new OSM({
@@ -747,7 +785,8 @@ const osmTileGr = new TileLayer({
 });
 const osmTileCr = new TileLayer({
   title: "osm-color",
-  name: "osm-color",
+  name: "osmcolor",
+  permalink:"osmcolor",
   type: 'base',
   source: new OSM({
       url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -760,6 +799,7 @@ const osmTileCr = new TileLayer({
 var Alkis_layer = new TileLayer({
   title: "ALKIS",
   name: "ALKIS",
+  permalink:"ALKIS",
   type: 'base',
   source: new TileWMS({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/alkis_wms?",
@@ -816,7 +856,7 @@ const wmsLayerGroup = new LayerGroup({
   name: "WMS-Lay",
   fold: true,
   fold: 'close',
-  visible: false,
+  visible: true,
   layers: [ Alkis_layer, wmsLsgLayer, wmsNsgLayer, wmsBiotopeEL, wmsUesgLayer, wmsWrrlFgLayer, wmsGewWmsFgLayer ]
 });
 const GNAtlasGroup = new LayerGroup({
