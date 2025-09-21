@@ -184,7 +184,7 @@ var permalinkControl = new Permalink({
   anchor: true,   // setzt ein # in die URL
   layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
   updateUrl: false,   // wichtig!
-  urlReplace: false,
+ // urlReplace: false,
   groups: true,
   rotation: true // falls du auch Kartenrotation speichern willst
 });
@@ -209,12 +209,7 @@ map.getLayers().forEach(layer => {
 
 
 permalinkControl.element.addEventListener('click', function() {
-  if (!permalinkControl.urlReplace==true) {   
-  permalinkControl.urlReplace = false; // vorher false
-  } else {
-    permalinkControl.urlReplace = true;
-
-  };
+ 
 
   console.log('Permalink clicked');
 });
