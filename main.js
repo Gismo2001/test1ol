@@ -20,6 +20,7 @@ import {ScaleLine} from 'ol/control.js';
 import TextButton from 'ol-ext/control/TextButton';
 import Button from 'ol-ext/control/Button';
 import Toggle from 'ol-ext/control/Toggle';
+import Permalink from 'ol-ext/control/Permalink';
 
 import {Select} from 'ol/interaction.js';
 import {Draw} from 'ol/interaction.js';
@@ -174,8 +175,26 @@ var note = new Notification(
     
   }
 );
+map.addControl(note);
 
-map.addControl(note)
+
+
+var permalinkControl = new Permalink({
+  title: 'Permalink',
+  anchor: true,   // setzt ein # in die URL
+  layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
+  updateUrl: false,   // wichtig!
+  groups: true
+  // rotation: true // falls du auch Kartenrotation speichern willst
+});
+map.addControl(permalinkControl);
+
+// Direkt nach dem Laden einmal den Hash löschen
+window.location.hash = '';
+
+permalinkControl.element.addEventListener('click', function() {
+  console.log('Permalink clicked');
+});
 
 
 //_____-----------------------------------------------------------------APrint
@@ -236,7 +255,7 @@ let isActive = false; // Variable, um den Aktivierungsstatus der Geolokalisierun
 const exp_gew_fla_vecLayer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_gew_info_fla.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'Gewässerflächen', // Titel für den Layer-Switcher
-  //permalink:"son_pun",  // Um Permalink zu setzen
+  
   name: 'exp_gew_fla',
   style: exp_gew_fla_vecStyle,
   visible: false
@@ -261,6 +280,7 @@ const exp_allgm_fsk_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_allgm_fsk.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'fsk',
   name: 'fsk', 
+  permalink:"fsk", 
   style: getStyleForArtFSK,
   visible: false,
   minResolution: 0,
@@ -269,6 +289,7 @@ const exp_allgm_fsk_layer = new VectorLayer({
 const exp_bw_son_lin_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_bw_son_lin.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }), 
   title: 'Sonstig, Linien',
+  permalink:"son_lin",  
   name: 'son_lin',
   style: getStyleForArtSonLin,
   visible: false
@@ -285,6 +306,7 @@ const exp_gew_info_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_gew_info.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'Gew, Info', 
   name: 'gew_info',
+  permalink:"gew_info", 
   style: getStyleForArtGewInfo,
   visible: false
 });
@@ -300,6 +322,7 @@ const exp_bw_son_pun_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url: function (extent) {return './myLayers/exp_bw_son_pun.geojson' + '?bbox=' + extent.join(','); },strategy: LoadingStrategy.bbox}),
   title: 'Sonstige, Punkte', 
   name: 'son_pun', 
+  permalink:"son_pun", 
   style: getStyleForArtSonPun,
   visible: false
 });
@@ -307,6 +330,7 @@ const exp_bw_ein_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url: function (extent) {return './myLayers/exp_bw_ein.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'Einläufe', 
   name: 'ein', 
+  permalink:"ein",  
   style: getStyleForArtEin,
   visible: false
 });
@@ -314,6 +338,7 @@ const exp_bw_que_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url: function (extent) {return './myLayers/exp_bw_que.geojson' + '?bbox=' + extent.join(',');},strategy: LoadingStrategy.bbox}),
   title: 'Querung', 
   name: 'que', 
+  permalink:"que",  
   style: queStyle,
   visible: false
 });
@@ -321,6 +346,7 @@ const exp_bw_due_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url: function (extent) {return './myLayers/exp_bw_due.geojson' + '?bbox=' + extent.join(',');},strategy: LoadingStrategy.bbox }),
   title: 'Düker', 
   name: 'due', 
+  permalink:"due",  
   style: dueStyle,
   visible: false
 });
@@ -328,6 +354,7 @@ const exp_bw_weh_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url: function (extent) {return './myLayers/exp_bw_weh.geojson' + '?bbox=' + extent.join(',');},strategy: LoadingStrategy.bbox}),
   title: 'Wehr', 
   name: 'weh', 
+  permalink:"weh",
   style: wehStyle,
   visible: false
 });
@@ -335,6 +362,7 @@ const exp_bw_bru_nlwkn_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_bw_bru_nlwkn.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'Brücke (NLWKN)', 
   name: 'bru_nlwkn', // Titel für den Layer-Switcher
+  permalink:"bru_nlwkn",  // Um Permalink zu setzen
   style: bru_nlwknStyle,
   visible: false
 });
@@ -342,6 +370,7 @@ const exp_bw_bru_andere_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url:function (extent) {return './myLayers/exp_bw_bru_andere.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'Brücke (andere)',
   name: 'bru_andere', 
+  permalink:"bru_andere",  
   style: bruAndereStyle,
   visible: false
 });
@@ -350,6 +379,7 @@ const exp_bw_sle_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url:function (extent) {return './myLayers/exp_bw_sle.geojson' + '?bbox=' + extent.join(',');},strategy: LoadingStrategy.bbox }),
   title: 'Schleuse', 
   name: 'sle', 
+  permalink:"sle", 
   style: sleStyle,
   visible: true, 
 });
@@ -843,6 +873,10 @@ map.addLayer(BwGroupP);
 map.addLayer(vector); 
 
 const excludedLayerNames = ['gew', 'km10scal', 'km100scal', 'km500scal'];
+
+
+
+
 
 const selectInteraction = new Select({
   layers: function(layer) {
@@ -2315,7 +2349,7 @@ var containerBar2 = new Bar();
 map.addControl(containerBar2);
 
 //containerBar2.addControl (search);
-//containerBar2.addControl (permalinkControl);
+containerBar2.addControl (permalinkControl);
 containerBar2.addControl (printControl);
 containerBar2.addControl(toggleButtonU);
 
