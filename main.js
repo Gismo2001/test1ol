@@ -190,7 +190,7 @@ var permalinkControl = new Permalink({
 map.addControl(permalinkControl);
 
 // Direkt nach dem Laden einmal den Hash löschen
-window.location.hash = '';
+//window.location.hash = '';
 
 permalinkControl.element.addEventListener('click', function() {
   console.log('Permalink clicked');
