@@ -177,19 +177,21 @@ var note = new Notification(
 );
 map.addControl(note);
 
-window.location.hash = '';
+
 
 var permalinkControl = new Permalink({
   title: 'Permalink',
   anchor: true,   // setzt ein # in die URL
   layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
   updateUrl: false,   // wichtig!
- // urlReplace: false,
-  groups: true,
-  rotation: true // falls du auch Kartenrotation speichern willst
+  urlreplace: true, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
+  groups: true
+  // rotation: true // falls du auch Kartenrotation speichern willst
 });
 map.addControl(permalinkControl);
 
+// Direkt nach dem Laden einmal den Hash löschen
+//window.location.hash = '';
 
 // ===== Automatisch für alle Layers mit permalink: Sichtbarkeit + Opacity speichern =====
 map.getLayers().forEach(layer => {
@@ -198,19 +200,14 @@ map.getLayers().forEach(layer => {
     // Sichtbarkeit wird automatisch von 'layers: true' übernommen
     // Transparenz speichern
     permalink.addParam(key + '_opacity', {
-      get: () => layer.getOpacity().toFixed(1),
+      get: () => layer.getOpacity().toFixed(2),
       set: val => layer.setOpacity(parseFloat(val))
     });
   }
 });
 
-// Direkt nach dem Laden einmal den Hash löschen
-//window.location.hash = '';
-
 
 permalinkControl.element.addEventListener('click', function() {
- 
-
   console.log('Permalink clicked');
 });
 
