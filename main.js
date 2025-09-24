@@ -186,7 +186,7 @@ var permalinkControl = new Permalink({
   updateUrl: false,   // wichtig!
   urlreplace: true, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
   //geohash: true,
-  fixed: 2,
+  //fixed: 2,
   groups: true
   // rotation: true // falls du auch Kartenrotation speichern willst
 });
@@ -868,6 +868,7 @@ const BwGroupL = new LayerGroup({
 const wmsLayerGroup = new LayerGroup({
   title: "WMS-Lay",
   name: "WMS-Lay",
+  permalink:"WMS-Lay",
   fold: true,
   fold: 'close',
   visible: true,
@@ -876,6 +877,7 @@ const wmsLayerGroup = new LayerGroup({
 const GNAtlasGroup = new LayerGroup({
   title: "Luftbilder",
   name: "Luftbilder",
+  permalink:"Luftbilder",
   fold: true,
   fold: 'close',
   visible: false,
@@ -884,6 +886,7 @@ const GNAtlasGroup = new LayerGroup({
 const kmGroup = new LayerGroup({
   title: "Station",
   name: "Station",
+  permalink:"Station",
   fold: true,
   fold: 'close',
   visible: true,
@@ -892,6 +895,7 @@ const kmGroup = new LayerGroup({
 const BaseGroup = new LayerGroup({
   title: "Base",
   name: "Base",
+  permalink:"Base",
   fold: true,
   fold: 'close',
   visible: true,
