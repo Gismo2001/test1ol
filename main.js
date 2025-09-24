@@ -185,6 +185,8 @@ var permalinkControl = new Permalink({
   layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
   updateUrl: false,   // wichtig!
   urlreplace: true, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
+  //geohash: true,
+  fixed: 2,
   groups: true
   // rotation: true // falls du auch Kartenrotation speichern willst
 });
@@ -206,10 +208,14 @@ map.getLayers().forEach(layer => {
   }
 });
 
-
 permalinkControl.element.addEventListener('click', function() {
   console.log('Permalink clicked');
+  // toggle CSS-Klasse "active"
+  permalinkControl.element.classList.toggle('active');
 });
+
+const permalinkButton = permalinkControl.element.querySelector('a');
+
 
 
 //_____-----------------------------------------------------------------APrint
@@ -529,6 +535,7 @@ const wmsBiotopeEL = new TileLayer({
 const gnAtlas2023 = new TileLayer({
   title: "2023_NI",
   name: "2023_NI",
+  permalink:"2023_NI",
   source: new TileWMS(({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/dop_wms",
     attributions: 'Orthophotos Niedersachsen, LGLN',
@@ -540,6 +547,7 @@ const gnAtlas2023 = new TileLayer({
 const gnAtlas2020 = new TileLayer({
   title: "2020_NI",
   name: "2020_NI",
+  permalink:"2020_NI",
   source: new TileWMS(({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/doph_wms?",
     attributions: ' ',
@@ -551,17 +559,19 @@ const gnAtlas2020 = new TileLayer({
 const gnAtlas2017 = new TileLayer({
   title: "2017_NI",
   name: "2017_NI",
+  permalink:"2017_NI",
   source: new TileWMS(({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/doph_wms?",
     attributions: ' ',
     params: {"LAYERS": "ni_dop20h_rgb_2017", "TILED": "true", "VERSION": "1.3.0"},
   })),
   opacity: 1,
-  visible: true,
+  visible: false,
 });
 const gnAtlas2014 = new TileLayer({
   title: "2014_NI",
   name: "2014_NI",
+  permalink:"2014_NI",
   source: new TileWMS(({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/doph_wms?",
     attributions: ' ',
@@ -573,6 +583,7 @@ const gnAtlas2014 = new TileLayer({
 const gnAtlas2012 = new TileLayer({
   title: "2012_NOH",
   name: "2012_NOH",
+  permalink:"2012_NOH",
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -584,6 +595,7 @@ const gnAtlas2012 = new TileLayer({
 const gnAtlas2011 = new TileLayer({
   title: "2011_NI",
   name: "2011_NI",
+  permalink:"2011_NI",
   source: new TileWMS(({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/doph_wms?",
     attributions: ' ',
@@ -595,6 +607,7 @@ const gnAtlas2011 = new TileLayer({
 const gnAtlas2010 = new TileLayer({
   title: "2010_NOH",
   name: "2010_NOH",
+  permalink:"2010_NOH",
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -606,6 +619,7 @@ const gnAtlas2010 = new TileLayer({
 const gnAtlas2009 = new TileLayer({
   title: "2009_NOH",
   name: "2009_NOH",
+  permalink:"2009_NOH",
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -617,6 +631,7 @@ const gnAtlas2009 = new TileLayer({
 const gnAtlas2002 = new TileLayer({
   title: "2002_NOH",
   name: "2002_NOH",
+  permalink:"2002_NOH",
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -629,6 +644,7 @@ const gnAtlas2002 = new TileLayer({
 const gnAtlas1990 = new TileLayer({
   title: "1990_NOH",
   name: "1990_NOH",
+  permalink:"1990_NOH",
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -641,6 +657,7 @@ const gnAtlas1990 = new TileLayer({
 const gnAtlas1980 = new TileLayer({
   title: "1980_NOH",
   name: "1980_NOH",
+  permalink:"1980_NOH",
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -652,6 +669,7 @@ const gnAtlas1980 = new TileLayer({
 const gnAtlas1970 = new TileLayer({
   title: "1970_NOH",
   name: "1970_NOH",
+  permalink:"1970_NOH",
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -663,6 +681,7 @@ const gnAtlas1970 = new TileLayer({
 const gnAtlas1957 = new TileLayer({
   title: "1957_NOH",
   name: "1957_NOH",
+  permalink:"1957_NOH",
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -674,6 +693,7 @@ const gnAtlas1957 = new TileLayer({
 const gnAtlas1937 = new TileLayer({
   title: "1937_NOH",
   name: "1937_NOH",
+  permalink:"1937_NOH",
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -830,6 +850,7 @@ map.addControl(layerSwitcher);
 const BwGroupP = new LayerGroup({
   title: "Bauw.(P)",
   name: "BauwP",
+  permalink:"BauwP",
   fold: true,
   fold: 'close',
   layers: [ exp_bw_son_pun_layer, exp_bw_ein_layer, exp_bw_que_layer, exp_bw_due_layer, exp_bw_bru_andere_layer, exp_bw_bru_nlwkn_layer, exp_bw_weh_layer, exp_bw_sle_layer],
@@ -838,6 +859,7 @@ const BwGroupP = new LayerGroup({
 const BwGroupL = new LayerGroup({
   title: "Bauw.(L)",
   name: "BauwL",
+  permalink:"BauwL",
   fold: true,
   fold: 'close',
   visible: true,  
