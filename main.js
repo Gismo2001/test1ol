@@ -2508,8 +2508,6 @@ function checkForLinkInTH(html) {
 
 
 //--------------------------------------------------------------------------------------------------------------------ContextMenu
- 
-
 var contextmenuItems = [
   {
     text: 'Karte zentrieren',
@@ -2523,14 +2521,21 @@ var contextmenuItems = [
     icon: 'data/center.png',
     callback: navigate
   },
-   {
+  {
     text: 'Koordinaten',
     classname: 'bold',
     icon: 'data/center.png',
     callback: logCoordinates32632
   },
-  '-' // this is a separator
+  '-', // Separator
+  {
+    text: 'copy',
+    classname: 'bold',
+    icon: 'data/center.png',
+    callback: copyMarked
+  }
 ];
+
 
 var contextmenu = new ContextMenu({
   width: 180,
@@ -2538,31 +2543,34 @@ var contextmenu = new ContextMenu({
 });
 map.addControl(contextmenu);
 
-
+// --- Menü dynamisch anpassen ---
 contextmenu.on('open', function (evt) {
-    
-  var contextFeature =	map.forEachFeatureAtPixel(evt.pixel, ft => ft);
+  var contextFeature = map.forEachFeatureAtPixel(evt.pixel, ft => ft);
+
+  contextmenu.clear();
+
   if (contextFeature && contextFeature.get('type') === 'removable') {
-    contextmenu.clear();
-    
+    // Menü leer oder später eigene Items ergänzen
   } else {
-    contextmenu.clear();
+    // Standard-Items wieder hinzufügen
     contextmenu.extend(contextmenuItems);
     contextmenu.extend(contextmenu.getDefaultItems());
   }
-
 });
 
+// --- Cursor ändern, wenn über Feature ---
 map.on('pointermove', function (e) {
   if (e.dragging) return;
   var pixel = map.getEventPixel(e.originalEvent);
   var hit = map.hasFeatureAtPixel(pixel);
-  map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+  map.getTargetElement().style.cursor = hit ? 'pointer' : 'default';
 });
 
+// --- Animation für zentrieren ---
 function elastic(t) {
   return Math.pow(2, -10 * t) * Math.sin((t - 0.075) * (2 * Math.PI) / 0.3) + 1;
 }
+
 
 function center(obj) {
   mapView.animate({
@@ -2572,6 +2580,7 @@ function center(obj) {
   });
 }
 
+// --- Google Maps Navigation ---
 function navigate(obj) {
   var coord4326 = transform(obj.coordinate, 'EPSG:3857', 'EPSG:4326');
   var lat = coord4326[1];
@@ -2581,18 +2590,39 @@ function navigate(obj) {
   window.open(url, '_blank');
 }
 
+
+
+// --- Koordinaten EPSG:32632 ---
 function logCoordinates32632(obj) {
-  let message;
   var coord32632 = transform(obj.coordinate, 'EPSG:3857', 'EPSG:32632');
   var x = coord32632[0].toFixed(3);
   var y = coord32632[1].toFixed(3);
-  message= `Koordinaten in EPSG:32632: ${x}, ${y}`;
+  var message = `Koordinaten in EPSG:32632: ${x}, ${y}`;
+
   note.show(message, { 
     duration: -1,
     className: 'ol-notification'
   });
   note.element.style.bottom = '50px';
-  
+}
+
+function copyMarked(obj) {
+  // Aktuelle Textauswahl holen
+  var selection = window.getSelection().toString().trim();
+
+  if (selection) {
+    // Wenn Text markiert ist → kopieren
+    navigator.clipboard.writeText(selection)
+      .then(() => {
+        note.show(`Kopiert: "${selection}"`, { duration: 2000, className: 'ol-notification' });
+      })
+      .catch(err => {
+        console.error('Fehler beim Kopieren: ', err);
+      });
+  } else {
+    // Falls nichts markiert ist → Hinweis
+    note.show("Kein Text markiert", { duration: 2000, className: 'ol-notification' });
+  }
 }
 
 
