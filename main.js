@@ -138,6 +138,7 @@ if (isMobileDevice()) {
 
 
 proj4.defs("EPSG:32632", "+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs");
+proj4.defs('EPSG:25832', '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs');
 register(proj4);
 
 
@@ -2895,35 +2896,55 @@ const vectorLayer = new ol.layer.Vector({
 map.addLayer(vectorLayer);
 
 
+
+
 function addPointFromInput() {
-  const input = prompt('Bitte geben Sie die Koordinaten im Format "x,y" ein (EPSG:3857):');
-  
-  if (input) {
-    const coords = input.split(',').map(Number);
-    
-    // Überprüfen, ob zwei gültige Zahlen eingegeben wurden
-    if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
-      drawPoint(coords);
-    } else {
-      alert('Ungültige Eingabe. Bitte verwenden Sie das Format "x,y".');
-    }
+  // Schritt 1: Koordinatensystem auswählen
+  const system = prompt(
+    'Bitte Koordinatensystem angeben:\n' +
+    ' - EPSG:4326   (Längen-/Breitengrade)\n' +
+    ' - EPSG:25832  (UTM, ETRS89)\n' +
+    ' - EPSG:32632  (UTM, WGS84)\n' +
+    ' - EPSG:3857   (Web Mercator)'
+  );
+
+  if (!system) return;
+  const crs = system.trim().toUpperCase();
+
+  // Schritt 2: Koordinaten eingeben
+  const input = prompt(`Koordinaten im Format "x,y" eingeben (${crs}):`);
+  if (!input) return;
+
+  const coords = input.split(',').map(str => Number(str.trim()));
+  if (coords.length !== 2 || coords.some(isNaN)) {
+    alert('❌ Ungültige Eingabe. Bitte verwenden Sie das Format "x,y".');
+    return;
   }
+
+  // Schritt 3: Transformation durchführen
+  let transformed;
+  if (crs === 'EPSG:4326') {
+    transformed = fromLonLat(coords);
+  } else if (crs !== 'EPSG:3857') {
+    transformed = transform(coords, crs, 'EPSG:3857');
+  } else {
+    transformed = coords;
+  }
+
+  drawPoint(transformed);
 }
 
+// --- Punkt zeichnen ---
 function drawPoint(coords) {
-  // Erstellen eines Punkt-Features
-  const point = new ol.Feature({
+  const pointFeature = new ol.Feature({
     geometry: new ol.geom.Point(coords),
   });
 
-  // Hinzufügen des Punktes zum Vektor-Source
-  vectorSource.addFeature(point);
+  vectorSource.addFeature(pointFeature);
 
-  // Karte auf den neuen Punkt zentrieren und heranzoomen
   map.getView().animate({
     center: coords,
-    zoom: 10,
-    duration: 1500
+    zoom: 13,
+    duration: 1000
   });
 }
-
