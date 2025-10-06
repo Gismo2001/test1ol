@@ -411,6 +411,7 @@ const km10scal_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/km_10_scal.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'km10scal',
   name: 'km10scal',
+  permalink:"km10scal",
   style: km10scalStyle,
   visible: true,
   minResolution: 0,
@@ -420,6 +421,7 @@ const km100scal_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/km_100_scal.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'km100scal',
   name: 'km100scal',
+  permalink:"km100scal",
   style: function(feature, resolution) {return km100scalStyle(feature, feature.get('km'), resolution);  },
   visible: true,
   minResolution: 0,
@@ -429,6 +431,7 @@ const km500scal_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/km_500_scal.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'km500scal',
   name: 'km500scal',
+  permalink:"km500scal",
   style: function(feature, resolution) {return km500scalStyle(feature, feature.get('km'), resolution);  },
   visible: true  
 });
@@ -2153,7 +2156,7 @@ var sub1 = new Bar({
       },
     }),
 
-    // Das Untermenü GeoJson
+    // Das Untermenü Punkt hinzufügen
     new Toggle({
       html: '<i class="fa fa-file"></i>',
       title: "Punkt setzen",
@@ -2187,7 +2190,7 @@ geojsonInput.addEventListener('change', function (event) {
   const files = event.target.files; // Alle ausgewählten Dateien
   if (!files.length) return;
 
-  console.log(Array.from(files));
+  //console.log(Array.from(files));
   // Iteriere über alle ausgewählten Dateien
   Array.from(files).forEach(file => {
    
@@ -2226,6 +2229,7 @@ geojsonInput.addEventListener('change', function (event) {
           source: vectorSource,
           name: sourceName,
           title: sourceName, 
+          //permalink: sourceName,
           style: layerStyle,  
         });
         map.addLayer(vectorLayer);
