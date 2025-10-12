@@ -2156,20 +2156,29 @@ var sub1 = new Bar({
       },
     }),
 
-    // Das Untermenü Punkt hinzufügen
     new Toggle({
-      html: '<i class="fa fa-file"></i>',
-      title: "Punkt setzen",
-      onToggle: function () {
-      punktButtonState = !punktButtonState; // Zustand umschalten
-      if (punktButtonState === true) {
-        addPointFromInput(); // Deine Funktion aufrufen
-        } else {
-        map.removeInteraction(dragAndDropInteraction);
-        isActive = false;
-        }
-      },
-    }),
+  html: '<i class="fa fa-circle"></i>',
+  title: "Punkt setzen",
+  onToggle: function () {
+    punktButtonState = !punktButtonState;
+
+    const coordInputDiv = document.getElementById('coordinate_selection');
+    const selectElement = document.getElementById('coord_select');
+
+    if (punktButtonState) {
+      coordInputDiv.style.display = 'block';
+
+      // Eventlistener aktivieren, wenn das Tool eingeschaltet wird
+      selectElement.addEventListener('change', handleCRSChange);
+    } else {
+      coordInputDiv.style.display = 'none';
+
+      // Listener wieder deaktivieren, um doppelte Reaktionen zu vermeiden
+      selectElement.removeEventListener('change', handleCRSChange);
+    }
+  },
+}),
+
   ]
 
 });
@@ -2897,13 +2906,95 @@ const vectorLayer = new ol.layer.Vector({
   }),
 });
 
-map.addLayer(vectorLayer);
+//map.addLayer(vectorLayer);
 
 
 
+function handleCRSChange(event) {
+  const crs = event.target.value.toUpperCase();
+  const systemLabel = crs.replace('EPSG_', 'EPSG:');
 
-function addPointFromInput() {
-  // Schritt 1: Koordinatensystem auswählen
+  const input = prompt(`Koordinaten im Format "x;y" eingeben (${systemLabel}):\nBeispiel: 52,435921°N ; 7,066653°O`);
+  if (!input) return;
+
+  // Split bei Semikolon (egal ob mit Leerzeichen)
+  const parts = input.split(';').map(str => str.trim());
+  if (parts.length !== 2) {
+    alert('❌ Ungültige Eingabe. Bitte verwenden Sie das Format "x;y".');
+    return;
+  }
+
+  // Jede Koordinate separat parsen
+  const parseCoord = (value, isLat) => {
+    // Gradzeichen & Buchstaben entfernen
+    let cleaned = value
+      .toUpperCase()
+      .replace(/[°\s]/g, '') // Gradzeichen und Leerzeichen raus
+      .replace(',', '.'); // Komma → Punkt
+
+    let sign = 1;
+
+    // Himmelsrichtungen berücksichtigen
+    if (cleaned.includes('S') || cleaned.includes('W') || cleaned.includes('O') && isLat === false) {
+      // S/W → negativ
+      sign = -1;
+    }
+
+    // Buchstaben entfernen (N,O,E,S,W)
+    cleaned = cleaned.replace(/[NOEWS]/g, '');
+
+    const num = parseFloat(cleaned);
+    if (isNaN(num)) return NaN;
+
+    return num * sign;
+  };
+
+  // EPSG:4326 ist (lat, lon) → wir erkennen N/S/E/W
+  const y = parseCoord(parts[0], true);
+  const x = parseCoord(parts[1], false);
+
+  if (isNaN(x) || isNaN(y)) {
+    alert('❌ Ungültige Koordinaten. Bitte überprüfen Sie Ihre Eingabe.');
+    return;
+  }
+
+  let transformed;
+
+  if (systemLabel === 'EPSG:4326') {
+    transformed = ol.proj.fromLonLat([x, y]); // [lon, lat]
+  } else if (systemLabel !== 'EPSG:3857') {
+    transformed = ol.proj.transform([x, y], systemLabel, 'EPSG:3857');
+  } else {
+    transformed = [x, y];
+  }
+
+  drawPoint(transformed);
+}
+
+
+// Punkt in der Karte darstellen
+function drawPoint(coords) {
+  const pointFeature = new ol.Feature({
+    geometry: new ol.geom.Point(coords),
+  });
+
+  // ⚠️ Hier muss dein eigener VectorSource-Name eingesetzt werden
+  sourceEdit.addFeature(pointFeature);
+
+  // Karte zentrieren
+  map.getView().animate({
+    center: coords,
+    zoom: 13,
+    duration: 1000,
+  });
+}
+  
+  //var div_select_epsg = document.getElementById('coordinate_selection').style.display='block';
+   //console.log(div_select_epsg);
+  //
+  //var select_epsg = document.getElementById('coord_select').display='block';
+  //console.log(select_epsg);
+  /* // Schritt 1: Koordinatensystem auswählen
   const system = prompt(
     'Bitte Koordinatensystem angeben:\n' +
     ' - EPSG:4326   (Längen-/Breitengrade)\n' +
@@ -2950,5 +3041,5 @@ function drawPoint(coords) {
     center: coords,
     zoom: 13,
     duration: 1000
-  });
-}
+  }); */
+

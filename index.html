@@ -49,29 +49,46 @@
   <body>
     <div id="map" tabindex="0"></div>
 
+ <div id="coordinate_selection" style="
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  z-index: 1100;
+  display: none;
+">
   
+  <select name="coord_choice" id="coord_select">
+    <option value="EPSG:32632" selected>EPSG:32632 (UTM, WGS84)</option>
+    <option value="EPSG:25832">EPSG:25832 (UTM, ETRS89)</option>
+    <option value="EPSG:3857">EPSG:3857 (Web Mercator)</option>
+    <option value="EPSG:4326">EPSG:4326 (Länge-/Breite)</option>
+  </select>
+</div>
+
     <div id="popup" class="ol-popup">
       <a href="#" id="popup-closer" class="ol-popup-closer"></a>
       <div id="popup-content"></div>  
     </div>
+
     <input type="file" id="geojsonInput" accept=".geojson,.json" style="display: none;" multiple>
+    <div id="custom-controls" class="custom-controls"></div>
 
+    <div id="notification">
+      <p>Es gab einen Fehler bei der Standortbestimmung.</p>
+      <p>Möchten Sie es erneut versuchen? <span id="retryButton">Erneut versuchen</span></p>
+    </div>
 
+    <div id="search-results-container">
+      <button id="close-search-results" onclick="closeSearchResults()">✖</button>
+      <h3>Suchergebnisse</h3>
+      <ul id="search-results"></ul>
+    </div>
 
-<div id="custom-controls" class="custom-controls"></div>
-
-<div id="notification">
-  <p>Es gab einen Fehler bei der Standortbestimmung.</p>
-  <p>Möchten Sie es erneut versuchen? <span id="retryButton">Erneut versuchen</span></p>
-</div>
-
-<div id="search-results-container">
-  <button id="close-search-results" onclick="closeSearchResults()">✖</button>
-  <h3>Suchergebnisse</h3>
-  <ul id="search-results"></ul>
- </div>  
-  
-  
   </body>
 
   </html>
