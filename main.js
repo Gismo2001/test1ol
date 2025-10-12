@@ -139,7 +139,9 @@ if (isMobileDevice()) {
 
 proj4.defs("EPSG:32632", "+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs");
 proj4.defs('EPSG:25832', '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs');
-register(proj4);
+proj4.defs("EPSG:31467", "+proj=tmerc +lat_0=0 +lon_0=9 +k=1.000000 +x_0=3500000 +y_0=0 +datum=potsdam +units=m +no_defs");
+proj4.defs("EPSG:31466", "+proj=tmerc +lat_0=0 +lon_0=6 +k=1.000000 +x_0=2500000 +y_0=0 +datum=potsdam +units=m +no_defs");
+ol.proj.proj4.register(proj4);
 
 
 const attribution = new Attribution({
@@ -2909,12 +2911,15 @@ const vectorLayer = new ol.layer.Vector({
 //map.addLayer(vectorLayer);
 
 
-
 function handleCRSChange(event) {
   const crs = event.target.value.toUpperCase();
-  const systemLabel = crs.replace('EPSG_', 'EPSG:');
+  const systemLabel = crs.replace('_', ':'); // sicherer als replace('EPSG_', ...)
 
-  const input = prompt(`Koordinaten im Format "x;y" eingeben (${systemLabel}):\nBeispiel: 52,435921°N ; 7,066653°O`);
+  const input = prompt(
+    `Koordinaten im Format "x;y" eingeben (${systemLabel}):\n` +
+    `Beispiel (EPSG:4326): 52,435921°N ; 7,066653°O\n` +
+    `Beispiel (EPSG:31467): 3368600,1 ; 5813210,0`
+  );
   if (!input) return;
 
   // Split bei Semikolon (egal ob mit Leerzeichen)
@@ -2924,34 +2929,40 @@ function handleCRSChange(event) {
     return;
   }
 
-  // Jede Koordinate separat parsen
+  // --- Hilfsfunktion zum Parsen von Gradkoordinaten (EPSG:4326) ---
   const parseCoord = (value, isLat) => {
-    // Gradzeichen & Buchstaben entfernen
     let cleaned = value
       .toUpperCase()
       .replace(/[°\s]/g, '') // Gradzeichen und Leerzeichen raus
       .replace(',', '.'); // Komma → Punkt
 
     let sign = 1;
-
-    // Himmelsrichtungen berücksichtigen
-    if (cleaned.includes('S') || cleaned.includes('W') || cleaned.includes('O') && isLat === false) {
-      // S/W → negativ
+    if (
+      cleaned.includes('S') ||
+      cleaned.includes('W') ||
+      (cleaned.includes('O') && isLat === false)
+    ) {
       sign = -1;
     }
 
-    // Buchstaben entfernen (N,O,E,S,W)
     cleaned = cleaned.replace(/[NOEWS]/g, '');
-
     const num = parseFloat(cleaned);
     if (isNaN(num)) return NaN;
-
     return num * sign;
   };
 
-  // EPSG:4326 ist (lat, lon) → wir erkennen N/S/E/W
-  const y = parseCoord(parts[0], true);
-  const x = parseCoord(parts[1], false);
+  let x, y;
+
+  // --- Automatische Zuordnung der Eingabereihenfolge ---
+  if (systemLabel === 'EPSG:4326') {
+    // Geografische Koordinaten → [lat; lon]
+    y = parseCoord(parts[0], true);   // Breitengrad
+    x = parseCoord(parts[1], false);  // Längengrad
+  } else {
+    // Metrische Koordinaten → [Rechtswert; Hochwert]
+    x = parseFloat(parts[0].replace(',', '.')); // Easting
+    y = parseFloat(parts[1].replace(',', '.')); // Northing
+  }
 
   if (isNaN(x) || isNaN(y)) {
     alert('❌ Ungültige Koordinaten. Bitte überprüfen Sie Ihre Eingabe.');
@@ -2960,8 +2971,11 @@ function handleCRSChange(event) {
 
   let transformed;
 
+  // --- Transformation in WebMercator ---
   if (systemLabel === 'EPSG:4326') {
     transformed = ol.proj.fromLonLat([x, y]); // [lon, lat]
+  } else if (systemLabel === 'EPSG:31466' || systemLabel === 'EPSG:31467') {
+    transformed = ol.proj.transform([x, y], systemLabel, 'EPSG:3857');
   } else if (systemLabel !== 'EPSG:3857') {
     transformed = ol.proj.transform([x, y], systemLabel, 'EPSG:3857');
   } else {
@@ -2971,8 +2985,7 @@ function handleCRSChange(event) {
   drawPoint(transformed);
 }
 
-
-// Punkt in der Karte darstellen
+// --- Punkt in der Karte darstellen ---
 function drawPoint(coords) {
   const pointFeature = new ol.Feature({
     geometry: new ol.geom.Point(coords),
@@ -2988,7 +3001,7 @@ function drawPoint(coords) {
     duration: 1000,
   });
 }
-  
+
   //var div_select_epsg = document.getElementById('coordinate_selection').style.display='block';
    //console.log(div_select_epsg);
   //
