@@ -279,7 +279,7 @@ let isActive = false; // Variable, um den Aktivierungsstatus der Geolokalisierun
 const exp_gew_fla_vecLayer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_gew_info_fla.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'Gewässerflächen', // Titel für den Layer-Switcher
-  
+  permalink: 'exp_gew_fla',
   name: 'exp_gew_fla',
   style: exp_gew_fla_vecStyle,
   visible: false
@@ -289,6 +289,7 @@ const exp_gew_biotope_noh = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_bw_biotope_noh.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'Biotope_Noh', // Titel für den Layer-Switcher
   name: 'exp_bw_biotope_noh',
+  permalink: 'exp_bw_biotope_noh',
   style: exp_gew_fla_vecStyle,
   visible: false
 });
@@ -304,7 +305,7 @@ const exp_allgm_fsk_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_allgm_fsk.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'fsk',
   name: 'fsk', 
-  permalink:"fsk", 
+  permalink:'fsk', 
   style: getStyleForArtFSK,
   visible: false,
   minResolution: 0,
@@ -313,7 +314,7 @@ const exp_allgm_fsk_layer = new VectorLayer({
 const exp_bw_son_lin_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_bw_son_lin.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }), 
   title: 'Sonstig, Linien',
-  permalink:"son_lin",  
+  permalink:'son_lin',  
   name: 'son_lin',
   style: getStyleForArtSonLin,
   visible: false
@@ -323,7 +324,7 @@ const exp_gew_umn_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_gew_umn.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'U-Maßnahmen', 
   name: 'gew_umn',
-  permalink:"gew_umn",
+  permalink: 'gew_umn',
   style: getStyleForArtUmn,
   visible: false
 });
@@ -331,7 +332,7 @@ const exp_gew_info_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_gew_info.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'Gew, Info', 
   name: 'gew_info',
-  permalink:"gew_info", 
+  permalink: 'gew_info', 
   style: getStyleForArtGewInfo,
   visible: false
 });
@@ -347,7 +348,7 @@ const exp_bw_son_pun_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url: function (extent) {return './myLayers/exp_bw_son_pun.geojson' + '?bbox=' + extent.join(','); },strategy: LoadingStrategy.bbox}),
   title: 'Sonstige, Punkte', 
   name: 'son_pun', 
-  permalink:"son_pun", 
+  permalink:'son_pun', 
   style: getStyleForArtSonPun,
   visible: false
 });
@@ -355,7 +356,7 @@ const exp_bw_ein_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url: function (extent) {return './myLayers/exp_bw_ein.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'Einläufe', 
   name: 'ein', 
-  permalink:"ein",  
+  permalink:'ein',  
   style: getStyleForArtEin,
   visible: false
 });
@@ -363,7 +364,7 @@ const exp_bw_que_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url: function (extent) {return './myLayers/exp_bw_que.geojson' + '?bbox=' + extent.join(',');},strategy: LoadingStrategy.bbox}),
   title: 'Querung', 
   name: 'que', 
-  permalink:"que",  
+  permalink:'que',  
   style: queStyle,
   visible: false
 });
@@ -371,7 +372,7 @@ const exp_bw_due_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url: function (extent) {return './myLayers/exp_bw_due.geojson' + '?bbox=' + extent.join(',');},strategy: LoadingStrategy.bbox }),
   title: 'Düker', 
   name: 'due', 
-  permalink:"due",  
+  permalink:'due',  
   style: dueStyle,
   visible: false
 });
@@ -379,7 +380,7 @@ const exp_bw_weh_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url: function (extent) {return './myLayers/exp_bw_weh.geojson' + '?bbox=' + extent.join(',');},strategy: LoadingStrategy.bbox}),
   title: 'Wehr', 
   name: 'weh', 
-  permalink:"weh",
+  permalink:'weh',
   style: wehStyle,
   visible: false
 });
@@ -387,7 +388,7 @@ const exp_bw_bru_nlwkn_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/exp_bw_bru_nlwkn.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'Brücke (NLWKN)', 
   name: 'bru_nlwkn', // Titel für den Layer-Switcher
-  permalink:"bru_nlwkn",  // Um Permalink zu setzen
+  permalink:'bru_nlwkn',  // Um Permalink zu setzen
   style: bru_nlwknStyle,
   visible: false
 });
@@ -395,7 +396,7 @@ const exp_bw_bru_andere_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url:function (extent) {return './myLayers/exp_bw_bru_andere.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'Brücke (andere)',
   name: 'bru_andere', 
-  permalink:"bru_andere",  
+  permalink:'bru_andere',  
   style: bruAndereStyle,
   visible: false
 });
@@ -404,7 +405,7 @@ const exp_bw_sle_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(),url:function (extent) {return './myLayers/exp_bw_sle.geojson' + '?bbox=' + extent.join(',');},strategy: LoadingStrategy.bbox }),
   title: 'Schleuse', 
   name: 'sle', 
-  permalink:"sle", 
+  permalink:'sle', 
   style: sleStyle,
   visible: true, 
 });
@@ -413,7 +414,7 @@ const km10scal_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/km_10_scal.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'km10scal',
   name: 'km10scal',
-  permalink:"km10scal",
+  permalink:'km10scal',
   style: km10scalStyle,
   visible: true,
   minResolution: 0,
@@ -423,7 +424,7 @@ const km100scal_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/km_100_scal.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'km100scal',
   name: 'km100scal',
-  permalink:"km100scal",
+  permalink:'km100scal',
   style: function(feature, resolution) {return km100scalStyle(feature, feature.get('km'), resolution);  },
   visible: true,
   minResolution: 0,
@@ -433,7 +434,7 @@ const km500scal_layer = new VectorLayer({
   source: new VectorSource({format: new GeoJSON(), url: function (extent) {return './myLayers/km_500_scal.geojson' + '?bbox=' + extent.join(','); }, strategy: LoadingStrategy.bbox }),
   title: 'km500scal',
   name: 'km500scal',
-  permalink:"km500scal",
+  permalink:'km500scal',
   style: function(feature, resolution) {return km500scalStyle(feature, feature.get('km'), resolution);  },
   visible: true  
 });
@@ -441,7 +442,7 @@ const km500scal_layer = new VectorLayer({
 const wmsNsgLayer = new TileLayer({
   title: "NSG",
   name: "NSG",
-  permalink:"NSG",  
+  permalink:'NSG',  
   source: new TileWMS({
     url: 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Natur_wms/MapServer/WMSServer',
     params: {
@@ -457,7 +458,7 @@ const wmsNsgLayer = new TileLayer({
 const wmsLsgLayer = new TileLayer({
   title: "LSG",
   name: "LSG",
-  permalink:"LSG",  
+  permalink:'LSG',  
   source: new TileWMS({
     url: 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Natur_wms/MapServer/WMSServer',
     params: {
@@ -472,9 +473,9 @@ const wmsLsgLayer = new TileLayer({
   opacity: .5,
 });
 const wmsUesgLayer = new TileLayer({
-  title: "ÜSG",
-  name: "UESG",
-  permalink:"UESG",
+  title: 'ÜSG',
+  name: 'UESG',
+  permalink:'UESG',
   source: new TileWMS({
     url:  'https://www.umweltkarten-niedersachsen.de/arcgis/services/HWSchutz_wms/MapServer/WMSServer',
     params: {
@@ -488,9 +489,9 @@ const wmsUesgLayer = new TileLayer({
   opacity: .5,
 });
 const wmsWrrlFgLayer = new TileLayer({
-  title: "Fließgew.",
-  name: "Fließgew",
-  permalink:"Fließgew",
+  title: 'Fließgew.',
+  name: 'Fließgew',
+  permalink:'Fließgew',
   source: new TileWMS({
     url:  'https://www.umweltkarten-niedersachsen.de/arcgis/services/WRRL_wms/MapServer/WMSServer',
     params: {
@@ -504,9 +505,9 @@ const wmsWrrlFgLayer = new TileLayer({
   opacity: 1,
 });
 const wmsGewWmsFgLayer = new TileLayer({
-  title: "GewWms",
-  name: "Gewaesser",
-  permalink:"Gewaesser",
+  title: 'GewWms',
+  name: 'Gewaesser',
+  permalink:'Gewaesser',
   source: new TileWMS({
     url:  'https://www.umweltkarten-niedersachsen.de/arcgis/services/Hydro_wms/MapServer/WMSServer',
     params: {
@@ -522,9 +523,9 @@ const wmsGewWmsFgLayer = new TileLayer({
 
 
 const wmsBiotopeEL = new TileLayer({
-  title: "Biotope_EL",
-  name: "Biotope_EL",
-  permalink:"Biotope_EL",  
+  title: 'Biotope_EL',
+  name: 'Biotope_EL',
+  permalink:'Biotope_EL',  
   source: new TileWMS({
   url:  'https://geodaten.emsland.de/core-services/services/lkel_fb67_naturschutz_und_forsten_wms',
   params: {
@@ -539,9 +540,9 @@ const wmsBiotopeEL = new TileLayer({
 });
 
 const gnAtlas2023 = new TileLayer({
-  title: "2023_NI",
-  name: "2023_NI",
-  permalink:"2023_NI",
+  title: '2023_NI',
+  name: '2023_NI',
+  permalink:'2023_NI',
   source: new TileWMS(({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/dop_wms",
     attributions: 'Orthophotos Niedersachsen, LGLN',
@@ -551,9 +552,9 @@ const gnAtlas2023 = new TileLayer({
   visible: false,
 });
 const gnAtlas2020 = new TileLayer({
-  title: "2020_NI",
-  name: "2020_NI",
-  permalink:"2020_NI",
+  title: '2020_NI',
+  name: '2020_NI',
+  permalink:'2020_NI',
   source: new TileWMS(({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/doph_wms?",
     attributions: ' ',
@@ -563,9 +564,9 @@ const gnAtlas2020 = new TileLayer({
   visible: false,
 });
 const gnAtlas2017 = new TileLayer({
-  title: "2017_NI",
-  name: "2017_NI",
-  permalink:"2017_NI",
+  title: '2017_NI',
+  name: '2017_NI',
+  permalink:'2017_NI',
   source: new TileWMS(({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/doph_wms?",
     attributions: ' ',
@@ -575,9 +576,9 @@ const gnAtlas2017 = new TileLayer({
   visible: false,
 });
 const gnAtlas2014 = new TileLayer({
-  title: "2014_NI",
-  name: "2014_NI",
-  permalink:"2014_NI",
+  title: '2014_NI',
+  name: '2014_NI',
+  permalink:'2014_NI',
   source: new TileWMS(({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/doph_wms?",
     attributions: ' ',
@@ -586,10 +587,11 @@ const gnAtlas2014 = new TileLayer({
   opacity: 1,
   visible: false,
 });
+
 const gnAtlas2012 = new TileLayer({
-  title: "2012_NOH",
-  name: "2012_NOH",
-  permalink:"2012_NOH",
+  title: '2012_NOH',
+  name: '2012_NOH',
+  permalink: '2012_NOH',
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -599,9 +601,9 @@ const gnAtlas2012 = new TileLayer({
   visible: false,
 });
 const gnAtlas2011 = new TileLayer({
-  title: "2011_NI",
-  name: "2011_NI",
-  permalink:"2011_NI",
+  title: '2011_NI',
+  name: '2011_NI',
+  permalink:'2011_NI',
   source: new TileWMS(({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/doph_wms?",
     attributions: ' ',
@@ -611,9 +613,9 @@ const gnAtlas2011 = new TileLayer({
   visible: false,
 });
 const gnAtlas2010 = new TileLayer({
-  title: "2010_NOH",
-  name: "2010_NOH",
-  permalink:"2010_NOH",
+  title: '2010_NOH',
+  name: '2010_NOH',
+  permalink:'2010_NOH',
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -623,9 +625,9 @@ const gnAtlas2010 = new TileLayer({
   visible: false,
 });
 const gnAtlas2009 = new TileLayer({
-  title: "2009_NOH",
-  name: "2009_NOH",
-  permalink:"2009_NOH",
+  title: '2009_NOH',
+  name: '2009_NOH',
+  permalink:'2009_NOH',
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -635,9 +637,9 @@ const gnAtlas2009 = new TileLayer({
   visible: false,
 });
 const gnAtlas2002 = new TileLayer({
-  title: "2002_NOH",
-  name: "2002_NOH",
-  permalink:"2002_NOH",
+  title: '2002_NOH',
+  name: '2002_NOH',
+  permalink:'2002_NOH',
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -648,9 +650,9 @@ const gnAtlas2002 = new TileLayer({
 });
 
 const gnAtlas1990 = new TileLayer({
-  title: "1990_NOH",
-  name: "1990_NOH",
-  permalink:"1990_NOH",
+  title: '1990_NOH',
+  name: '1990_NOH',
+  permalink:'1990_NOH',
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -661,9 +663,9 @@ const gnAtlas1990 = new TileLayer({
 });
 
 const gnAtlas1980 = new TileLayer({
-  title: "1980_NOH",
-  name: "1980_NOH",
-  permalink:"1980_NOH",
+  title: '1980_NOH',
+  name: '1980_NOH',
+  permalink:'1980_NOH',
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -673,9 +675,9 @@ const gnAtlas1980 = new TileLayer({
   visible: false,
 });
 const gnAtlas1970 = new TileLayer({
-  title: "1970_NOH",
-  name: "1970_NOH",
-  permalink:"1970_NOH",
+  title: '1970_NOH',
+  name: '1970_NOH',
+  permalink:'1970_NOH',
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -685,9 +687,9 @@ const gnAtlas1970 = new TileLayer({
   visible: false,
 });
 const gnAtlas1957 = new TileLayer({
-  title: "1957_NOH",
-  name: "1957_NOH",
-  permalink:"1957_NOH",
+  title: '1957_NOH',
+  name: '1957_NOH',
+  permalink:'1957_NOH',
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -697,9 +699,9 @@ const gnAtlas1957 = new TileLayer({
   visible: false,
 });
 const gnAtlas1937 = new TileLayer({
-  title: "1937_NOH",
-  name: "1937_NOH",
-  permalink:"1937_NOH",
+  title: '1937_NOH',
+  name: '1937_NOH',
+  permalink:'1937_NOH',
   source: new TileWMS(({
       url: "https://geo.grafschaft.de/arcgis/services/Migratrion_Okt_2020/BAS_Luftbilder_2/MapServer/WMSServer",
       attributions: ' ',
@@ -710,9 +712,9 @@ const gnAtlas1937 = new TileLayer({
 });
 
 var baseDE_layer = new TileLayer({
-  title: "Base-DE",
-  name: "baseDe",
-  permalink:"baseDE",
+  title: 'Base-DE',
+  name: 'baseDe',
+  permalink:'baseDE',
   type: 'base',
   source: new TileWMS({
     url: "https://sgx.geodatenzentrum.de/wms_basemapde",
@@ -727,9 +729,9 @@ var baseDE_layer = new TileLayer({
   visible: false,
 });
 var dop20ni_layer = new TileLayer({
-  title: "DOP20 NI",
-  name: "dop20ni",
-  permalink:"dop20ni",
+  title: 'DOP20 NI',
+  name: 'dop20ni',
+  permalink:'dop20ni',
   type: 'base',
   source: new TileWMS({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/dop_wms",
@@ -744,9 +746,9 @@ var dop20ni_layer = new TileLayer({
   visible: false,  
 });
 const googleSatLayer = new TileLayer({
-  title: "GoogleSat",
-  name: "googleSat",
-  permalink:"googleSat",
+  title: 'GoogleSat',
+  name: 'googleSat',
+  permalink:'googleSat',
   type: 'base',
   baseLayer: false,
   source: new TileImage({url: 'http://mt1.google.com/vt/lyrs=s&hl=pl&&x={x}&y={y}&z={z}' }),
@@ -754,9 +756,9 @@ const googleSatLayer = new TileLayer({
   visible: false,
 });
 const googleHybLayer = new TileLayer({
-  title: "GoogleHybrid",
-  name: "googleHybrid",
-  permalink:"googleHybrid",
+  title: 'GoogleHybrid',
+  name: 'googleHybrid',
+  permalink:'googleHybrid',
   type: 'base',
   baseLayer: false,
   opacity: 1,
@@ -766,7 +768,7 @@ const googleHybLayer = new TileLayer({
 const ESRIWorldImagery = new TileLayer({
   title: 'ESRI-Sat',
   name: 'ESRISat',
-  permalink:"ESRISat",
+  permalink:'ESRISat',
   type: 'base',
   source: new XYZ({
     attributions: 'Powered by Esri',
@@ -778,7 +780,7 @@ const ESRIWorldImagery = new TileLayer({
 const ESRIWorldGrey = new TileLayer({
   title: 'ESRI-Grey',
   name: 'ESRIGrey',
-  permalink:"ESRIGrey",
+  permalink:'ESRIGrey',
   type: 'base',
   source: new XYZ({
       attributions: 'Powered by Esri',
@@ -789,9 +791,9 @@ const ESRIWorldGrey = new TileLayer({
 });
 
 const osmTileGr = new TileLayer({
-  title: "osm-grey",
-  name: "osmgrey",
-  permalink:"osmgrey",
+  title: 'osm-grey',
+  name: 'osmgrey',
+  permalink:'osmgrey',
   className: 'bw',
   type: 'base',
   source: new OSM({
@@ -802,9 +804,9 @@ const osmTileGr = new TileLayer({
   visible: false,
 });
 const osmTileCr = new TileLayer({
-  title: "osm-color",
-  name: "osmcolor",
-  permalink:"osmcolor",
+  title: 'osm-color',
+  name: 'osmcolor',
+  permalink:'osmcolor',
   type: 'base',
   source: new OSM({
       url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -815,9 +817,9 @@ const osmTileCr = new TileLayer({
 });
 
 var Alkis_layer = new TileLayer({
-  title: "ALKIS",
-  name: "ALKIS",
-  permalink:"ALKIS",
+  title: 'ALKIS',
+  name: 'ALKIS',
+  permalink:'ALKIS',
   type: 'base',
   source: new TileWMS({
     url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/alkis_wms?",
@@ -854,54 +856,54 @@ map.addControl(layerSwitcher);
 
 //----------------------------------------------------------------------------------------------------Layergruppen
 const BwGroupP = new LayerGroup({
-  title: "Bauw.(P)",
-  name: "BauwP",
-  permalink:"BauwP",
+  title: 'Bauw.(P)',
+  name: 'BauwP',
+  permalink:'BauwP',
   fold: true,
   fold: 'close',
   layers: [ exp_bw_son_pun_layer, exp_bw_ein_layer, exp_bw_que_layer, exp_bw_due_layer, exp_bw_bru_andere_layer, exp_bw_bru_nlwkn_layer, exp_bw_weh_layer, exp_bw_sle_layer],
   
 });
 const BwGroupL = new LayerGroup({
-  title: "Bauw.(L)",
-  name: "BauwL",
-  permalink:"BauwL",
+  title: 'Bauw.(L)',
+  name: 'BauwL',
+  permalink:'BauwL',
   fold: true,
   fold: 'close',
   visible: true,  
   layers: [ gehoelz_vecLayer, exp_gew_biotope_noh, exp_gew_fla_vecLayer, exp_gew_umn_layer, exp_bw_son_lin_layer, exp_gew_info_layer ]
 });
 const wmsLayerGroup = new LayerGroup({
-  title: "WMS-Lay",
-  name: "WMS-Lay",
-  permalink:"WMS-Lay",
+  title: 'WMS-Lay',
+  name: 'WMS-Lay',
+  permalink:'WMS-Lay',
   fold: true,
   fold: 'close',
   visible: true,
   layers: [ Alkis_layer, wmsLsgLayer, wmsNsgLayer, wmsBiotopeEL, wmsUesgLayer, wmsWrrlFgLayer, wmsGewWmsFgLayer ]
 });
 const GNAtlasGroup = new LayerGroup({
-  title: "Luftbilder",
-  name: "Luftbilder",
-  permalink:"Luftbilder",
+  title: 'Luftbilder',
+  name: 'Luftbilder',
+  permalink:'Luftbilder',
   fold: true,
   fold: 'close',
   visible: false,
   layers: [gnAtlas1937, gnAtlas1957, gnAtlas1970, gnAtlas1980,  gnAtlas1990, gnAtlas2002, gnAtlas2009, gnAtlas2010,gnAtlas2011, gnAtlas2012, gnAtlas2014, gnAtlas2017, gnAtlas2020, gnAtlas2023]
 });
 const kmGroup = new LayerGroup({
-  title: "Station",
-  name: "Station",
-  permalink:"Station",
+  title: 'Station',
+  name: 'Station',
+  permalink:'Station',
   fold: true,
   fold: 'close',
   visible: true,
   layers: [km10scal_layer, km100scal_layer, km500scal_layer]
 });
 const BaseGroup = new LayerGroup({
-  title: "Base",
-  name: "Base",
-  permalink:"Base",
+  title: 'Base',
+  name: 'Base',
+  permalink:'Base',
   fold: true,
   fold: 'close',
   visible: true,
@@ -2804,14 +2806,22 @@ edit.on('info', function(e) {
     const type = geometry.getType();
 
     if (type === 'Point') {
-      const coord3857 = geometry.getCoordinates();
-      const coord4326 = toLonLat(coord3857);
-      const coord32632 = transform(coord3857, 'EPSG:3857', 'EPSG:32632');
+  const coord3857 = geometry.getCoordinates();
+
+  // Zu anderen Koordinatensystemen transformieren
+  const coord4326 = toLonLat(coord3857); // EPSG:4326 = Längen-/Breitengrad
+  const coord25832 = transform(coord3857, 'EPSG:3857', 'EPSG:25832'); // ETRS89 / UTM Zone 32N
+  const coord32632 = transform(coord3857, 'EPSG:3857', 'EPSG:32632'); // WGS84 / UTM Zone 32N
+
+  // HTML für Ausgabe
+  message += `
+    – <b>Koordinaten:</b><br/>
+    <b>EPSG:4326 (WGS84):</b> ${coord4326[1].toFixed(6)}, ${coord4326[0].toFixed(6)}<br/>
+    <b>EPSG:3857 (Web Mercator):</b> ${coord3857[1].toFixed(2)}, ${coord3857[0].toFixed(2)}<br/>
+    <b>EPSG:25832 u. 32632 (WGS 84, ETRS89 / UTM32):</b> ${coord25832[1].toFixed(2)}, ${coord25832[0].toFixed(2)}<br/>
     
-      message += ` – Koordinaten:<br/>
-      <b>EPSG:4326</b>: ${coord4326[1].toFixed(6)}, ${coord4326[0].toFixed(6)}
-      <b>EPSG:3857</b>: ${coord3857[1].toFixed(2)}, ${coord3857[0].toFixed(2)}<br/>
-      <b>EPSG:32632</b>: ${coord32632[1].toFixed(2)}, ${coord32632[0].toFixed(2)}`;
+  `;
+      
       
     } else if (type === 'LineString') {
       const length = getLength(geometry);
@@ -2918,8 +2928,10 @@ function handleCRSChange(event) {
 
   const input = prompt(
     `Koordinaten im Format "x;y" eingeben (${systemLabel}):\n` +
-    `Beispiel (EPSG:4326): 52,435921°N ; 7,066653°O\n` +
-    `Beispiel (EPSG:31467): 3368600,1 ; 5813210,0`
+    `Beispiel (EPSG:4326):  52.564809, 7.068310\n` +
+    `Beispiel (EPSG:31467): 3368600,1 ; 5813210,0\n` +
+    `Beispiel (EPSG:25832): 3368600,1 ; 5813210,0\n` +
+    `Beispiel (EPSG:32632): 369123,92 ; 5826024,92 ; `
   );
   if (!input) return;
 
@@ -2979,6 +2991,11 @@ function handleCRSChange(event) {
     transformed = ol.proj.transform([x, y], systemLabel, 'EPSG:3857');
   } else if (systemLabel !== 'EPSG:3857') {
     transformed = ol.proj.transform([x, y], systemLabel, 'EPSG:3857');
+  } else if (systemLabel !== 'EPSG:32632') {
+    transformed = ol.proj.transform([x, y], systemLabel, 'EPSG:3857');
+  } else if (systemLabel !== 'EPSG:25832') {
+    transformed = ol.proj.transform([x, y], systemLabel, 'EPSG:3857');
+    
   } else {
     transformed = [x, y];
   }

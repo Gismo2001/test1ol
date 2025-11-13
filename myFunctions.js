@@ -1,4 +1,3 @@
-
 import proj4 from 'proj4';
 import { register } from 'ol/proj/proj4';
 import { getArea } from 'ol/sphere';
@@ -9,7 +8,6 @@ import Fill from 'ol/style/Fill';
 
 proj4.defs('EPSG:25832', '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs');
 register(proj4); // OpenLayers weiß jetzt, wie EPSG:25832 funktioniert
-
 
 export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
     const a = 6378137;
@@ -45,7 +43,6 @@ export function UTMToLatLon_Fix(east, north, zone, isNorthernHemisphere) {
 
     return `${lat.toFixed(6)},${lon.toFixed(6)}`;
 }
-
 export function myFuncInfoDiv(results, popup, content, selectInteraction, coordinates, map) {
                   
   const resultsContainer = document.getElementById('search-results-container');
@@ -76,22 +73,18 @@ export function myFuncInfoDiv(results, popup, content, selectInteraction, coordi
     
   }
 }
-
 function createFotoLink(url, label) {
   if (url && url.trim() !== '') {
     return `<a href="${url}" onclick="window.open('${url}', '_blank'); return false;">${label}</a>`;
   }
   return label;
 }
-
 function getBeschreibLangHTML(value) {
   if (value && value.trim() !== '') {
     return `<br><u>Beschreib (lang): </u>${value}`;
   }
   return '';
 }
-
-
 export function generatePopupHTML(feature, layer) {
   
   const layerName = layer?.get?.('name') || 'unbekannt';
@@ -394,8 +387,6 @@ return `
   `;
   return html;
 }
-
-
 function createResultListItem(layer, layerTitle, name, bwId, feature, map, popup, content, selectInteraction) {
   const listItem = document.createElement('li');
   if (layerTitle === 'fot') {
@@ -441,7 +432,6 @@ function createResultListItem(layer, layerTitle, name, bwId, feature, map, popup
   listItem.addEventListener('dblclick', () => zoomToFeature(feature, map));
   return listItem;
 }
-
 export function zoomToFeature(feature, map) {
   
   const geometry = feature.getGeometry();
@@ -474,8 +464,6 @@ export function zoomToFeature(feature, map) {
     feature.setStyle(originalStyle || null); // null verwendet den Layer-Stil
   }, 1500);
 }
-
-
 export function makeDivDraggable(div, handle) {
   let offsetX = 0, offsetY = 0, startX = 0, startY = 0;
 
