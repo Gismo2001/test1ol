@@ -170,7 +170,7 @@ const map = new Map({
 
 var note = new Notification(
   {
-    //className: 'ol-notification',
+    className: 'ol-notification',
     //autoClose: false,
     closeBox: true,
     closeBoxTitle: 'close',
@@ -198,6 +198,16 @@ map.addControl(permalinkControl);
 // Direkt nach dem Laden einmal den Hash löschen
 //window.location.hash = '';
 
+permalinkControl.element.addEventListener('click', function() {
+  const link = permalinkControl.getLink()
+  navigator.clipboard.writeText(link);
+  note.show(`Kopiert und in url an-/ausgeschaltet! `, { duration: 2000, className: 'ol-notification' });
+  // toggle CSS-Klasse "active"
+  permalinkControl.element.classList.toggle('active');
+});
+
+
+
 // ===== Automatisch für alle Layers mit permalink: Sichtbarkeit + Opacity speichern =====
 map.getLayers().forEach(layer => {
   const key = layer.get('permalink');
@@ -210,15 +220,7 @@ map.getLayers().forEach(layer => {
     });
   }
 });
-
-permalinkControl.element.addEventListener('click', function() {
-  console.log('Permalink clicked');
-  // toggle CSS-Klasse "active"
-  permalinkControl.element.classList.toggle('active');
-});
-
 const permalinkButton = permalinkControl.element.querySelector('a');
-
 
 
 //_____-----------------------------------------------------------------APrint
@@ -961,7 +963,7 @@ map.addInteraction(selectInteraction);
 var toggleButtonU = new Toggle({
   html: '<i class="icon fa-fw fa fa-arrow-circle-down" aria-hidden="true"></i>',
   className: "select",
-  title: "Select Info",
+  title: "WMS Info",
   active: true, // Button wird beim Start als aktiv gesetzt
   interaction: selectInteraction,
   onToggle: function(active) {
@@ -1838,16 +1840,18 @@ function searchFeaturesByTextBw(searchText) {
       let source = layer.getSource();
       if (!source) return;
       let features = source.getFeatures();
-      features.forEach(feature => {
-        let properties = feature.getProperties();
-        let name = properties.name ? properties.name.toLowerCase() : '';
-        let beschreib = properties.beschreib ? properties.beschreib.toLowerCase() : '';
-        let bauart = properties.bauart ? properties.bauart.toLowerCase() : '';
-        let searchTextLower = searchText.toLowerCase(); // Suchtext ebenfalls in Kleinbuchstaben umwandeln
-        if (name.includes(searchTextLower) || beschreib.includes(searchTextLower) || bauart.includes(searchTextLower)) {
-            matchingFeatures.push({ feature, layer });
-        }
-    });
+        features.forEach(feature => {
+          let properties = feature.getProperties();
+          let name = properties.name ? properties.name.toLowerCase() : '';
+          let beschreib = properties.beschreib ? properties.beschreib.toLowerCase() : '';
+          
+          let bauart = properties.bauart ? properties.bauart.toLowerCase() : '';
+          let searchTextLower = searchText.toLowerCase(); // Suchtext ebenfalls in Kleinbuchstaben umwandeln
+          if (name.includes(searchTextLower) || beschreib.includes(searchTextLower) || bauart.includes(searchTextLower)) 
+            {
+             matchingFeatures.push({ feature, layer });
+            }
+        });
   });
   // Ergebnisse anzeigen
   displaySearchResultsBw(matchingFeatures);
@@ -2187,6 +2191,53 @@ var sub1 = new Bar({
   ]
 
 });
+var sub2 = new Bar({
+  toggleOne: true,
+  controls: [
+    new Toggle({
+      html: '<i class="fa fa-envelope-open" aria-hidden="true"></i>',
+      title: "Geojson-Datei laden",
+      onToggle: function () {
+        geojsonInput.click(); // Öffnet den Dateiauswahldialog
+        
+      }
+    }),
+    new Toggle({
+      //<i class="fa-solid fa-ruler"></i>
+      html: '  <i class="fa fa-font-awesome"></i>  ',
+      title: "Messung",
+      onToggle: function (b) {
+        vectorEdit.set('displayInLayerSwitcher', true);
+        vectorEdit.setVisible(true); // Optional: direkt einblenden
+        const isEditing = edit.get('edition');
+        if (!isEditing) {
+          edit.set('edition', true);
+          edit.setActive(true);
+          if (!edit.getInteraction('ModifySelect')) {
+            edit.addInteraction('ModifySelect');
+          }
+          editBarAnAus = true;
+          editBarElement.style.display = ''; 
+        } else {
+          edit.set('edition', false);
+          editBarAnAus = false;
+          editBarElement.style.display = 'none';
+          edit.setActive(false);
+          edit.deactivateControls(); 
+          const select = edit.getInteraction('Select');
+          if (select) select.getFeatures().clear();
+          const interaction = edit.getInteraction('ModifySelect');
+          if (interaction) {
+            interaction.setActive(false);
+          }
+
+        }
+      }
+    })
+  ]
+});
+let geojsonCounter = 0;
+
 
 // Input-Feld (versteckt im HTML, z. B. im Body)
 //const geojsonInput = document.createElement('input');
@@ -2266,53 +2317,6 @@ geojsonInput.addEventListener('change', function (event) {
     reader.readAsText(file); // Datei einlesen
   });
 });
-
-var sub2 = new Bar({
-  toggleOne: true,
-  controls: [
-    new Toggle({
-      html: '<i class="fa fa-envelope-open" aria-hidden="true"></i>',
-      title: "Geojson-Datei laden",
-      onToggle: function () {
-        geojsonInput.click(); // Öffnet den Dateiauswahldialog
-        
-      }
-    }),
-    new Toggle({
-      //<i class="fa-solid fa-ruler"></i>
-      html: '  <i class="fa fa-font-awesome"></i>  ',
-      title: "Messung",
-      onToggle: function (b) {
-        vectorEdit.set('displayInLayerSwitcher', true);
-        vectorEdit.setVisible(true); // Optional: direkt einblenden
-        const isEditing = edit.get('edition');
-        if (!isEditing) {
-          edit.set('edition', true);
-          edit.setActive(true);
-          if (!edit.getInteraction('ModifySelect')) {
-            edit.addInteraction('ModifySelect');
-          }
-          editBarAnAus = true;
-          editBarElement.style.display = ''; 
-        } else {
-          edit.set('edition', false);
-          editBarAnAus = false;
-          editBarElement.style.display = 'none';
-          edit.setActive(false);
-          edit.deactivateControls(); 
-          const select = edit.getInteraction('Select');
-          if (select) select.getFeatures().clear();
-          const interaction = edit.getInteraction('ModifySelect');
-          if (interaction) {
-            interaction.setActive(false);
-          }
-
-        }
-      }
-    })
-  ]
-});
-let geojsonCounter = 0;
 
 //--------------------------------------------------------------------------Drag and Drop
 let dragAndDropInteraction;
