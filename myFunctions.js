@@ -91,10 +91,12 @@ export function generatePopupHTML(feature, layer) {
   let latLonResult;
   const rwert = feature.get('rwert');
   const hwert = feature.get('hwert');
+ 
   
   if (rwert && hwert) {
     latLonResult = UTMToLatLon_Fix(rwert, hwert, 32, true);
   } else {
+    // Hier noch weitere Ausgaben für weitere Koordinatensysteme einfügen, falls benötigt
     const geom = feature.getGeometry();
     const center = geom.getType() === 'Point'
       ? geom.getCoordinates()

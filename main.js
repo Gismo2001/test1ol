@@ -1190,10 +1190,12 @@ map.on('click', function (evt) {
     const uniqueResults = getUniqueFeatures(foundResults);
 
     if (uniqueResults.length === 1) {
+      
       const { feature, layer } = uniqueResults[0];
       document.getElementById('search-results-container').style.display = 'none';
 
       popup.setPosition(coordinates);
+      console.log(feature, layer)
       content.innerHTML = generatePopupHTML(feature, layer);
 
       selectInteraction.getFeatures().clear();
