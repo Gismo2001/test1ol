@@ -187,7 +187,8 @@ var permalinkControl = new Permalink({
   anchor: true,   // setzt ein # in die URL
   layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
   updateUrl: false,   // wichtig!
-  urlreplace: true, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
+  //urlreplace: false, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
+  fixed: 4,
   //geohash: true,
   //fixed: 2,
   groups: true
@@ -206,7 +207,6 @@ permalinkControl.element.addEventListener('click', function() {
   // toggle CSS-Klasse "active"
   permalinkControl.element.classList.toggle('active');
 });
-
 
 
 // ===== Automatisch für alle Layers mit permalink: Sichtbarkeit + Opacity speichern =====
@@ -2471,6 +2471,7 @@ function initializeWMS(WMSCapabilities,map ) {
       placeholder: 'WMS link hier einfügen...',
       title: 'WMS-Dienste',
       name: 'WMS-Dienste',
+      
       searchLabel: 'Suche',
       optional: 'token',
       services: {
@@ -2496,6 +2497,8 @@ function initializeWMS(WMSCapabilities,map ) {
   cap.on('load', function (e) {
       map.addLayer(e.layer);
       e.layer.set('legend', e.options.data.legend);
+      //e.layer.set('permalink', e.options.data.name);
+      
  });
 };
 
