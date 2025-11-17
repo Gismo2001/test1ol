@@ -202,6 +202,7 @@ permalinkControl.element.addEventListener('click', function() {
   const link = permalinkControl.getLink()
   navigator.clipboard.writeText(link);
   note.show(`Kopiert und in url an-/ausgeschaltet! `, { duration: 2000, className: 'ol-notification' });
+  note.element.style.bottom = '50px';
   // toggle CSS-Klasse "active"
   permalinkControl.element.classList.toggle('active');
 });
@@ -1195,7 +1196,7 @@ map.on('click', function (evt) {
       document.getElementById('search-results-container').style.display = 'none';
 
       popup.setPosition(coordinates);
-      console.log(feature, layer)
+      
       content.innerHTML = generatePopupHTML(feature, layer);
 
       selectInteraction.getFeatures().clear();
