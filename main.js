@@ -122,9 +122,6 @@ var firstProjection = "EPSG:32632";
 var secondProjection = "EPSG:3857";
 
 var resultkoord = proj4(firstProjection, secondProjection, [500000, 5800000]);
-console.log(resultkoord);
-
-
 
 function isMobileDevice() {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -182,32 +179,6 @@ map.addControl(note);
 
 
 
-var permalinkControl = new Permalink({
-  title: 'Permalink',
-  anchor: true,   // setzt ein # in die URL
-  layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
-  updateUrl: false,   // wichtig!
-  //urlreplace: false, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
-  fixed: 4,
-  //geohash: true,
-  //fixed: 2,
-  groups: true
-  // rotation: true // falls du auch Kartenrotation speichern willst
-});
-map.addControl(permalinkControl);
-
-// Direkt nach dem Laden einmal den Hash löschen
-//window.location.hash = '';
-
-permalinkControl.element.addEventListener('click', function() {
-  const link = permalinkControl.getLink()
-  navigator.clipboard.writeText(link);
-  note.show(`Kopiert und in url an-/ausgeschaltet! `, { duration: 2000, className: 'ol-notification' });
-  note.element.style.bottom = '50px';
-  // toggle CSS-Klasse "active"
-  permalinkControl.element.classList.toggle('active');
-});
-
 
 // ===== Automatisch für alle Layers mit permalink: Sichtbarkeit + Opacity speichern =====
 map.getLayers().forEach(layer => {
@@ -221,10 +192,14 @@ map.getLayers().forEach(layer => {
     });
   }
 });
-const permalinkButton = permalinkControl.element.querySelector('a');
+
+//const permalinkButton = permalinkControl.element.querySelector('a');
 
 
 //_____-----------------------------------------------------------------APrint
+
+
+
 map.addControl(new CanvasAttribution());
 map.addControl(new CanvasTitle({ 
   title: '', 
@@ -1041,7 +1016,7 @@ function getLayersInGroup(layerGroup) {
 }
 
 function singleClickHandler(evt) {
-  console.log ('singleClickHandler');
+  
   const visibleLayers = [];
   map.getLayers().forEach(layer => {
     const layerName = layer.get('name');
@@ -1063,13 +1038,13 @@ function singleClickHandler(evt) {
     const source = layer.getSource();
       if (source instanceof TileWMS && typeof source.getFeatureInfoUrl === 'function') {
         const layerName = layer.get('name');
-        console.log('Layer Name:', layerName);
+        
         const url = source.getFeatureInfoUrl(evt.coordinate, viewResolution, viewProjection, {'INFO_FORMAT': 'text/html'});
         if (url) {
           fetch(url)
           .then((response) => response.text())
           .then((html) => {
-            //console.log(html)
+            
             if (html.trim() !== '') {
               removeExistingInfoDiv();
               var bodyIsEmpty = /<body[^>]*>\s*<\/body>/i.test(html);
@@ -1929,7 +1904,7 @@ function displaySearchResultsBw(results) {
       zoomToFeature(feature, map);
       if (layer) {
         const layname = layer.get('name');
-        console.log('Geklickter Layername:', layname);
+        
         // Weitere Aktionen mit layname hier möglich
       } else {
         console.log('Kein Layer für dieses Feature gefunden.');
@@ -1965,7 +1940,7 @@ function displaySearchResultsEig(results) {
 }
 //-------------------------------------------------------Hervorhebung Suche FSK
 function highlightFeatureFSK(searchText) {
-  console.log('angekommen')
+  
   const source = exp_allgm_fsk_layer.getSource();
   const features = source.getFeatures();
   let found = false;
@@ -2011,6 +1986,9 @@ window.closeSearchResults = function () {
 };
 let jsonButtonState = false; // Initialer Zustand
 let punktButtonState = false;
+let permaButtonState = false;
+
+
 /* Nested subbar */
 var sub2 = new Bar({
   toggleOne: true,
@@ -2167,29 +2145,50 @@ var sub1 = new Bar({
         }
       },
     }),
-
+     // Das Untermenü Punkt setzen
     new Toggle({
-  html: '<i class="fa fa-circle"></i>',
-  title: "Punkt setzen",
-  onToggle: function () {
-    punktButtonState = !punktButtonState;
+      html: '<i class="fa fa-circle"></i>',
+      title: "Punkt setzen",
+      onToggle: function () {
+        punktButtonState = !punktButtonState;
+        const coordInputDiv = document.getElementById('coordinate_selection');
+        const selectElement = document.getElementById('coord_select');
+        if (punktButtonState) {
+          coordInputDiv.style.display = 'block';
 
-    const coordInputDiv = document.getElementById('coordinate_selection');
-    const selectElement = document.getElementById('coord_select');
+          // Eventlistener aktivieren, wenn das Tool eingeschaltet wird
+          selectElement.addEventListener('change', handleCRSChange);
+        } else {
+          coordInputDiv.style.display = 'none';
 
-    if (punktButtonState) {
-      coordInputDiv.style.display = 'block';
+          // Listener wieder deaktivieren, um doppelte Reaktionen zu vermeiden
+          selectElement.removeEventListener('change', handleCRSChange);
+        }
+      },
+    }),
 
-      // Eventlistener aktivieren, wenn das Tool eingeschaltet wird
-      selectElement.addEventListener('change', handleCRSChange);
-    } else {
-      coordInputDiv.style.display = 'none';
+// Das Untermenü Perma
+    new Toggle({
+      html: '<i class="fa fa-file"></i>',
+      title: "Permalink erstellen",
+      onToggle: function () {
+      permaButtonState = !permaButtonState; // Zustand umschalten
+      if (permaButtonState === true) {
+        permaButtonState = true;
+        isActive = true;
+        containerBar2.addControl (permalinkControl);
+        console.log('perma on: ' + permaButtonState);
+        //setInteraction(); // Deine Funktion aufrufen, wenn der Zustand true ist
+      } else {
+        console.log('perma off: ' + permaButtonState);
+        permaButtonState = false;
+        containerBar2.removeControl (permalinkControl);
+        isActive = false;
+      }
+      },
+    }),
 
-      // Listener wieder deaktivieren, um doppelte Reaktionen zu vermeiden
-      selectElement.removeEventListener('change', handleCRSChange);
-    }
-  },
-}),
+
 
   ]
 
@@ -2291,7 +2290,6 @@ geojsonInput.addEventListener('change', function (event) {
           sourceName = "Unbekannt: " + fileName;
         }
         const layerStyle = fileName === 'fot' ? arrowStyle : geojsonStyle;
-        console.log("LayerStyle: " + layerStyle);
         
         const vectorLayer = new VectorLayer({
           source: vectorSource,
@@ -2320,6 +2318,39 @@ geojsonInput.addEventListener('change', function (event) {
     reader.readAsText(file); // Datei einlesen
   });
 });
+
+var permalinkControl = new Permalink({
+  title: 'Permalink',
+  anchor: true,   // setzt ein # in die URL
+  layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
+  updateUrl: false,   // wichtig!
+  urlreplace: false, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
+  fixed: 4,
+  //geohash: true,
+  //fixed: 2,
+  groups: true
+  // rotation: true // falls du auch Kartenrotation speichern willst
+  
+});
+map.addControl(permalinkControl);
+
+
+permalinkControl.element.addEventListener('click', function() {
+  const link = permalinkControl.getLink()
+  navigator.clipboard.writeText(link);
+  note.show(`Kopiert und in url an-/ausgeschaltet! `, { duration: 2000, className: 'ol-notification' });
+  note.element.style.bottom = '50px';
+  // toggle CSS-Klasse "active"
+  permalinkControl.element.classList.toggle('active');
+  permalinkControl.hasUrlParam = false;
+  
+
+  //console.log(hasUrlParam);
+});
+
+console.log(permalinkControl.urlreplace);
+
+
 
 //--------------------------------------------------------------------------Drag and Drop
 let dragAndDropInteraction;
@@ -2376,7 +2407,7 @@ function setInteraction()
     map.addLayer(vectorLayer);
     // **Direkt nach dem Hinzufügen Features ausgeben**
     vectorSource.once('change', function () {
-      console.log("MOIN");
+      
       const features = vectorSource.getFeatures();
       if (features.length > 0) {
         const properties = features[0].getProperties();
@@ -2433,7 +2464,7 @@ var containerBar2 = new Bar();
 map.addControl(containerBar2);
 
 //containerBar2.addControl (search);
-containerBar2.addControl (permalinkControl);
+//containerBar2.addControl (permalinkControl);
 containerBar2.addControl (printControl);
 containerBar2.addControl(toggleButtonU);
 
@@ -2774,7 +2805,6 @@ edit.getInteraction('ModifySelect').on('modifystart', function(e){
   if (e.features.length===1) tooltip.setFeature(e.features[0]);
 });
 edit.getInteraction('ModifySelect').on('modifyend', function(e){
-  console.log('angekommen modify');
   tooltip.setFeature();
 });
 edit.getInteraction('DrawPoint').on('change:active', function(e){
@@ -2880,7 +2910,6 @@ var save = new Button({
 
     // Als JSON-String serialisieren
     var json = JSON.stringify(geojsonObject, null, 2);
-    console.log(json);
     // Optional: direkt als Datei herunterladen
     var blob = new Blob([json], { type: "application/json;charset=utf-8" });
     var link = document.createElement("a");
