@@ -1820,12 +1820,12 @@ function searchFeaturesByTextBw(searchText) {
       let features = source.getFeatures();
         features.forEach(feature => {
           let properties = feature.getProperties();
+          let bw_id = properties.bw_id ? properties.bw_id.toLowerCase() : '';
           let name = properties.name ? properties.name.toLowerCase() : '';
           let beschreib = properties.beschreib ? properties.beschreib.toLowerCase() : '';
-          
           let bauart = properties.bauart ? properties.bauart.toLowerCase() : '';
           let searchTextLower = searchText.toLowerCase(); // Suchtext ebenfalls in Kleinbuchstaben umwandeln
-          if (name.includes(searchTextLower) || beschreib.includes(searchTextLower) || bauart.includes(searchTextLower)) 
+          if (name.includes(searchTextLower) || bw_id.includes(searchTextLower) || name.includes(searchTextLower) || beschreib.includes(searchTextLower) || bauart.includes(searchTextLower)) 
             {
              matchingFeatures.push({ feature, layer });
             }
@@ -2175,15 +2175,16 @@ var sub1 = new Bar({
       permaButtonState = !permaButtonState; // Zustand umschalten
       if (permaButtonState === true) {
         permaButtonState = true;
-        isActive = true;
         containerBar2.addControl (permalinkControl);
+        isActive = false; //  auf false setzen
         console.log('perma on: ' + permaButtonState);
-        //setInteraction(); // Deine Funktion aufrufen, wenn der Zustand true ist
+        setInteractionPerma(permalinkControl); // Deine Funktion aufrufen, wenn der Zustand true ist
       } else {
-        console.log('perma off: ' + permaButtonState);
         permaButtonState = false;
         containerBar2.removeControl (permalinkControl);
-        isActive = false;
+        isActive = true; //  auf true setzen
+        console.log('perma off: ' + permaButtonState);
+        //map.removeInteraction(dragAndDropInteraction);
       }
       },
     }),
@@ -2323,16 +2324,20 @@ var permalinkControl = new Permalink({
   title: 'Permalink',
   anchor: true,   // setzt ein # in die URL
   layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
-  updateUrl: false,   // wichtig!
   urlreplace: false, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
+  updateUrl: false,   // wichtig!
   fixed: 4,
+  
   //geohash: true,
   //fixed: 2,
   groups: true
   // rotation: true // falls du auch Kartenrotation speichern willst
   
+  
 });
+
 map.addControl(permalinkControl);
+permalinkControl.hasUrlParam = false;
 
 
 permalinkControl.element.addEventListener('click', function() {
@@ -2343,13 +2348,26 @@ permalinkControl.element.addEventListener('click', function() {
   // toggle CSS-Klasse "active"
   permalinkControl.element.classList.toggle('active');
   permalinkControl.hasUrlParam = false;
-  
-
   //console.log(hasUrlParam);
 });
 
-console.log(permalinkControl.urlreplace);
 
+// Funktion für Permalink
+function setInteractionPerma (permalinkControl) {
+      //permalinkControl.geohash = /gh=/.test(document.location.href),
+      //console.log('permalinkControl.geohash');
+      //permalinkControl.fixed = 4,
+      //permalinkcontrol.urlReplace= false,
+      //permalinkcontrol.localStorage= true,	// Save permalink in localStorage if no url provided
+  
+     { 
+     permalinkControl.setUrlParam('urlReplace', false);
+     permalinkControl.isActive = false;
+     console.log(permalinkControl.urlreplace);
+     }  
+     console.log('setinteractionPerma Layers aufgerufen: ' + permalinkControl.localStorage);
+   
+}; 
 
 
 //--------------------------------------------------------------------------Drag and Drop
