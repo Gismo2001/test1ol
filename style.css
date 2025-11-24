@@ -33,7 +33,6 @@ html {
   border: 1px solid #ccc;
   border-radius: 2px;
 }
-
 #notification {
   display: none;
   position: fixed;
@@ -45,10 +44,23 @@ html {
   border: 1px solid #ccc;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   z-index: 1009;
+  
+  /* HIER WIRD DIE MAXIMALE BREITE HINZUGEFÜGT */
+  max-width: 100px; 
+  width: 90%; /* Optional: Sorgt dafür, dass es auf kleinen Bildschirmen 90% Breite einnimmt, aber nicht breiter als 400px wird */
 }
+
 #notification p {
   margin: 0;
 } 
+
+.ol-notification {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  
+}
+
 
 /*Standortbestimmung nochmal Button  */
 #retryButton {
@@ -346,11 +358,5 @@ html {
 
 .ol-button i {
   color: inherit;
-}
-.ol-notification {
-  user-select: text !important;
-  -webkit-user-select: text !important;
-  -moz-user-select: text !important;
-  
 }
 
