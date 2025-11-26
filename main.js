@@ -602,6 +602,23 @@ const gnAtlas2010 = new TileLayer({
   opacity: 1,
   visible: false,
 });
+
+
+const gnAtlas2009Ni = new TileLayer({
+  title: '2009_Ni',
+  name: '2009_Ni',
+  permalink:'2009_Ni',
+   source: new TileWMS(({
+    url: "https://opendata.lgln.niedersachsen.de/doorman/noauth/doph_wms?",
+    attributions: ' ',
+    params: {"LAYERS": "ni_dop20h_rgb_2009", "TILED": "true", "VERSION": "1.3.0"},
+  })),
+  opacity: 1,
+  visible: false,
+});
+
+
+
 const gnAtlas2009 = new TileLayer({
   title: '2009_NOH',
   name: '2009_NOH',
@@ -867,7 +884,7 @@ const GNAtlasGroup = new LayerGroup({
   fold: true,
   fold: 'close',
   visible: false,
-  layers: [gnAtlas1937, gnAtlas1957, gnAtlas1970, gnAtlas1980,  gnAtlas1990, gnAtlas2002, gnAtlas2009, gnAtlas2010,gnAtlas2011, gnAtlas2012, gnAtlas2014, gnAtlas2017, gnAtlas2020, gnAtlas2023]
+  layers: [gnAtlas1937, gnAtlas1957, gnAtlas1970, gnAtlas1980,  gnAtlas1990, gnAtlas2002, gnAtlas2009, gnAtlas2009Ni, gnAtlas2010,gnAtlas2011, gnAtlas2012, gnAtlas2014, gnAtlas2017, gnAtlas2020, gnAtlas2023]
 });
 const kmGroup = new LayerGroup({
   title: 'Station',
