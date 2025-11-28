@@ -193,13 +193,7 @@ map.getLayers().forEach(layer => {
   }
 });
 
-//const permalinkButton = permalinkControl.element.querySelector('a');
-
-
 //_____-----------------------------------------------------------------APrint
-
-
-
 map.addControl(new CanvasAttribution());
 map.addControl(new CanvasTitle({ 
   title: '', 
@@ -919,7 +913,6 @@ const vector = new VectorLayer({
     'circle-radius': 7,
     'circle-fill-color': '#ffcc33',
   }, 
- 
 });
 
 
@@ -935,10 +928,6 @@ map.addLayer(vector);
 
 const excludedLayerNames = ['gew', 'km10scal', 'km100scal', 'km500scal'];
 
-
-
-
-
 const selectInteraction = new Select({
   layers: function(layer) {
     const name = layer.get('name');
@@ -947,11 +936,7 @@ const selectInteraction = new Select({
   hitTolerance: 5,
   multi: true
 });
-
 map.addInteraction(selectInteraction);
-
-
-
 //------------------------------------------------------------------------------Info für WMS-Layer
 var toggleButtonU = new Toggle({
   html: '<i class="icon fa-fw fa fa-arrow-circle-down" aria-hidden="true"></i>',
@@ -983,39 +968,6 @@ var toggleButtonU = new Toggle({
 // Klasse 'active' zum Button hinzufügen, um sicherzustellen, dass er beim Start als aktiv dargestellt wird
 toggleButtonU.element.classList.add('active');
 toggleButtonU.element.querySelector('.icon').classList.add('active');
-
-/* 
-var selectInteraction = new Select({
-  layers: [vector],
-  hitTolerance: 5,
-});
-var selectFeat = new Select({
-  hitTolerance: 5,
-  multi: true,
-  condition: singleClick,
-});
- */
-//let layer_selected = null; 
-/* 
-selectFeat.on('select', function (e) {
-  if (editBarAnAus===false ){
-  e.selected.forEach(function (featureSelected) {
-      const layerName = selectFeat.getLayer(featureSelected).get('name');
-      if (layerName !== 'gew') {
-          // Setze layer_selected nur, wenn das layerName nicht 'gew' ist
-          layer_selected = selectFeat.getLayer(featureSelected);
-          
-      } else {
-          selectFeat.getFeatures().clear(); // Hebt die Selektion auf
-          layer_selected = null; 
-      }
-  }
-  );
-  }
-});
-map.addInteraction(selectFeat);
- */
-//map.addOverlay(popup);
 
 // ---------------------------------------------------------------------------------------WMS
 function getLayersInGroup(layerGroup) {
@@ -1155,7 +1107,6 @@ map.on('click', function (evt) {
     
     // Liste leeren  
     var ul = document.getElementById('search-results');
-    
     if (ul) {
       while (ul.firstChild) {
         ul.removeChild(ul.firstChild);
@@ -1164,13 +1115,10 @@ map.on('click', function (evt) {
 
     map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
       if (!layer) return;
-
       const lyname = layer.get('name') || '';
-
       if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500scal') {
         feature.set('layerName', lyname);
         let fid = feature.getId() || JSON.stringify(feature.getProperties());
-        
         if (!seenFeatureIds.has(fid)) {
           foundResults.push({feature, layer});
           seenFeatureIds.add(fid);
@@ -1179,18 +1127,12 @@ map.on('click', function (evt) {
     });
 
     const coordinates = evt.coordinate;
-
     const uniqueResults = getUniqueFeatures(foundResults);
-
     if (uniqueResults.length === 1) {
-      
       const { feature, layer } = uniqueResults[0];
       document.getElementById('search-results-container').style.display = 'none';
-
       popup.setPosition(coordinates);
-      
       content.innerHTML = generatePopupHTML(feature, layer);
-
       selectInteraction.getFeatures().clear();
       selectInteraction.getFeatures().push(feature);
 
@@ -2195,11 +2137,27 @@ var sub1 = new Bar({
         containerBar2.addControl (permalinkControl);
         isActive = false; //  auf false setzen
         console.log('perma on: ' + permaButtonState);
-        setInteractionPerma(permalinkControl); // Deine Funktion aufrufen, wenn der Zustand true ist
+        map.addControl(permalinkControl);
+        permalinkControl.hasUrlParam = false;
+setInteractionPerma(permalinkControl); // Deine Funktion aufrufen, wenn der Zustand true ist
+permalinkControl.element.addEventListener('click', function() {
+  const link = permalinkControl.getLink()
+  navigator.clipboard.writeText(link);
+  console.log('Permalink kopiert: ' + link);
+  note.show(`Kopiert und in url an-/ausgeschaltet! `, { duration: 2000, className: 'ol-notification' });
+  note.element.style.bottom = '50px';
+  // toggle CSS-Klasse "active"
+  permalinkControl.element.classList.toggle('active');
+  permalinkControl.hasUrlParam = false;
+  //console.log(hasUrlParam);
+});
+        
       } else {
         permaButtonState = false;
+        permalinkControl.hasUrlParam = false;
         containerBar2.removeControl (permalinkControl);
-        isActive = true; //  auf true setzen
+        isActive = false; //  auf true setzen
+        
         console.log('perma off: ' + permaButtonState);
         //map.removeInteraction(dragAndDropInteraction);
       }
@@ -2337,11 +2295,13 @@ geojsonInput.addEventListener('change', function (event) {
   });
 });
 
+
+
 var permalinkControl = new Permalink({
   title: 'Permalink',
   anchor: true,   // setzt ein # in die URL
   layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
-  urlreplace: false, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
+  //urlreplace: false, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
   updateUrl: false,   // wichtig!
   fixed: 4,
   
@@ -2353,22 +2313,11 @@ var permalinkControl = new Permalink({
   
 });
 
-map.addControl(permalinkControl);
-permalinkControl.hasUrlParam = false;
+if (permaButtonState === true) {
 
 
-permalinkControl.element.addEventListener('click', function() {
-  const link = permalinkControl.getLink()
-  navigator.clipboard.writeText(link);
-  note.show(`Kopiert und in url an-/ausgeschaltet! `, { duration: 2000, className: 'ol-notification' });
-  note.element.style.bottom = '50px';
-  // toggle CSS-Klasse "active"
-  permalinkControl.element.classList.toggle('active');
-  permalinkControl.hasUrlParam = false;
-  //console.log(hasUrlParam);
-});
 
-
+};
 // Funktion für Permalink
 function setInteractionPerma (permalinkControl) {
       //permalinkControl.geohash = /gh=/.test(document.location.href),
@@ -2378,14 +2327,13 @@ function setInteractionPerma (permalinkControl) {
       //permalinkcontrol.localStorage= true,	// Save permalink in localStorage if no url provided
   
      { 
-     permalinkControl.setUrlParam('urlReplace', false);
+     //permalinkControl.setUrlParam('urlReplace', false);
      permalinkControl.isActive = false;
      console.log(permalinkControl.urlreplace);
      }  
      console.log('setinteractionPerma Layers aufgerufen: ' + permalinkControl.localStorage);
    
 }; 
-
 
 //--------------------------------------------------------------------------Drag and Drop
 let dragAndDropInteraction;
