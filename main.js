@@ -700,10 +700,10 @@ const gnAtlas1937 = new TileLayer({
   visible: false,
 });
 
-var baseDE_layer = new TileLayer({
-  title: 'Base-DE',
-  name: 'baseDe',
-  permalink:'baseDE',
+var baseDECr_layer = new TileLayer({
+  title: 'Base-DE-color',
+  name: 'baseDeCr',
+  permalink:'baseDECr',
   type: 'base',
   source: new TileWMS({
     url: "https://sgx.geodatenzentrum.de/wms_basemapde",
@@ -717,6 +717,26 @@ var baseDE_layer = new TileLayer({
   opacity: 1,
   visible: false,
 });
+
+var baseDEGr_layer = new TileLayer({
+  title: 'Base-DE-grey',
+  name: 'baseDeGr',
+  permalink:'baseDEGr',
+  type: 'base',
+  source: new TileWMS({
+    url: "https://sgx.geodatenzentrum.de/wms_basemapde",
+    attributions: '© GeoBasis-DE / BKG (Jahr des letzten Datenbezugs) CC BY 4.0',
+    params: {
+      "LAYERS": "de_basemapde_web_raster_grau",
+      "TILED": true,
+      "VERSION": "1.3.0"
+    },
+  }),
+  opacity: 1,
+  visible: false,
+});
+
+
 var dop20ni_layer = new TileLayer({
   title: 'DOP20 NI',
   name: 'dop20ni',
@@ -896,7 +916,7 @@ const BaseGroup = new LayerGroup({
   fold: true,
   fold: 'close',
   visible: true,
-  layers: [ESRIWorldImagery, ESRIWorldGrey, googleHybLayer, googleSatLayer, dop20ni_layer, baseDE_layer, osmTileGr, osmTileCr]
+  layers: [ESRIWorldImagery, ESRIWorldGrey, googleHybLayer, googleSatLayer, dop20ni_layer, baseDEGr_layer, baseDECr_layer, osmTileGr, osmTileCr]
 });
 
 
@@ -1945,7 +1965,7 @@ window.closeSearchResults = function () {
 };
 let jsonButtonState = false; // Initialer Zustand
 let punktButtonState = false;
-let permaButtonState = false;
+let permaButtonState = true;
 
 
 /* Nested subbar */
@@ -2133,28 +2153,28 @@ var sub1 = new Bar({
       onToggle: function () {
       permaButtonState = !permaButtonState; // Zustand umschalten
       if (permaButtonState === true) {
-        permaButtonState = true;
+        //permaButtonState = true;
         containerBar2.addControl (permalinkControl);
         isActive = false; //  auf false setzen
         console.log('perma on: ' + permaButtonState);
         map.addControl(permalinkControl);
-        permalinkControl.hasUrlParam = false;
-setInteractionPerma(permalinkControl); // Deine Funktion aufrufen, wenn der Zustand true ist
-permalinkControl.element.addEventListener('click', function() {
-  const link = permalinkControl.getLink()
-  navigator.clipboard.writeText(link);
-  console.log('Permalink kopiert: ' + link);
-  note.show(`Kopiert und in url an-/ausgeschaltet! `, { duration: 2000, className: 'ol-notification' });
-  note.element.style.bottom = '50px';
-  // toggle CSS-Klasse "active"
-  permalinkControl.element.classList.toggle('active');
-  permalinkControl.hasUrlParam = false;
-  //console.log(hasUrlParam);
-});
+        //permalinkControl.hasUrlParam = false;
+        setInteractionPerma(permalinkControl); // Deine Funktion aufrufen, wenn der Zustand true ist
+        permalinkControl.element.addEventListener('click', function() {
+          const link = permalinkControl.getLink()
+          navigator.clipboard.writeText(link);
+          console.log('Permalink kopiert: ' + link);
+          note.show(`Kopiert und in url an-/ausgeschaltet! `, { duration: 2000, className: 'ol-notification' });
+          note.element.style.bottom = '50px';
+          // toggle CSS-Klasse "active"
+          permalinkControl.element.classList.toggle('active');
+          //permalinkControl.hasUrlParam = false;
+          //console.log(hasUrlParam);
+  });
         
       } else {
-        permaButtonState = false;
-        permalinkControl.hasUrlParam = false;
+        //permaButtonState = false;
+        //permalinkControl.hasUrlParam = false;
         containerBar2.removeControl (permalinkControl);
         isActive = false; //  auf true setzen
         
@@ -2295,8 +2315,6 @@ geojsonInput.addEventListener('change', function (event) {
   });
 });
 
-
-
 var permalinkControl = new Permalink({
   title: 'Permalink',
   anchor: true,   // setzt ein # in die URL
@@ -2313,11 +2331,6 @@ var permalinkControl = new Permalink({
   
 });
 
-if (permaButtonState === true) {
-
-
-
-};
 // Funktion für Permalink
 function setInteractionPerma (permalinkControl) {
       //permalinkControl.geohash = /gh=/.test(document.location.href),
