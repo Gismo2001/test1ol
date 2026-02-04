@@ -35,16 +35,18 @@ html {
 }
 
 
-
 .ol-notification {
   user-select: text !important;
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
-  width: 350px !important; /* Auf 350 Pixel setzen */
+
+  width: 550px !important;
   left: 50%;
-    transform: translateX(-50%);
-   z-index: 1009;
-  
+  transform: translateX(-50%);
+  z-index: 1009;
+
+  font-size: 12px;      /* ← Schriftgröße */
+  line-height: 1.4;     /* optional, aber empfehlenswert */
 }
 
 
