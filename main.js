@@ -521,7 +521,7 @@ const gnAtlas2023 = new TileLayer({
     params: {"LAYERS": "ni_dop20", "TILED": "true", "VERSION": "1.3.0"},
   })),
   opacity: 1,
-  visible: false,
+  visible: true,
 });
 const gnAtlas2020 = new TileLayer({
   title: '2020_NI',
