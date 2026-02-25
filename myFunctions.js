@@ -350,6 +350,7 @@ return `
       case 'gew_info':  
       const urlWKDB = feature.get('URL_WKDB');
       const url_wk_sb = feature.get('URL_WKSB');
+      
     
       const urlWKDBHtml = (urlWKDB && urlWKDB.trim() !== '') 
         ? `<a href="${urlWKDB}" onclick="window.open('${urlWKDB}', '_blank'); return false;">NLWKN-WK</a>` 
@@ -369,7 +370,8 @@ return `
         <p>
           <a href="${feature.get('BSB')}" onclick="window.open('${feature.get('BSB')}', '_blank'); return false;">BSB</a>
           <a href="${feature.get('MNB')}" onclick="window.open('${feature.get('MNB')}', '_blank'); return false;">MNB</a><br>
-          Kat: ${feature.get('Kat')}
+          Kat: ${feature.get('Kat')}<br>
+          Info: ${feature.get('beschreib_kurz') || '(k.A.)'}
         </p>
       `;
       break;
