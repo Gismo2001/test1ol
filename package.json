@@ -17,7 +17,7 @@
     "vite-plugin-qrcode": "^0.3.0"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^5.15.4",
+    "@fortawesome/fontawesome-free": "^6.7.2",
     "jspdf": "^2.5.2",
     "kompas": "^0.0.2",
     "ol": "^10.4.0",
