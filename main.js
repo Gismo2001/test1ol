@@ -2794,7 +2794,7 @@ async function addDgmLayer(url, bbox, id1) {
     sources: [{ url }], 
     projection: 'EPSG:25832', 
     normalize: false, 
-    sourceOptions: { allowFullFile: true }, 
+    sourceOptions: { allowFullFile: false, cache: true }, 
   });
 
   const GeoTIFFLayer1 = new WebGLTileLayer({
