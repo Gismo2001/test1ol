@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+</head>
+<body>
+  <h2>Passwort eingeben</h2>
+  <input type="password" id="pw">
+  <button onclick="check()">Login</button>
+
+  <script>
+    function check() {
+      if (document.getElementById("pw").value === "geheim123") {
+        window.location.href = "/index.html";
+      } else {
+        alert("Falsches Passwort");
+      }
+    }
+  </script>
+</body>
+</html>
