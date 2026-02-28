@@ -15,21 +15,26 @@
   <button onclick="check()">Login</button>
 
   <script>
+    const PASSWORD = "geheim123";
+
+    // Wenn schon eingeloggt, direkt weiter
+    if(localStorage.getItem("loggedIn") === "true") {
+      window.location.href = "/";
+    }
+
     function check() {
       const pw = document.getElementById("pw").value;
-      if (pw === "geheim123") {
-        // Richtige Hauptseite laden
+      if (pw === PASSWORD) {
+        localStorage.setItem("loggedIn", "true"); // Login merken
         window.location.href = "/";
       } else {
         alert("Falsches Passwort");
       }
     }
 
-    // Optional: Enter-Taste unterstützt Login
     document.getElementById("pw").addEventListener("keypress", function(e){
       if(e.key === "Enter") check();
     });
   </script>
 </body>
 </html>
-
