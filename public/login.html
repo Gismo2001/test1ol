@@ -1,21 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
+  <meta charset="UTF-8">
   <title>Login</title>
+  <style>
+    body { font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; }
+    input { padding: 0.5em; font-size:1em; margin-bottom:1em; }
+    button { padding: 0.5em 1em; font-size:1em; cursor:pointer; }
+  </style>
 </head>
 <body>
-  <h2>Passwort eingeben</h2>
-  <input type="password" id="pw">
+  <h2>Bitte Passwort eingeben</h2>
+  <input type="password" id="pw" placeholder="Passwort">
   <button onclick="check()">Login</button>
 
   <script>
     function check() {
-      if (document.getElementById("pw").value === "geheim123") {
-        window.location.href = "/index.html";
+      const pw = document.getElementById("pw").value;
+      if (pw === "geheim123") {
+        // Richtige Hauptseite laden
+        window.location.href = "/";
       } else {
         alert("Falsches Passwort");
       }
     }
+
+    // Optional: Enter-Taste unterstützt Login
+    document.getElementById("pw").addEventListener("keypress", function(e){
+      if(e.key === "Enter") check();
+    });
   </script>
 </body>
 </html>
