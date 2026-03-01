@@ -2325,7 +2325,7 @@ var sub2 = new Bar({
           unByKey(dgmClickListener);
           dgmClickListener = null;
       }
-       dgmKachelLayer.set('displayInLayerSwitcher', false);
+      dgmKachelLayer.set('displayInLayerSwitcher', false);
       // Optional: Popup schließen
       const popup1 = document.getElementById('popup1');
       if (popup1) popup1.style.display = 'none';
@@ -2349,7 +2349,7 @@ var sub2 = new Bar({
           unByKey(domClickListener);
           domClickListener = null;
       }
-       dgmKachelLayer.set('displayInLayerSwitcher', false);
+       domKachelLayer.set('displayInLayerSwitcher', false);
       // Optional: Popup schließen
       const popup1 = document.getElementById('popup1');
       if (popup1) popup1.style.display = 'none';
