@@ -138,6 +138,18 @@ let activeDgmRasterData = {
 let dgmClickListener = null;
 
 
+// Ganz oben in der Datei, außerhalb aller Funktionen:
+let activeDomRasterLayer = null;
+let activeDomRasterData = { 
+  raster: null, 
+  width: 0, 
+  height: 0, 
+  bbox: null, 
+  min: 0, 
+  max: 100 
+};
+let domClickListener = null;
+
 // von EPSG:32632 (UTM 32N) nach EPSG:3857 (WebMercator)
 var firstProjection = "EPSG:32632";
 var secondProjection = "EPSG:3857";
@@ -219,8 +231,30 @@ const dgmKachelLayer = new VectorLayer({
   }),
 });
 map.addLayer(dgmKachelLayer);
+dgmKachelLayer.set('displayInLayerSwitcher', false);
 
 
+const domKachelSource = new VectorSource({
+  url: '/data/dom_kacheln.geojson',  // relativer Pfad im Projekt
+  format: new GeoJSON(),
+});
+const domKachelLayer = new VectorLayer({
+  source: domKachelSource,
+  title: 'DOM-Kacheln',
+  name: 'domKacheln',     // wichtig für Switcher
+  visible: false,   // <-- wichtig
+  style: new Style({
+    stroke: new Stroke({
+      color: 'rgba(0, 150, 255, 0.8)',
+      width: 1.5,
+    }),
+    fill: new Fill({
+      color: 'rgba(0, 150, 255, 0.1)',
+    }),
+  }),
+});
+map.addLayer(domKachelLayer);
+domKachelLayer.set('displayInLayerSwitcher', false);
 
 
 // ===== Automatisch für alle Layers mit permalink: Sichtbarkeit + Opacity speichern =====
@@ -1048,7 +1082,6 @@ function getLayersInGroup(layerGroup) {
 }
 
 function singleClickHandler(evt) {
-  
   const visibleLayers = [];
   map.getLayers().forEach(layer => {
     const layerName = layer.get('name');
@@ -1070,8 +1103,15 @@ function singleClickHandler(evt) {
     const source = layer.getSource();
       if (source instanceof TileWMS && typeof source.getFeatureInfoUrl === 'function') {
         const layerName = layer.get('name');
-        
-        const url = source.getFeatureInfoUrl(evt.coordinate, viewResolution, viewProjection, {'INFO_FORMAT': 'text/html'});
+        const url = source.getFeatureInfoUrl(
+          evt.coordinate,
+          viewResolution,
+          viewProjection,
+        {
+        'INFO_FORMAT': 'text/html',
+        'QUERY_LAYERS': source.getParams().LAYERS
+      }
+    );
         if (url) {
           fetch(url)
           .then((response) => response.text())
@@ -2188,20 +2228,17 @@ var sub1 = new Bar({
         }
       },
     }),
-
-// Das Untermenü Perma
+    // Das Untermenü Permalink
     new Toggle({
       html: '<i class="fa fa-file"></i>',
       title: "Permalink erstellen",
       onToggle: function () {
       permaButtonState = !permaButtonState; // Zustand umschalten
       if (permaButtonState === true) {
-        //permaButtonState = true;
         containerBar2.addControl (permalinkControl);
         isActive = false; //  auf false setzen
         console.log('perma on: ' + permaButtonState);
         map.addControl(permalinkControl);
-        //permalinkControl.hasUrlParam = false;
         setInteractionPerma(permalinkControl); // Deine Funktion aufrufen, wenn der Zustand true ist
         permalinkControl.element.addEventListener('click', function() {
           const link = permalinkControl.getLink()
@@ -2211,8 +2248,7 @@ var sub1 = new Bar({
           note.element.style.bottom = '50px';
           // toggle CSS-Klasse "active"
           permalinkControl.element.classList.toggle('active');
-          //permalinkControl.hasUrlParam = false;
-          //console.log(hasUrlParam);
+          console.log(hasUrlParam);
   });
         
       } else {
@@ -2220,21 +2256,17 @@ var sub1 = new Bar({
         //permalinkControl.hasUrlParam = false;
         containerBar2.removeControl (permalinkControl);
         isActive = false; //  auf true setzen
-        
         console.log('perma off: ' + permaButtonState);
-        //map.removeInteraction(dragAndDropInteraction);
       }
       },
     }),
-
-
-
   ]
-
 });
+
 var sub2 = new Bar({
   toggleOne: true,
   controls: [
+    // Geojson laden
     new Toggle({
       html: '<i class="fa fa-envelope-open" aria-hidden="true"></i>',
       title: "Geojson-Datei laden",
@@ -2243,6 +2275,7 @@ var sub2 = new Bar({
         
       }
     }),
+    // Zeichnen
     new Toggle({
       //<i class="fa-solid fa-ruler"></i>
       html: '  <i class="fa fa-font-awesome"></i>  ',
@@ -2275,32 +2308,54 @@ var sub2 = new Bar({
         }
       }
     }),
-   new Toggle({
-  html: '<i class="fa fa-map"></i>',
-  title: "dgm-Datei laden",
-  onToggle: function () {
-    const active = this.getActive();
-
-    dgmKachelLayer.setVisible(active);
-
-    if (active) {
-      // Event registrieren
-      dgmClickListener = map.on('singleclick', handleDgmClick);
-    } else {
-      // Event entfernen
-      if (dgmClickListener) {
-        unByKey(dgmClickListener);
-        dgmClickListener = null;
+    // DGM laden
+    new Toggle({
+    html: '<i class="fa fa-map"></i>',
+    title: "dgm-Datei laden",
+    onToggle: function () {
+      const active = this.getActive();
+      dgmKachelLayer.setVisible(active);
+      dgmKachelLayer.set('displayInLayerSwitcher', true);
+      if (active) {
+        // Event registrieren
+        dgmClickListener = map.on('singleclick', handleDgmClick);
+      } else {
+        // Event entfernen
+        if (dgmClickListener) {
+          unByKey(dgmClickListener);
+          dgmClickListener = null;
       }
-
+       dgmKachelLayer.set('displayInLayerSwitcher', false);
       // Optional: Popup schließen
       const popup1 = document.getElementById('popup1');
-      
+      if (popup1) popup1.style.display = 'none';
+    }
+    }
+    }),
+    // DOM laden
+    new Toggle({
+    html: '<i class="fa-solid fa-file"></i>',
+    title: "dom-Datei laden",
+    onToggle: function () {
+      const active = this.getActive();
+      domKachelLayer.setVisible(active);
+      domKachelLayer.set('displayInLayerSwitcher', true);
+      if (active) {
+        // Event registrieren
+        domClickListener = map.on('singleclick', handleDomClick);
+      } else {
+        // Event entfernen
+        if (domClickListener) {
+          unByKey(domClickListener);
+          domClickListener = null;
+      }
+       dgmKachelLayer.set('displayInLayerSwitcher', false);
+      // Optional: Popup schließen
+      const popup1 = document.getElementById('popup1');
       if (popup1) popup1.style.display = 'none';
     }
   }
-  })
-
+    })
   ]
 });
 let geojsonCounter = 0;
@@ -2388,26 +2443,17 @@ var permalinkControl = new Permalink({
   title: 'Permalink',
   anchor: true,   // setzt ein # in die URL
   layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
-  //urlreplace: false, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
   updateUrl: false,   // wichtig!
   fixed: 4,
-  
+  groups: true
+  //urlreplace: false, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
   //geohash: true,
   //fixed: 2,
-  groups: true
   // rotation: true // falls du auch Kartenrotation speichern willst
-  
-  
 });
 
 // Funktion für Permalink
 function setInteractionPerma (permalinkControl) {
-      //permalinkControl.geohash = /gh=/.test(document.location.href),
-      //console.log('permalinkControl.geohash');
-      //permalinkControl.fixed = 4,
-      //permalinkcontrol.urlReplace= false,
-      //permalinkcontrol.localStorage= true,	// Save permalink in localStorage if no url provided
-  
      { 
      //permalinkControl.setUrlParam('urlReplace', false);
      permalinkControl.isActive = false;
@@ -2492,7 +2538,7 @@ function setInteraction()
 }
 
 
-// Zwei Toggle-Buttons vorbereiten
+// Das Hauptmenü 1
 var toggle1 = new Toggle({
   html: '<i class="fa fa-info"></i>',
   title: "Infos",
@@ -2504,6 +2550,7 @@ var toggle1 = new Toggle({
   }
 });
 
+// Das Hauptmenü 2
 var toggle2 = new Toggle({
   html: 'W',
   title: "Dateien",
@@ -2696,7 +2743,6 @@ function elastic(t) {
   return Math.pow(2, -10 * t) * Math.sin((t - 0.075) * (2 * Math.PI) / 0.3) + 1;
 }
 
-
 function center(obj) {
   mapView.animate({
     duration: 700,
@@ -2714,15 +2760,6 @@ function navigate(obj) {
   var url = `https://www.google.com/maps?q=${lat},${lon}`;
   window.open(url, '_blank');
 }
-
-
-
-
-
-
-
-
-
 
 function createDgmGeoTiffStyle(minHeight, maxHeight) {
   const NO_DATA = -9999;
@@ -2818,6 +2855,37 @@ async function addDgmLayer(url, bbox, id1) {
 
 }
 
+async function addDomLayer(url, bbox, id1) {
+  // min/max aus GDAL-Metadaten ermitteln
+  const { min, max, raster, width, height } = await getMinMaxFromMetadata(url);
+
+  // GeoTIFF Layer
+  const TiffSource1 = new GeoTIFFSource({ 
+    sources: [{ url }], 
+    projection: 'EPSG:25832', 
+    normalize: false, 
+    sourceOptions: { allowFullFile: false, cache: true }, 
+  });
+
+  const GeoTIFFLayer1 = new WebGLTileLayer({
+    source: TiffSource1,
+    title: `${id1} DOM_GeoTiff`,
+    name: `${id1} DOM_GeoTiff`,
+    visible: true,
+    willReadFrequently : true,
+    style: createDgmGeoTiffStyle(min, max), // dynamische Graustufen
+  });
+
+  // Extent der Kachel für Klickabfrage speichern
+  GeoTIFFLayer1.bbox = bbox;
+
+  map.addLayer(GeoTIFFLayer1);
+  activeDgmRasterLayer = GeoTIFFLayer1;
+
+  // Rasterdaten und Dimensionen global speichern
+  activeDgmRasterData = { raster, width, height, bbox, min, max };
+}
+
 async function handleDgmClick(evt) {
 
   const kachelnVisible = dgmKachelLayer && dgmKachelLayer.getVisible();
@@ -2900,6 +2968,92 @@ async function handleDgmClick(evt) {
   popup1.innerHTML = height !== null
     ? `Höhe: <b>${height.toFixed(2)} m</b>`
     : `<i>Keine DGM-Daten an dieser Position verfügbar</i>`;
+
+  popup1.style.display = 'block';
+}
+
+async function handleDomClick(evt) {
+
+  const kachelnVisible = domKachelLayer && domKachelLayer.getVisible();
+
+  // Popup einmal holen oder erzeugen
+  let popup1 = document.getElementById('popup1');
+
+  if (!popup1) {
+    popup1 = document.createElement('div');
+    popup1.id = 'popup1';
+    popup1.style.cssText = `
+      position: absolute;
+      background: white;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+      z-index: 10000;
+    `;
+    document.body.appendChild(popup1);
+  }
+
+  // 🟢 FALL 1: Kachelauswahl
+  if (kachelnVisible) {
+
+    let featureFound = false;
+
+    map.forEachFeatureAtPixel(evt.pixel, (feature) => {
+
+      featureFound = true;
+
+      const props = feature.getProperties();
+      const tifUrl = props.dom1;
+      const bbox = feature.getGeometry().getExtent();
+
+      popup1.style.left = evt.pixel[0] + 'px';
+      popup1.style.top = evt.pixel[1] + 'px';
+      popup1.innerHTML = `
+        <b>Kachel:</b> ${props.tile_id}<br>
+        <b>Datum:</b> ${props.Aktualitaet}<br>
+        <button id="loadDomBtn">DOM laden</button>
+      `;
+      popup1.style.display = 'block';
+
+      document.getElementById('loadDomBtn').onclick = function () {
+        addDomLayer(tifUrl, bbox, props.tile_id);
+        popup1.style.display = 'none';
+      };
+    });
+
+    if (!featureFound) popup1.style.display = 'none';
+    return;
+  }
+
+  // 🟢 FALL 2: Höhenabfrage
+  const domLayers = map.getLayers().getArray().filter((layer) => {
+    const name = layer.get('name');
+    return name && name.endsWith('DOM_GeoTiff') && layer.getVisible();
+  });
+
+  if (domLayers.length === 0) {
+    popup1.style.display = 'none';
+    return;
+  }
+
+  let height = null;
+
+  for (const layer of domLayers) {
+    const val = await readHeightFromGeoTIFFLayer(layer, evt.pixel);
+
+    if (val !== null && val !== undefined && !Number.isNaN(val)) {
+      height = val;
+      break;
+    }
+  }
+
+  popup1.style.left = evt.pixel[0] + 10 + 'px';
+  popup1.style.top = evt.pixel[1] - 15 + 'px';
+
+  popup1.innerHTML = height !== null
+    ? `Höhe: <b>${height.toFixed(2)} m</b>`
+    : `<i>Keine DOM-Daten an dieser Position verfügbar</i>`;
 
   popup1.style.display = 'block';
 }
@@ -2995,9 +3149,6 @@ async function readHeightFromGeoTIFFLayer(layer, coordinate) {
     return null;
   }
 }
-
-
-
 
 
 // --- Koordinaten EPSG:32632 ---

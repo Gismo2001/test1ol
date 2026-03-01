@@ -343,9 +343,9 @@ return `
       `;
       break;
     case 'son_pun':
-      html += `
+      /* html += `
         <br><p>sonstiger punkt </p>               
-      `;
+      `; */
       break;
       case 'gew_info':  
       const urlWKDB = feature.get('URL_WKDB');
