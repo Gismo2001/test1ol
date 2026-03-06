@@ -1200,6 +1200,8 @@ var closer = document.getElementById('popup-closer');
 let clickCooldown = false;
 
 map.on('click', function (evt) {
+  console.log('Karte wurde angeklickt');
+  
   if (clickCooldown) return;
   clickCooldown = true;
   setTimeout(() => clickCooldown = false, 300); // Sperre für 300ms
@@ -1213,6 +1215,7 @@ map.on('click', function (evt) {
     if (ul) {
       while (ul.firstChild) {
         ul.removeChild(ul.firstChild);
+        console.log('Liste geleert');
       }
     }
 
