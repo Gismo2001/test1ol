@@ -2229,7 +2229,7 @@ var sub1 = new Bar({
     }),
     // Das Untermenü Permalink
     new Toggle({
-      html: '<i class="fa fa-file"></i>',
+      html: '<button id="p-button">P</button>',
       title: "Permalink erstellen",
       onToggle: function () {
       permaButtonState = !permaButtonState; // Zustand umschalten
