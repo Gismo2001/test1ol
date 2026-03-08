@@ -118,32 +118,26 @@ import { getCenter } from 'ol/extent'; // ❗ WICHTIG: oben importieren
 
 import {extend as extendExtent, createEmpty as createEmptyExtent} from 'ol/extent';
 
-
-// Array für alle geladenen DGM-Layer
 let activeDgmRasterLayers = [];  
-
-// Array für DGM-Metadaten (min, max, bbox, raster, etc.)
 let activeDgmRasterData = [];  
-
-// Click-Listener für DGM
 let dgmClickListener = null;
-
-
-
-
-// Ganz oben in der Datei, außerhalb aller Funktionen:
-let activeDomRasterLayer = null;
-let activeDomRasterData = { 
-  raster: null, 
-  width: 0, 
-  height: 0, 
-  bbox: null, 
-  min: 0, 
-  max: 100 
-};
-let domClickListener = null;
-
 let loadedDgms = [];   // speichert {tile_id, bbox}
+
+
+
+let activeDomRasterLayers = [];  
+let activeDomRasterData = [];  
+let domClickListener = null;
+let loadedDoms = [];   // speichert {tile_id, bbox}
+
+
+
+
+
+
+
+
+
 
 // von EPSG:32632 (UTM 32N) nach EPSG:3857 (WebMercator)
 var firstProjection = "EPSG:32632";
@@ -2321,6 +2315,7 @@ var sub2 = new Bar({
       const active = this.getActive();
       dgmKachelLayer.setVisible(active);
       dgmKachelLayer.set('displayInLayerSwitcher', active);
+      domKachelLayer.setVisible(!active);
       if (dgmClickListener) {
         unByKey(dgmClickListener);
         dgmClickListener = null;
@@ -2342,6 +2337,7 @@ var sub2 = new Bar({
       const active = this.getActive();
       domKachelLayer.setVisible(active);
       domKachelLayer.set('displayInLayerSwitcher', true);
+      dgmKachelLayer.setVisible(!active)
       if (active) {
         // Event registrieren
         domClickListener = map.on('singleclick', handleDomClick);
@@ -2763,7 +2759,7 @@ function navigate(obj) {
   window.open(url, '_blank');
 }
 
-function createDgmGeoTiffStyle(minHeight, maxHeight) {
+function createGeoTiffStyle(minHeight, maxHeight) {
   const NO_DATA = -9999;
   const range = (maxHeight - minHeight) || 1;
   const step = (p) => minHeight + range * p;
@@ -2826,11 +2822,8 @@ async function getMinMaxFromMetadata(url) {
 
 let dgmLayerCounter = 0;
 async function addDgmLayer(url, bbox, id1) {
-   dgmLayerCounter++; // Zähler erhöhen
-  // Min/Max aus GDAL-Metadaten ermitteln
+  dgmLayerCounter++; // Zähler erhöhen
   const { min, max, raster, width, height } = await getMinMaxFromMetadata(url);
-
-  // GeoTIFF Layer erstellen
   const TiffSource1 = new GeoTIFFSource({ 
     sources: [{ url }], 
     projection: 'EPSG:25832', 
@@ -2844,66 +2837,57 @@ async function addDgmLayer(url, bbox, id1) {
     name: layerNameWithCounter,
     visible: true,
     willReadFrequently: true,
-    style: createDgmGeoTiffStyle(min, max), // dynamische Graustufen
+    style: createGeoTiffStyle(min, max), // dynamische Graustufen
   });
-
-  // Extent der Kachel für Klickabfrage speichern
   GeoTIFFLayer1.bbox = bbox;
-
-  // Layer zur Karte hinzufügen
   map.addLayer(GeoTIFFLayer1);
-
-  // Layer in globalem Array speichern
   activeDgmRasterLayers.push(GeoTIFFLayer1);
-
-  // Rasterdaten in Array speichern
   const dgmData = { raster, width, height, bbox, min, max, layer: GeoTIFFLayer1 };
   activeDgmRasterData.push(dgmData);
-
-  // Gesamt-Min/Max berechnen
-  const overall = getOverallMinMax();
+  const overall = getOverallDgmMinMax();
   activeDgmRasterData.forEach(dgm => {
-    dgm.layer.setStyle(createDgmGeoTiffStyle(overall.min, overall.max));
+    dgm.layer.setStyle(createGeoTiffStyle(overall.min, overall.max));
   });
-
-  // Gesamt-BBox berechnen und auf Map zoomen
   const totalBBox = getLoadedDgmExtent();
-  //if (totalBBox) {
-    //map.getView().fit(totalBBox, { padding: [50, 50, 50, 50], duration: 700 });
-  //}
-
-  // Rückgabe für den Klick-Handler optional
+  if (totalBBox) {
+   // map.getView().fit(totalBBox, { padding: [50, 50, 50, 50], duration: 700 });
+  }
   return dgmData;
 }
-async function addDomLayer(url, bbox, id1) {
-  // min/max aus GDAL-Metadaten ermitteln
-  const { min, max, raster, width, height } = await getMinMaxFromMetadata(url);
 
-  // GeoTIFF Layer
+let domLayerCounter = 0;
+async function addDomLayer(url, bbox, id1) {
+  domLayerCounter++; // Zähler erhöhen
+  const { min, max, raster, width, height } = await getMinMaxFromMetadata(url);
   const TiffSource1 = new GeoTIFFSource({ 
     sources: [{ url }], 
     projection: 'EPSG:25832', 
     normalize: false, 
     sourceOptions: { allowFullFile: false, cache: true }, 
   });
-
+  const layerNameWithCounter = `${domLayerCounter}_${id1} DOM_GeoTiff`;
   const GeoTIFFLayer1 = new WebGLTileLayer({
     source: TiffSource1,
-    title: `${id1} DOM_GeoTiff`,
-    name: `${id1} DOM_GeoTiff`,
+    title: layerNameWithCounter,
+    name: layerNameWithCounter,
     visible: true,
-    willReadFrequently : true,
-    style: createDgmGeoTiffStyle(min, max), // dynamische Graustufen
+    willReadFrequently: true,
+    style: createGeoTiffStyle(min, max), // dynamische Graustufen
   });
-
-  // Extent der Kachel für Klickabfrage speichern
   GeoTIFFLayer1.bbox = bbox;
-
   map.addLayer(GeoTIFFLayer1);
-  activeDgmRasterLayer = GeoTIFFLayer1;
-
-  // Rasterdaten und Dimensionen global speichern
-  activeDgmRasterData = { raster, width, height, bbox, min, max };
+  activeDomRasterLayers.push(GeoTIFFLayer1);
+  const domData = { raster, width, height, bbox, min, max, layer: GeoTIFFLayer1 };
+  activeDomRasterData.push(domData);
+  const overall = getOverallDomMinMax();
+  activeDomRasterData.forEach(dom => {
+    dom.layer.setStyle(createGeoTiffStyle(overall.min, overall.max));
+  });
+  const totalBBox = getLoadedDomExtent();
+  if (totalBBox) {
+    //map.getView().fit(totalBBox, { padding: [50, 50, 50, 50], duration: 700 });
+  }
+  return domData;
 }
 
 async function handleDgmClick(evt) {
@@ -2961,9 +2945,9 @@ async function handleDgmClick(evt) {
           activeDgmRasterData.push(dgmData);
 
           // Gesamt-Min/Max berechnen
-          const overall = getOverallMinMax();
+          const overall = getOverallDgmMinMax();
           activeDgmRasterData.forEach(dgm => {
-            dgm.layer.setStyle(createDgmGeoTiffStyle(overall.min, overall.max));
+            dgm.layer.setStyle(createGeoTiffStyle(overall.min, overall.max));
           });
 
           // Gesamt-BBox berechnen und Ansicht anpassen
@@ -3006,18 +2990,17 @@ async function handleDgmClick(evt) {
   popup1.style.top = evt.pixel[1] - 15 + 'px';
 
   popup1.innerHTML = height !== null
-    ? `Höhe: <b>${height.toFixed(2)} m</b>`
+    ? `H-DGM: <b>${height.toFixed(2)} m</b>`
     : `<i>Keine DGM-Daten an dieser Position verfügbar</i>`;
 
   popup1.style.display = 'block';
 }
-async function handleDomClick(evt) {
 
+async function handleDomClick(evt) {
   const kachelnVisible = domKachelLayer && domKachelLayer.getVisible();
 
   // Popup einmal holen oder erzeugen
   let popup1 = document.getElementById('popup1');
-
   if (!popup1) {
     popup1 = document.createElement('div');
     popup1.id = 'popup1';
@@ -3035,28 +3018,51 @@ async function handleDomClick(evt) {
 
   // 🟢 FALL 1: Kachelauswahl
   if (kachelnVisible) {
-
     let featureFound = false;
 
     map.forEachFeatureAtPixel(evt.pixel, (feature) => {
-
       featureFound = true;
 
       const props = feature.getProperties();
       const tifUrl = props.dom1;
       const bbox = feature.getGeometry().getExtent();
 
+      // prüfen ob bereits geladen
+      const alreadyLoaded = loadedDoms.some(d => d.tile_id === props.tile_id);
+
       popup1.style.left = evt.pixel[0] + 'px';
       popup1.style.top = evt.pixel[1] + 'px';
+
       popup1.innerHTML = `
         <b>Kachel:</b> ${props.tile_id}<br>
         <b>Datum:</b> ${props.Aktualitaet}<br>
+        ${alreadyLoaded ? '<i>bereits geladen</i><br>' : ''}
         <button id="loadDomBtn">DOM laden</button>
       `;
       popup1.style.display = 'block';
 
-      document.getElementById('loadDomBtn').onclick = function () {
-        addDomLayer(tifUrl, bbox, props.tile_id);
+      document.getElementById('loadDomBtn').onclick = async function () {
+        if (!alreadyLoaded) {
+          // DOM laden und Daten zurückbekommen
+          const domData = await addDomLayer(tifUrl, bbox, props.tile_id);
+
+          // Layer als geladen markieren
+          loadedDoms.push({ tile_id: props.tile_id, bbox: bbox });
+          activeDomRasterData.push(domData);
+
+          // Gesamt-Min/Max berechnen
+          const overall = getOverallDomMinMax();
+          activeDomRasterData.forEach(dom => {
+            dom.layer.setStyle(createGeoTiffStyle(overall.min, overall.max));
+          });
+
+          // Gesamt-BBox berechnen und Ansicht anpassen
+          const totalBBox = getLoadedDomExtent();
+          if (totalBBox) {
+            //map.getView().fit(totalBBox, { padding: [50,50,50,50], duration: 700 });
+          }
+        }
+
         popup1.style.display = 'none';
       };
     });
@@ -3080,7 +3086,6 @@ async function handleDomClick(evt) {
 
   for (const layer of domLayers) {
     const val = await readHeightFromGeoTIFFLayer(layer, evt.pixel);
-
     if (val !== null && val !== undefined && !Number.isNaN(val)) {
       height = val;
       break;
@@ -3091,12 +3096,11 @@ async function handleDomClick(evt) {
   popup1.style.top = evt.pixel[1] - 15 + 'px';
 
   popup1.innerHTML = height !== null
-    ? `Höhe: <b>${height.toFixed(2)} m</b>`
+    ? `H-DOM: <b>${height.toFixed(2)} m</b>`
     : `<i>Keine DOM-Daten an dieser Position verfügbar</i>`;
 
   popup1.style.display = 'block';
 }
-
 
 /**
  * Liefert einen Höhenwert (erste Band) an Karte-Koordinate zurück oder null.
@@ -3106,7 +3110,7 @@ async function handleDomClick(evt) {
  * @returns {Number|null}
  */
 async function readHeightFromGeoTIFFLayer(layer, coordinate) {
-  console.log('aufgerufen');
+  
   if (!layer) return null;
 
   // 1) Wenn die einfache API verfügbar ist: layer.getData(coordinate)
@@ -3651,7 +3655,7 @@ function drawPoint(coords) {
     duration: 1000
   }); */
 
-function getOverallMinMax() {
+function getOverallDgmMinMax() {
   if(activeDgmRasterData.length === 0) return null;
 
   let overallMin = Infinity;
@@ -3665,16 +3669,35 @@ function getOverallMinMax() {
   return {min: overallMin, max: overallMax};
 }
 
+function getOverallDomMinMax() {
+  if(activeDomRasterData.length === 0) return null;
+
+  let overallMin = Infinity;
+  let overallMax = -Infinity;
+
+  activeDomRasterData.forEach(dom => {
+    if(dom.min < overallMin) overallMin = dom.min;
+    if(dom.max > overallMax) overallMax = dom.max;
+  });
+
+  return {min: overallMin, max: overallMax};
+}
+
 
 function getLoadedDgmExtent() {
-
   if (loadedDgms.length === 0) return null;
-
   let extent = createEmptyExtent();
-
   loadedDgms.forEach(dgm => {
     extendExtent(extent, dgm.bbox);
   });
+  return extent;
+}
 
+function getLoadedDomExtent() {
+  if (loadedDoms.length === 0) return null;
+  let extent = createEmptyExtent();
+  loadedDoms.forEach(dom => {
+    extendExtent(extent, dom.bbox);
+  });
   return extent;
 }
