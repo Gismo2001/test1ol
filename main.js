@@ -883,7 +883,7 @@ const osmTileGr = new TileLayer({
   className: 'bw',
   type: 'base',
   source: new OSM({
-      url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      url: 'https://{a-c}.tile.openstreetmap.de/{z}/{x}/{y}.png',
       //attributions: ['© OpenStreetMap contributors', 'Tiles courtesy of <a href="https://www.openstreetmap.org/"></a>'],
   }),
   opacity: 1,
@@ -894,8 +894,9 @@ const osmTileCr = new TileLayer({
   name: 'osmcolor',
   permalink:'osmcolor',
   type: 'base',
+  
   source: new OSM({
-      url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      url: 'https://{a-c}.tile.openstreetmap.de/{z}/{x}/{y}.png',
       //attributions: ['© OpenStreetMap contributors', 'Tiles courtesy of <a href="https://www.openstreetmap.org/"></a>'],
   }),
   opacity: 0.75,
@@ -2318,21 +2319,18 @@ var sub2 = new Bar({
     onToggle: function () {
       const active = this.getActive();
       dgmKachelLayer.setVisible(active);
-      dgmKachelLayer.set('displayInLayerSwitcher', true);
+      dgmKachelLayer.set('displayInLayerSwitcher', active);
+      if (dgmClickListener) {
+        unByKey(dgmClickListener);
+        dgmClickListener = null;
+      }
+
       if (active) {
-        // Event registrieren
         dgmClickListener = map.on('singleclick', handleDgmClick);
       } else {
-        // Event entfernen
-        if (dgmClickListener) {
-          unByKey(dgmClickListener);
-          dgmClickListener = null;
-      }
-      dgmKachelLayer.set('displayInLayerSwitcher', false);
-      // Optional: Popup schließen
       const popup1 = document.getElementById('popup1');
       if (popup1) popup1.style.display = 'none';
-    }
+      }
     }
     }),
     // DOM laden
