@@ -77,11 +77,6 @@ import GeoTIFFSource from 'ol/source/GeoTIFF.js';
 import { WebGLTile as WebGLTileLayer } from 'ol/layer.js';
 import { fromArrayBuffer } from 'geotiff';
 
-
-//import saveAs from 'file-saver';
-
-
-
 import { 
   getStyleForArtEin,
   getStyleForArtSonPun,
@@ -107,8 +102,6 @@ import {
   
 } from './extStyle';
 
-
-
 import { 
   myFuncInfoDiv,
   UTMToLatLon_Fix,
@@ -123,19 +116,19 @@ import SearchPhoton from 'ol-ext/control/SearchPhoton';
 import WMSCapabilities from'ol-ext/control/WMSCapabilities';
 import { getCenter } from 'ol/extent'; // ❗ WICHTIG: oben importieren
 
+import {extend as extendExtent, createEmpty as createEmptyExtent} from 'ol/extent';
 
 
-// Ganz oben in der Datei, außerhalb aller Funktionen:
-let activeDgmRasterLayer = null;
-let activeDgmRasterData = { 
-  raster: null, 
-  width: 0, 
-  height: 0, 
-  bbox: null, 
-  min: 0, 
-  max: 100 
-};
+// Array für alle geladenen DGM-Layer
+let activeDgmRasterLayers = [];  
+
+// Array für DGM-Metadaten (min, max, bbox, raster, etc.)
+let activeDgmRasterData = [];  
+
+// Click-Listener für DGM
 let dgmClickListener = null;
+
+
 
 
 // Ganz oben in der Datei, außerhalb aller Funktionen:
@@ -149,6 +142,8 @@ let activeDomRasterData = {
   max: 100 
 };
 let domClickListener = null;
+
+let loadedDgms = [];   // speichert {tile_id, bbox}
 
 // von EPSG:32632 (UTM 32N) nach EPSG:3857 (WebMercator)
 var firstProjection = "EPSG:32632";
@@ -1082,7 +1077,9 @@ function getLayersInGroup(layerGroup) {
   return layers;
 }
 
+
 function singleClickHandler(evt) {
+  console.log(dgmClickListener);
   const visibleLayers = [];
   map.getLayers().forEach(layer => {
     const layerName = layer.get('name');
@@ -1201,7 +1198,10 @@ var closer = document.getElementById('popup-closer');
 let clickCooldown = false;
 
 map.on('click', function (evt) {
-  console.log('Karte wurde angeklickt');
+  if  (!dgmClickListener && !domClickListener) {
+      
+      
+  
   
   if (clickCooldown) return;
   clickCooldown = true;
@@ -1250,6 +1250,7 @@ map.on('click', function (evt) {
     }
 
   }
+}
 });
 
 function getUniqueFeatures(results) {
@@ -2823,39 +2824,57 @@ async function getMinMaxFromMetadata(url) {
   }
 }
 
+let dgmLayerCounter = 0;
 async function addDgmLayer(url, bbox, id1) {
-  // min/max aus GDAL-Metadaten ermitteln
+   dgmLayerCounter++; // Zähler erhöhen
+  // Min/Max aus GDAL-Metadaten ermitteln
   const { min, max, raster, width, height } = await getMinMaxFromMetadata(url);
 
-  // GeoTIFF Layer
+  // GeoTIFF Layer erstellen
   const TiffSource1 = new GeoTIFFSource({ 
     sources: [{ url }], 
     projection: 'EPSG:25832', 
     normalize: false, 
     sourceOptions: { allowFullFile: false, cache: true }, 
   });
-
+  const layerNameWithCounter = `${dgmLayerCounter}_${id1} DGM_GeoTiff`;
   const GeoTIFFLayer1 = new WebGLTileLayer({
     source: TiffSource1,
-    title: `${id1} DGM_GeoTiff`,
-    name: `${id1} DGM_GeoTiff`,
+    title: layerNameWithCounter,
+    name: layerNameWithCounter,
     visible: true,
-    willReadFrequently : true,
+    willReadFrequently: true,
     style: createDgmGeoTiffStyle(min, max), // dynamische Graustufen
   });
 
   // Extent der Kachel für Klickabfrage speichern
   GeoTIFFLayer1.bbox = bbox;
 
+  // Layer zur Karte hinzufügen
   map.addLayer(GeoTIFFLayer1);
-  activeDgmRasterLayer = GeoTIFFLayer1;
 
-  // Rasterdaten und Dimensionen global speichern
-  activeDgmRasterData = { raster, width, height, bbox, min, max };
+  // Layer in globalem Array speichern
+  activeDgmRasterLayers.push(GeoTIFFLayer1);
 
+  // Rasterdaten in Array speichern
+  const dgmData = { raster, width, height, bbox, min, max, layer: GeoTIFFLayer1 };
+  activeDgmRasterData.push(dgmData);
 
+  // Gesamt-Min/Max berechnen
+  const overall = getOverallMinMax();
+  activeDgmRasterData.forEach(dgm => {
+    dgm.layer.setStyle(createDgmGeoTiffStyle(overall.min, overall.max));
+  });
+
+  // Gesamt-BBox berechnen und auf Map zoomen
+  const totalBBox = getLoadedDgmExtent();
+  //if (totalBBox) {
+    //map.getView().fit(totalBBox, { padding: [50, 50, 50, 50], duration: 700 });
+  //}
+
+  // Rückgabe für den Klick-Handler optional
+  return dgmData;
 }
-
 async function addDomLayer(url, bbox, id1) {
   // min/max aus GDAL-Metadaten ermitteln
   const { min, max, raster, width, height } = await getMinMaxFromMetadata(url);
@@ -2888,12 +2907,10 @@ async function addDomLayer(url, bbox, id1) {
 }
 
 async function handleDgmClick(evt) {
-
   const kachelnVisible = dgmKachelLayer && dgmKachelLayer.getVisible();
 
   // Popup einmal holen oder erzeugen
   let popup1 = document.getElementById('popup1');
-
   if (!popup1) {
     popup1 = document.createElement('div');
     popup1.id = 'popup1';
@@ -2911,28 +2928,51 @@ async function handleDgmClick(evt) {
 
   // 🟢 FALL 1: Kachelauswahl
   if (kachelnVisible) {
-
     let featureFound = false;
 
     map.forEachFeatureAtPixel(evt.pixel, (feature) => {
-
       featureFound = true;
 
       const props = feature.getProperties();
       const tifUrl = props.dgm1;
       const bbox = feature.getGeometry().getExtent();
 
+      // prüfen ob bereits geladen
+      const alreadyLoaded = loadedDgms.some(d => d.tile_id === props.tile_id);
+
       popup1.style.left = evt.pixel[0] + 'px';
       popup1.style.top = evt.pixel[1] + 'px';
+
       popup1.innerHTML = `
         <b>Kachel:</b> ${props.tile_id}<br>
         <b>Datum:</b> ${props.Aktualitaet}<br>
+        ${alreadyLoaded ? '<i>bereits geladen</i><br>' : ''}
         <button id="loadDgmBtn">DGM laden</button>
       `;
       popup1.style.display = 'block';
 
-      document.getElementById('loadDgmBtn').onclick = function () {
-        addDgmLayer(tifUrl, bbox, props.tile_id);
+      document.getElementById('loadDgmBtn').onclick = async function () {
+        if (!alreadyLoaded) {
+          // DGM laden und Daten zurückbekommen
+          const dgmData = await addDgmLayer(tifUrl, bbox, props.tile_id);
+
+          // Layer als geladen markieren
+          loadedDgms.push({ tile_id: props.tile_id, bbox: bbox });
+          activeDgmRasterData.push(dgmData);
+
+          // Gesamt-Min/Max berechnen
+          const overall = getOverallMinMax();
+          activeDgmRasterData.forEach(dgm => {
+            dgm.layer.setStyle(createDgmGeoTiffStyle(overall.min, overall.max));
+          });
+
+          // Gesamt-BBox berechnen und Ansicht anpassen
+          const totalBBox = getLoadedDgmExtent();
+          if (totalBBox) {
+            //map.getView().fit(totalBBox, { padding: [50,50,50,50], duration: 700 });
+          }
+        }
+
         popup1.style.display = 'none';
       };
     });
@@ -2956,7 +2996,6 @@ async function handleDgmClick(evt) {
 
   for (const layer of dgmLayers) {
     const val = await readHeightFromGeoTIFFLayer(layer, evt.pixel);
-
     if (val !== null && val !== undefined && !Number.isNaN(val)) {
       height = val;
       break;
@@ -2972,7 +3011,6 @@ async function handleDgmClick(evt) {
 
   popup1.style.display = 'block';
 }
-
 async function handleDomClick(evt) {
 
   const kachelnVisible = domKachelLayer && domKachelLayer.getVisible();
@@ -3613,3 +3651,30 @@ function drawPoint(coords) {
     duration: 1000
   }); */
 
+function getOverallMinMax() {
+  if(activeDgmRasterData.length === 0) return null;
+
+  let overallMin = Infinity;
+  let overallMax = -Infinity;
+
+  activeDgmRasterData.forEach(dgm => {
+    if(dgm.min < overallMin) overallMin = dgm.min;
+    if(dgm.max > overallMax) overallMax = dgm.max;
+  });
+
+  return {min: overallMin, max: overallMax};
+}
+
+
+function getLoadedDgmExtent() {
+
+  if (loadedDgms.length === 0) return null;
+
+  let extent = createEmptyExtent();
+
+  loadedDgms.forEach(dgm => {
+    extendExtent(extent, dgm.bbox);
+  });
+
+  return extent;
+}
