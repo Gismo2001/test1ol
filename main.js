@@ -2728,14 +2728,6 @@ contextmenu.on('open', function (evt) {
   }
 });
 
-// --- Cursor ändern, wenn über Feature ---
-map.on('pointermove', function (e) {
-  if (e.dragging) return;
-  var pixel = map.getEventPixel(e.originalEvent);
-  var hit = map.hasFeatureAtPixel(pixel);
-  map.getTargetElement().style.cursor = hit ? 'pointer' : 'default';
-});
-
 // --- Animation für zentrieren ---
 function elastic(t) {
   return Math.pow(2, -10 * t) * Math.sin((t - 0.075) * (2 * Math.PI) / 0.3) + 1;
@@ -2758,6 +2750,55 @@ function navigate(obj) {
   var url = `https://www.google.com/maps?q=${lat},${lon}`;
   window.open(url, '_blank');
 }
+const heightStatus = document.getElementById('height-status');
+const heightValue = document.getElementById('height-value');
+
+map.on('pointermove', function (e) {
+
+  if (e.dragging) return;
+
+  const pixel = map.getEventPixel(e.originalEvent);
+  const coord = map.getCoordinateFromPixel(pixel);
+
+  const visibleDgmLayers = activeDgmRasterLayers.filter(l => l.getVisible());
+
+  if (visibleDgmLayers.length === 0) {
+    heightStatus.style.display = 'none';
+    return;
+  }
+
+  let output = "";
+
+  for (const layer of visibleDgmLayers) {
+
+    // prüfen ob Maus im Layer-Extent liegt
+    if (!layer.bbox || !ol.extent.containsCoordinate(layer.bbox, coord)) {
+      continue;
+    }
+
+    const data = layer.getData(pixel);
+
+    if (data && data[0] !== -9999 && !Number.isNaN(data[0])) {
+
+      const height = data[0];
+      const layerNr = layer.get('name').split('_')[0];
+
+      output += `H_Nr_${layerNr}: ${height.toFixed(2)} m<br>`;
+      break;   // ← HIER abbrechen
+    }
+
+  }
+
+  if (output !== "") {
+    heightValue.innerHTML = output;
+    heightStatus.style.display = 'block';
+  } else {
+    heightStatus.style.display = 'none';
+  }
+
+});
+let lastCall = 0;
+const throttleDelay = 60; // 50–80ms ideal
 
 function createGeoTiffStyle(minHeight, maxHeight) {
   const NO_DATA = -9999;
@@ -2966,34 +3007,55 @@ async function handleDgmClick(evt) {
   }
 
   // 🟢 FALL 2: Höhenabfrage
-  const dgmLayers = map.getLayers().getArray().filter((layer) => {
-    const name = layer.get('name');
-    return name && name.endsWith('DGM_GeoTiff') && layer.getVisible();
-  });
+ // 🟢 FALL 2: Höhenabfrage
 
-  if (dgmLayers.length === 0) {
-    popup1.style.display = 'none';
-    return;
+const coord = map.getCoordinateFromPixel(evt.pixel);
+
+const dgmLayers = map.getLayers().getArray().filter((layer) => {
+  const name = layer.get('name');
+  return name && name.endsWith('DGM_GeoTiff') && layer.getVisible();
+});
+
+if (dgmLayers.length === 0) {
+  popup1.style.display = 'none';
+  return;
+}
+
+let height = null;
+let foundLayer = null;
+
+for (const layer of dgmLayers) {
+
+  // prüfen ob Klick im DGM-Extent liegt
+  if (!layer.bbox || !ol.extent.containsCoordinate(layer.bbox, coord)) {
+    continue;
   }
 
-  let height = null;
+  const val = await readHeightFromGeoTIFFLayer(layer, evt.pixel);
 
-  for (const layer of dgmLayers) {
-    const val = await readHeightFromGeoTIFFLayer(layer, evt.pixel);
-    if (val !== null && val !== undefined && !Number.isNaN(val)) {
-      height = val;
-      break;
-    }
+  if (val !== null && val !== undefined && !Number.isNaN(val)) {
+    height = val;
+    foundLayer = layer;
+    break; // nur ein DGM möglich
   }
+}
 
-  popup1.style.left = evt.pixel[0] + 10 + 'px';
-  popup1.style.top = evt.pixel[1] - 15 + 'px';
+popup1.style.left = evt.pixel[0] + 10 + 'px';
+popup1.style.top = evt.pixel[1] - 15 + 'px';
 
-  popup1.innerHTML = height !== null
-    ? `H-DGM: <b>${height.toFixed(2)} m</b>`
-    : `<i>Keine DGM-Daten an dieser Position verfügbar</i>`;
+if (height !== null) {
 
-  popup1.style.display = 'block';
+  const layerNr = foundLayer.get('name').split('_')[0];
+
+  popup1.innerHTML = `H_Nr_ ${layerNr}: <b>${height.toFixed(2)} m</b>`;
+
+} else {
+
+  popup1.innerHTML = `<i>Keine DGM-Daten an dieser Position verfügbar</i>`;
+
+}
+
+popup1.style.display = 'block';
 }
 
 async function handleDomClick(evt) {
