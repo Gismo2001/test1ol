@@ -132,6 +132,8 @@ let activeDomRasterData = [];
 let domClickListener = null;
 let loadedDoms = [];   // speichert {tile_id, bbox}
 
+let profileMode = false;
+
 
 
 
@@ -164,7 +166,7 @@ function disableDgmInteraction() {
   if (popup1) popup1.style.display = 'none';
 
   heightStatus.style.display = 'none';
-
+heightValue.style.display = 'none';
   console.log("DGM Interaction deaktiviert");
 }
 
@@ -258,6 +260,20 @@ var note = new Notification(
 map.addControl(note);
 
 
+const profileSource = new ol.source.Vector();
+
+const profileLayer = new ol.layer.Vector({
+  source: profileSource,
+  style: new ol.style.Style({
+    stroke: new ol.style.Stroke({
+      color: 'red',
+      width: 3
+    })
+  })
+});
+
+map.addLayer(profileLayer);
+
 const dgmKachelSource = new VectorSource({
   url: '/data/dgm_kacheln.geojson',  // relativer Pfad im Projekt
   format: new GeoJSON(),
@@ -307,6 +323,162 @@ dgmKachelLayer.on('change:visible', updateDgmInteraction);
 
 
 updateDgmInteraction();
+
+let profilePoints = [];
+
+let profileDraw = null;
+
+function enableProfileDrawing() {
+
+  profileDraw = new ol.interaction.Draw({
+    source: profileSource,
+    type: 'LineString',
+    maxPoints: 2
+  });
+
+  map.addInteraction(profileDraw);
+
+  profileDraw.on('drawend', function(evt) {
+
+    const line = evt.feature.getGeometry();
+    const coords = line.getCoordinates();
+
+    generateElevationProfile(coords[0], coords[1]);
+
+    map.removeInteraction(profileDraw);
+    profileDraw = null;
+
+  });
+
+}
+
+
+map.on('singleclick', function(evt) {
+
+  if (!profileMode) return;
+
+  profilePoints.push(evt.coordinate);
+
+  if (profilePoints.length === 2) {
+    generateElevationProfile(profilePoints[0], profilePoints[1]);
+    profilePoints = [];
+  }
+
+});
+
+function getProfilePoints(coord1, coord2, step = 5) {
+
+  const line = new ol.geom.LineString([coord1, coord2]);
+  const length = line.getLength();
+
+  const points = [];
+
+  for (let d = 0; d <= length; d += step) {
+
+    const coord = line.getCoordinateAt(d / length);
+    points.push({coord, dist: d});
+
+  }
+
+  return points;
+}
+
+function getHeightAtCoordinate(coord) {
+
+  const pixel = map.getPixelFromCoordinate(coord);
+
+  const offsets = [
+    [0,0],[1,0],[-1,0],[0,1],[0,-1]
+  ];
+
+  for (const layer of activeDgmRasterLayers) {
+
+    if (!layer.getVisible()) continue;
+
+    if (!layer.bbox || !ol.extent.containsCoordinate(layer.bbox, coord)) {
+      continue;
+    }
+
+    for (const o of offsets) {
+
+      const p = [pixel[0] + o[0], pixel[1] + o[1]];
+      const data = layer.getData(p);
+
+      if (
+        data &&
+        !Number.isNaN(data[0]) &&
+        data[0] !== 0 &&
+        data[0] !== -9999
+      ) {
+        return data[0];
+      }
+
+    }
+
+  }
+
+  return null;
+
+}
+
+function generateElevationProfile(coord1, coord2) {
+
+  const points = getProfilePoints(coord1, coord2, 5);
+
+  const profile = [];
+
+  for (const p of points) {
+
+    const height = getHeightAtCoordinate(p.coord);
+
+    if (height !== null) {
+      profile.push({
+        distance: p.dist,
+        height: height
+      });
+    }
+
+  }
+
+  showProfileChart(profile);
+
+}
+
+function showProfileChart(profile) {
+
+  const distances = profile.map(p => p.distance);
+  const heights = profile.map(p => p.height);
+
+  const win = window.open("", "Höhenprofil", "width=600,height=400");
+
+  win.document.write(`
+    <canvas id="chart"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
+    <script>
+      const ctx = document.getElementById('chart').getContext('2d');
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ${JSON.stringify(distances)},
+          datasets: [{
+            label: 'Höhe (m)',
+            data: ${JSON.stringify(heights)},
+            borderWidth: 2,
+            fill: false
+          }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Distanz (m)' } },
+            y: { title: { display: true, text: 'Höhe (m)' } }
+          }
+        }
+      });
+    <\/script>
+  `);
+
+}
 // ===== Automatisch für alle Layers mit permalink: Sichtbarkeit + Opacity speichern =====
 map.getLayers().forEach(layer => {
   const key = layer.get('permalink');
@@ -1254,10 +1426,6 @@ let clickCooldown = false;
 
 map.on('click', function (evt) {
   if  (!dgmClickListener && !domClickListener) {
-      
-      
-  
-  
   if (clickCooldown) return;
   clickCooldown = true;
   setTimeout(() => clickCooldown = false, 300); // Sperre für 300ms
@@ -2373,20 +2541,24 @@ var sub2 = new Bar({
 new Toggle({
   html: '<i class="fa fa-map"></i>',
   title: "dgm-Datei laden",
-
   onToggle: function () {
-
     const active = this.getActive();
-
     dgmKachelLayer.setVisible(active);
-    dgmKachelLayer.set('displayInLayerSwitcher', true);
+    
+    //domKachelLayer.setVisible(!active)
 
     if (active) {
       enableDgmInteraction();
+      dgmKachelLayer.set('displayInLayerSwitcher', true);
     } else {
       disableDgmInteraction();
+      dgmKachelLayer.set('displayInLayerSwitcher', false);
+     
     }
-
+    // dgmKachelLayer.set('displayInLayerSwitcher', false);
+    // Optional: Popup schließen
+      const popup1 = document.getElementById('popup1');
+      if (popup1) popup1.style.display = 'none';
   }
 }),
     // DOM laden
@@ -2397,7 +2569,7 @@ new Toggle({
       const active = this.getActive();
       domKachelLayer.setVisible(active);
       domKachelLayer.set('displayInLayerSwitcher', true);
-      dgmKachelLayer.setVisible(!active)
+      //dgmKachelLayer.setVisible(!active)
       if (active) {
         // Event registrieren
         domClickListener = map.on('singleclick', handleDomClick);
@@ -2413,7 +2585,36 @@ new Toggle({
       if (popup1) popup1.style.display = 'none';
     }
   }
-    })
+    }),
+ 
+
+new Toggle({
+  html: '<i class="fa fa-area-chart"></i>',
+  title: "Höhenprofil",
+
+  onToggle: function() {
+
+    profileMode = this.getActive();
+
+    if (profileMode) {
+
+      profileSource.clear();
+      enableProfileDrawing();
+      console.log("Profilmodus aktiv");
+
+    } else {
+
+      if (profileDraw) {
+        map.removeInteraction(profileDraw);
+        profileDraw = null;
+      }
+
+      console.log("Profilmodus aus");
+
+    }
+
+  }
+})
   ]
 });
 let geojsonCounter = 0;
@@ -3061,6 +3262,10 @@ async function handleDgmClick(evt) {
 
     if (!featureFound) popup1.style.display = 'none';
     return;
+    if (!kachelnVisible) {
+      popup1.style.display = 'none';
+      return;
+    }   
   }
 
 const coord = map.getCoordinateFromPixel(evt.pixel);
