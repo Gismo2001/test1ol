@@ -195,6 +195,25 @@ function updateDgmInteraction() {
   }
 
 }
+
+function lineIntersectsAnyDgm(coord1, coord2) {
+
+  const lineExtent = ol.extent.boundingExtent([coord1, coord2]);
+
+  for (const layer of activeDgmRasterLayers) {
+
+    if (!layer.getVisible()) continue;
+
+    if (!layer.bbox) continue;
+
+    if (ol.extent.intersects(lineExtent, layer.bbox)) {
+      return true;
+    }
+
+  }
+
+  return false;
+}
 // von EPSG:32632 (UTM 32N) nach EPSG:3857 (WebMercator)
 var firstProjection = "EPSG:32632";
 var secondProjection = "EPSG:3857";
@@ -423,8 +442,13 @@ function getHeightAtCoordinate(coord) {
 
 function generateElevationProfile(coord1, coord2) {
 
-  const points = getProfilePoints(coord1, coord2, 5);
+  if (!lineIntersectsAnyDgm(coord1, coord2)) {
+    popup1.innerHTML = "<b>Für diese Strecke sind keine Höhendaten vorhanden.</b>";
+    popup1.style.display = 'block';
+    return;
+  }
 
+  const points = getProfilePoints(coord1, coord2, 5);
   const profile = [];
 
   for (const p of points) {
@@ -440,44 +464,67 @@ function generateElevationProfile(coord1, coord2) {
 
   }
 
+  if (profile.length === 0) {
+    popup1.innerHTML = "<b>Keine Höhendaten entlang der Linie gefunden.</b>";
+    popup1.style.display = 'block';
+    return;
+  }
+
   showProfileChart(profile);
-
 }
-
 function showProfileChart(profile) {
-
-  const distances = profile.map(p => p.distance);
-  const heights = profile.map(p => p.height);
+  const distances = profile.map(p => p.distance.toFixed(2));
+  const heights = profile.map(p => p.height.toFixed(2));
 
   const win = window.open("", "Höhenprofil", "width=600,height=400");
+  win.document.body.innerHTML = "<h3>Höhenprofil</h3><canvas id='chart'></canvas><button id='exportCsvBtn'>CSV exportieren</button>";
 
-  win.document.write(`
-    <canvas id="chart"></canvas>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
-    <script>
-      const ctx = document.getElementById('chart').getContext('2d');
+  // Chart.js laden
+  const script = win.document.createElement("script");
+  script.src = "https://cdn.jsdelivr.net/npm/chart.js";
+  script.onload = () => {
+    const ctx = win.document.getElementById('chart').getContext('2d');
 
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ${JSON.stringify(distances)},
-          datasets: [{
-            label: 'Höhe (m)',
-            data: ${JSON.stringify(heights)},
-            borderWidth: 2,
-            fill: false
-          }]
-        },
-        options: {
-          scales: {
-            x: { title: { display: true, text: 'Distanz (m)' } },
-            y: { title: { display: true, text: 'Höhe (m)' } }
-          }
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: distances,
+        datasets: [{
+          label: 'Höhe (m)',
+          data: heights,
+          borderWidth: 2,
+          tension: 0.2,
+          pointRadius: 0,
+          fill: false
+        }]
+      },
+      options: {
+        scales: {
+          x: { title: { display: true, text: 'Distanz (m)' } },
+          y: { title: { display: true, text: 'Höhe (m)' } }
         }
-      });
-    <\/script>
-  `);
+      }
+    });
 
+    // CSV-Button
+    win.document.getElementById('exportCsvBtn').onclick = function() {
+      let csvContent = "data:text/csv;charset=utf-8,Distanz (m);Höhe (m)\n";
+      for (let i = 0; i < profile.length; i++) {
+        // Dezimalpunkt durch Komma ersetzen
+        const dist = distances[i].replace(".", ",");
+        const height = heights[i].replace(".", ",");
+        csvContent += dist + ";" + height + "\n";
+      }
+      const encodedUri = encodeURI(csvContent);
+      const link = win.document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "hoehenprofil.csv");
+      win.document.body.appendChild(link);
+      link.click();
+      win.document.body.removeChild(link);
+    };
+  };
+  win.document.body.appendChild(script);
 }
 // ===== Automatisch für alle Layers mit permalink: Sichtbarkeit + Opacity speichern =====
 map.getLayers().forEach(layer => {
