@@ -121,6 +121,7 @@ import {extend as extendExtent, createEmpty as createEmptyExtent} from 'ol/exten
 let activeDgmRasterLayers = [];  
 let activeDgmRasterData = [];  
 let dgmClickListener = null;
+let dgmPointerMoveListener = null;
 let loadedDgms = [];   // speichert {tile_id, bbox}
 
 
@@ -145,14 +146,18 @@ var secondProjection = "EPSG:3857";
 
 var resultkoord = proj4(firstProjection, secondProjection, [500000, 5800000]);
 
+let ismobile = false;
 function isMobileDevice() {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 }
 
 if (isMobileDevice()) {
-  console.log("Mobilgerät erkannt");
+  console.log("Mobilgerät erkannt" & ismobile);
+
+
 } else {
-  console.log("Desktopgerät erkannt");
+  console.log("Desktopgerät erkannt" & ismobile);
 }
 
 
@@ -2307,28 +2312,56 @@ var sub2 = new Bar({
         }
       }
     }),
-    // DGM laden
-    new Toggle({
-    html: '<i class="fa fa-map"></i>',
-    title: "dgm-Datei laden",
-    onToggle: function () {
-      const active = this.getActive();
-      dgmKachelLayer.setVisible(active);
-      dgmKachelLayer.set('displayInLayerSwitcher', active);
-      domKachelLayer.setVisible(!active);
+// DGM laden
+// DGM laden
+new Toggle({
+  html: '<i class="fa fa-map"></i>',
+  title: "dgm-Datei laden",
+
+  onToggle: function () {
+
+    const active = this.getActive();
+
+    // --- Listener entfernen ---
+    if (!active) {
+
       if (dgmClickListener) {
         unByKey(dgmClickListener);
         dgmClickListener = null;
       }
 
-      if (active) {
-        dgmClickListener = map.on('singleclick', handleDgmClick);
-      } else {
+      if (dgmPointerMoveListener) {
+        unByKey(dgmPointerMoveListener);
+        dgmPointerMoveListener = null;
+      }
+
+      console.log('DGM-Listener entfernt');
+
+      dgmKachelLayer.setVisible(false);
+
       const popup1 = document.getElementById('popup1');
       if (popup1) popup1.style.display = 'none';
-      }
+
+      return;
     }
-    }),
+
+    // --- Layer sichtbar ---
+    dgmKachelLayer.setVisible(true);
+    dgmKachelLayer.set('displayInLayerSwitcher', true);
+
+    domKachelLayer.setVisible(false);
+
+    const popup1 = document.getElementById('popup1');
+    if (popup1) popup1.style.display = 'none';
+
+    // --- Listener aktivieren ---
+    dgmClickListener = map.on('singleclick', handleDgmClick);
+
+    dgmPointerMoveListener = map.on('pointermove', handleDgmPointerMove);
+
+    console.log('DGM-Listener aktiv');
+  }
+}),
     // DOM laden
     new Toggle({
     html: '<i class="fa-solid fa-file"></i>',
@@ -2750,11 +2783,13 @@ function navigate(obj) {
   var url = `https://www.google.com/maps?q=${lat},${lon}`;
   window.open(url, '_blank');
 }
+
 const heightStatus = document.getElementById('height-status');
 const heightValue = document.getElementById('height-value');
 
-map.on('pointermove', function (e) {
+function handleDgmPointerMove(e) {
 
+  if (ismobile) return;
   if (e.dragging) return;
 
   const pixel = map.getEventPixel(e.originalEvent);
@@ -2768,26 +2803,25 @@ map.on('pointermove', function (e) {
   }
 
   let output = "";
+for (const layer of visibleDgmLayers) {
 
-  for (const layer of visibleDgmLayers) {
-
-    // prüfen ob Maus im Layer-Extent liegt
-    if (!layer.bbox || !ol.extent.containsCoordinate(layer.bbox, coord)) {
-      continue;
-    }
-
-    const data = layer.getData(pixel);
-
-    if (data && data[0] !== -9999 && !Number.isNaN(data[0])) {
-
-      const height = data[0];
-      const layerNr = layer.get('name').split('_')[0];
-
-      output += `H_Nr_${layerNr}: ${height.toFixed(2)} m<br>`;
-      break;   // ← HIER abbrechen
-    }
-
+  if (!layer.bbox || !ol.extent.containsCoordinate(layer.bbox, coord)) {
+    continue;
   }
+
+  const data = layer.getData(pixel);
+
+  if (data && !Number.isNaN(data[0])) {
+
+    const height = data[0];
+    const layerNr = layer.get('name').split('_')[0];
+
+    heightValue.innerHTML = `Nr_${layerNr}: ${height.toFixed(2)} m`;
+    heightStatus.style.display = 'block';
+
+    return; // sofort fertig
+  }
+}
 
   if (output !== "") {
     heightValue.innerHTML = output;
@@ -2795,8 +2829,7 @@ map.on('pointermove', function (e) {
   } else {
     heightStatus.style.display = 'none';
   }
-
-});
+}
 let lastCall = 0;
 const throttleDelay = 60; // 50–80ms ideal
 
@@ -3047,7 +3080,7 @@ if (height !== null) {
 
   const layerNr = foundLayer.get('name').split('_')[0];
 
-  popup1.innerHTML = `H_Nr_ ${layerNr}: <b>${height.toFixed(2)} m</b>`;
+  popup1.innerHTML = `H_Nr_ ${layerNr}: <b>${height.toFixed(2)}</b>`;
 
 } else {
 
