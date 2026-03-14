@@ -120,6 +120,7 @@ import {extend as extendExtent, createEmpty as createEmptyExtent} from 'ol/exten
 
 let activeDgmRasterLayers = [];  
 let activeDgmRasterData = [];  
+
 let dgmClickListener = null;
 let dgmPointerMoveListener = null;
 let loadedDgms = [];   // speichert {tile_id, bbox}
@@ -134,12 +135,64 @@ let loadedDoms = [];   // speichert {tile_id, bbox}
 
 
 
+function enableDgmInteraction() {
 
+  if (!dgmClickListener) {
+    dgmClickListener = map.on('singleclick', handleDgmClick);
+  }
 
+  if (!ismobile && !dgmPointerMoveListener) {
+    dgmPointerMoveListener = map.on('pointermove', handleDgmPointerMove);
+  }
 
+  console.log("DGM Interaction aktiviert");
+}
 
+function disableDgmInteraction() {
 
+  if (dgmClickListener) {
+    unByKey(dgmClickListener);
+    dgmClickListener = null;
+  }
 
+  if (dgmPointerMoveListener) {
+    unByKey(dgmPointerMoveListener);
+    dgmPointerMoveListener = null;
+  }
+
+  const popup1 = document.getElementById('popup1');
+  if (popup1) popup1.style.display = 'none';
+
+  heightStatus.style.display = 'none';
+
+  console.log("DGM Interaction deaktiviert");
+}
+
+function updateDgmInteraction() {
+
+  const kachelnVisible = dgmKachelLayer.getVisible();
+
+  if (kachelnVisible) {
+
+    // Höhenanzeige deaktivieren
+    if (dgmPointerMoveListener) {
+      unByKey(dgmPointerMoveListener);
+      dgmPointerMoveListener = null;
+    }
+
+    console.log("Kachelmodus aktiv");
+
+  } else {
+
+    // Höhenanzeige aktivieren
+    if (!ismobile && !dgmPointerMoveListener) {
+      dgmPointerMoveListener = map.on('pointermove', handleDgmPointerMove);
+    }
+    console.log("Höhenmodus aktiv");
+
+  }
+
+}
 // von EPSG:32632 (UTM 32N) nach EPSG:3857 (WebMercator)
 var firstProjection = "EPSG:32632";
 var secondProjection = "EPSG:3857";
@@ -250,7 +303,10 @@ const domKachelLayer = new VectorLayer({
 map.addLayer(domKachelLayer);
 domKachelLayer.set('displayInLayerSwitcher', false);
 
+dgmKachelLayer.on('change:visible', updateDgmInteraction);
 
+
+updateDgmInteraction();
 // ===== Automatisch für alle Layers mit permalink: Sichtbarkeit + Opacity speichern =====
 map.getLayers().forEach(layer => {
   const key = layer.get('permalink');
@@ -2312,7 +2368,7 @@ var sub2 = new Bar({
         }
       }
     }),
-// DGM laden
+
 // DGM laden
 new Toggle({
   html: '<i class="fa fa-map"></i>',
@@ -2322,44 +2378,15 @@ new Toggle({
 
     const active = this.getActive();
 
-    // --- Listener entfernen ---
-    if (!active) {
-
-      if (dgmClickListener) {
-        unByKey(dgmClickListener);
-        dgmClickListener = null;
-      }
-
-      if (dgmPointerMoveListener) {
-        unByKey(dgmPointerMoveListener);
-        dgmPointerMoveListener = null;
-      }
-
-      console.log('DGM-Listener entfernt');
-
-      dgmKachelLayer.setVisible(false);
-
-      const popup1 = document.getElementById('popup1');
-      if (popup1) popup1.style.display = 'none';
-
-      return;
-    }
-
-    // --- Layer sichtbar ---
-    dgmKachelLayer.setVisible(true);
+    dgmKachelLayer.setVisible(active);
     dgmKachelLayer.set('displayInLayerSwitcher', true);
 
-    domKachelLayer.setVisible(false);
+    if (active) {
+      enableDgmInteraction();
+    } else {
+      disableDgmInteraction();
+    }
 
-    const popup1 = document.getElementById('popup1');
-    if (popup1) popup1.style.display = 'none';
-
-    // --- Listener aktivieren ---
-    dgmClickListener = map.on('singleclick', handleDgmClick);
-
-    dgmPointerMoveListener = map.on('pointermove', handleDgmPointerMove);
-
-    console.log('DGM-Listener aktiv');
   }
 }),
     // DOM laden
@@ -2787,13 +2814,12 @@ function navigate(obj) {
 const heightStatus = document.getElementById('height-status');
 const heightValue = document.getElementById('height-value');
 
-function handleDgmPointerMove(e) {
+function handleDgmPointerMove(evt) {
 
-  if (ismobile) return;
-  if (e.dragging) return;
+  if (evt.dragging) return;
 
-  const pixel = map.getEventPixel(e.originalEvent);
-  const coord = map.getCoordinateFromPixel(pixel);
+  const pixel = evt.pixel;
+  const coord = evt.coordinate;
 
   const visibleDgmLayers = activeDgmRasterLayers.filter(l => l.getVisible());
 
@@ -2802,34 +2828,32 @@ function handleDgmPointerMove(e) {
     return;
   }
 
-  let output = "";
-for (const layer of visibleDgmLayers) {
+  // passenden Layer finden
+  const activeLayer = visibleDgmLayers.find(layer =>
+    layer.bbox && ol.extent.containsCoordinate(layer.bbox, coord)
+  );
 
-  if (!layer.bbox || !ol.extent.containsCoordinate(layer.bbox, coord)) {
-    continue;
+  if (!activeLayer) {
+    heightStatus.style.display = 'none';
+    return;
   }
 
-  const data = layer.getData(pixel);
+  const data = activeLayer.getData(pixel);
 
-  if (data && !Number.isNaN(data[0])) {
+  if (data && data[0] !== -9999 && !Number.isNaN(data[0])) {
 
+    const layerNr = activeLayer.get('name').split('_')[0];
     const height = data[0];
-    const layerNr = layer.get('name').split('_')[0];
 
     heightValue.innerHTML = `Nr_${layerNr}: ${height.toFixed(2)} m`;
     heightStatus.style.display = 'block';
 
-    return; // sofort fertig
-  }
-}
-
-  if (output !== "") {
-    heightValue.innerHTML = output;
-    heightStatus.style.display = 'block';
   } else {
     heightStatus.style.display = 'none';
   }
+
 }
+
 let lastCall = 0;
 const throttleDelay = 60; // 50–80ms ideal
 
@@ -2966,7 +2990,7 @@ async function addDomLayer(url, bbox, id1) {
 
 async function handleDgmClick(evt) {
   const kachelnVisible = dgmKachelLayer && dgmKachelLayer.getVisible();
-
+  
   // Popup einmal holen oder erzeugen
   let popup1 = document.getElementById('popup1');
   if (!popup1) {
@@ -3038,9 +3062,6 @@ async function handleDgmClick(evt) {
     if (!featureFound) popup1.style.display = 'none';
     return;
   }
-
-  // 🟢 FALL 2: Höhenabfrage
- // 🟢 FALL 2: Höhenabfrage
 
 const coord = map.getCoordinateFromPixel(evt.pixel);
 
