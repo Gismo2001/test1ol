@@ -125,8 +125,6 @@ let dgmClickListener = null;
 let dgmPointerMoveListener = null;
 let loadedDgms = [];   // speichert {tile_id, bbox}
 
-
-
 let activeDomRasterLayers = [];  
 let activeDomRasterData = [];  
 let domClickListener = null;
@@ -283,6 +281,8 @@ const profileSource = new ol.source.Vector();
 
 const profileLayer = new ol.layer.Vector({
   source: profileSource,
+  title: 'Profil',
+  name: 'Profil',     // wichtig für Switcher
   style: new ol.style.Style({
     stroke: new ol.style.Stroke({
       color: 'red',
@@ -290,8 +290,6 @@ const profileLayer = new ol.layer.Vector({
     })
   })
 });
-
-map.addLayer(profileLayer);
 
 const dgmKachelSource = new VectorSource({
   url: '/data/dgm_kacheln.geojson',  // relativer Pfad im Projekt
@@ -352,7 +350,7 @@ function enableProfileDrawing() {
   profileDraw = new ol.interaction.Draw({
     source: profileSource,
     type: 'LineString',
-    maxPoints: 2
+    
   });
 
   map.addInteraction(profileDraw);
@@ -360,9 +358,9 @@ function enableProfileDrawing() {
   profileDraw.on('drawend', function(evt) {
 
     const line = evt.feature.getGeometry();
-    const coords = line.getCoordinates();
+   const coords = evt.feature.getGeometry().getCoordinates();
 
-    generateElevationProfile(coords[0], coords[1]);
+      generateElevationProfile(coords);
 
     map.removeInteraction(profileDraw);
     profileDraw = null;
@@ -440,27 +438,37 @@ function getHeightAtCoordinate(coord) {
 
 }
 
-function generateElevationProfile(coord1, coord2) {
+function generateElevationProfile(coords) {
 
-  if (!lineIntersectsAnyDgm(coord1, coord2)) {
-    popup1.innerHTML = "<b>Für diese Strecke sind keine Höhendaten vorhanden.</b>";
-    popup1.style.display = 'block';
-    return;
-  }
-
-  const points = getProfilePoints(coord1, coord2, 5);
   const profile = [];
+  let cumulativeDist = 0;
 
-  for (const p of points) {
+  for (let i = 0; i < coords.length - 1; i++) {
 
-    const height = getHeightAtCoordinate(p.coord);
+    const c1 = coords[i];
+    const c2 = coords[i + 1];
 
-    if (height !== null) {
-      profile.push({
-        distance: p.dist,
-        height: height
-      });
+    const segmentPoints = getProfilePoints(c1, c2, 5);
+
+    for (const p of segmentPoints) {
+
+      const height = getHeightAtCoordinate(p.coord);
+
+      if (height !== null) {
+
+        profile.push({
+          distance: cumulativeDist + p.dist,
+          height: height,
+          coord: p.coord
+        });
+
+      }
+
     }
+
+    const dx = c2[0] - c1[0];
+    const dy = c2[1] - c1[1];
+    cumulativeDist += Math.sqrt(dx*dx + dy*dy);
 
   }
 
@@ -472,25 +480,73 @@ function generateElevationProfile(coord1, coord2) {
 
   showProfileChart(profile);
 }
+
 function showProfileChart(profile) {
+
   const distances = profile.map(p => p.distance.toFixed(2));
   const heights = profile.map(p => p.height.toFixed(2));
+  const coords = profile.map(p => p.coord);
 
-  const win = window.open("", "Höhenprofil", "width=600,height=400");
-  win.document.body.innerHTML = "<h3>Höhenprofil</h3><canvas id='chart'></canvas><button id='exportCsvBtn'>CSV exportieren</button>";
+  const win = window.open("", "Höhenprofil", "width=700,height=500");
 
-  // Chart.js laden
+  win.document.body.innerHTML = `
+  <style>
+  html, body {
+    height:100%;
+    margin:0;
+    font-family:sans-serif;
+    display:flex;
+    flex-direction:column;
+  }
+
+  #chartContainer{
+    position:relative;
+    width:100%;
+  }
+
+  canvas{
+    width:100% !important;
+    height:100% !important;
+  }
+
+  #controls{
+    padding:10px;
+  }
+  </style>
+
+  <h3 style="margin:10px">Höhenprofil</h3>
+
+  <div id="chartContainer">
+    <canvas id="chart"></canvas>
+  </div>
+
+  <div id="controls">
+    <button id="exportCsvBtn">CSV exportieren</button>
+  </div>
+  `;
+
   const script = win.document.createElement("script");
   script.src = "https://cdn.jsdelivr.net/npm/chart.js";
-  script.onload = () => {
-    const ctx = win.document.getElementById('chart').getContext('2d');
 
-    new Chart(ctx, {
-      type: 'line',
+  script.onload = () => {
+
+    const ctx = win.document.getElementById("chart").getContext("2d");
+    const container = win.document.getElementById("chartContainer");
+
+    function resizeChartContainer(){
+      const headerHeight = 60;
+      const controlsHeight = 60;
+      container.style.height = (win.innerHeight - headerHeight - controlsHeight) + "px";
+    }
+
+    resizeChartContainer();
+
+    const chart = new Chart(ctx, {
+      type: "line",
       data: {
         labels: distances,
         datasets: [{
-          label: 'Höhe (m)',
+          label: "Höhe (m)",
           data: heights,
           borderWidth: 2,
           tension: 0.2,
@@ -499,33 +555,48 @@ function showProfileChart(profile) {
         }]
       },
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
         scales: {
-          x: { title: { display: true, text: 'Distanz (m)' } },
-          y: { title: { display: true, text: 'Höhe (m)' } }
+          x: { title: { display:true, text:"Distanz (m)" }},
+          y: { title: { display:true, text:"Höhe (m)" }}
         }
       }
     });
 
-    // CSV-Button
-    win.document.getElementById('exportCsvBtn').onclick = function() {
-      let csvContent = "data:text/csv;charset=utf-8,Distanz (m);Höhe (m)\n";
-      for (let i = 0; i < profile.length; i++) {
-        // Dezimalpunkt durch Komma ersetzen
-        const dist = distances[i].replace(".", ",");
-        const height = heights[i].replace(".", ",");
-        csvContent += dist + ";" + height + "\n";
+    win.addEventListener("resize", () => {
+      resizeChartContainer();
+      chart.resize();
+    });
+
+    // CSV Export
+    win.document.getElementById("exportCsvBtn").onclick = function(){
+
+      let csv = "data:text/csv;charset=utf-8,Distanz;Hoehe\n";
+
+      for(let i=0;i<profile.length;i++){
+
+        const dist = distances[i].replace(".",",");
+        const height = heights[i].replace(".",",");
+
+        csv += dist + ";" + height + "\n";
       }
-      const encodedUri = encodeURI(csvContent);
+
+      const uri = encodeURI(csv);
+
       const link = win.document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", "hoehenprofil.csv");
+      link.setAttribute("href", uri);
+      link.setAttribute("download","hoehenprofil.csv");
+
       win.document.body.appendChild(link);
       link.click();
       win.document.body.removeChild(link);
     };
   };
+
   win.document.body.appendChild(script);
 }
+
 // ===== Automatisch für alle Layers mit permalink: Sichtbarkeit + Opacity speichern =====
 map.getLayers().forEach(layer => {
   const key = layer.get('permalink');
@@ -2647,14 +2718,17 @@ new Toggle({
 
       profileSource.clear();
       enableProfileDrawing();
+      profileLayer.set('displayInLayerSwitcher', true);
       console.log("Profilmodus aktiv");
 
     } else {
 
       if (profileDraw) {
         map.removeInteraction(profileDraw);
+        console.log("Profilmodus deaktiviert, Interaktion entfernt");
         profileDraw = null;
       }
+      //profileLayer.set('displayInLayerSwitcher', false);
 
       console.log("Profilmodus aus");
 
@@ -3561,6 +3635,8 @@ async function readHeightFromGeoTIFFLayer(layer, coordinate) {
   }
 }
 
+map.addLayer(profileLayer);
+profileLayer.set('displayInLayerSwitcher', false);
 
 // --- Koordinaten EPSG:32632 ---
 function logCoordinates32632(obj) {
