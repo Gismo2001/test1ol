@@ -346,11 +346,9 @@ let profilePoints = [];
 let profileDraw = null;
 
 function enableProfileDrawing() {
-
   profileDraw = new ol.interaction.Draw({
     source: profileSource,
     type: 'LineString',
-    
   });
 
   map.addInteraction(profileDraw);
@@ -371,16 +369,12 @@ function enableProfileDrawing() {
 
 
 map.on('singleclick', function(evt) {
-
   if (!profileMode) return;
-
   profilePoints.push(evt.coordinate);
-
   if (profilePoints.length === 2) {
     generateElevationProfile(profilePoints[0], profilePoints[1]);
     profilePoints = [];
   }
-
 });
 
 function getProfilePoints(coord1, coord2, step = 5) {
@@ -439,165 +433,135 @@ function getHeightAtCoordinate(coord) {
 }
 
 function generateElevationProfile(coords) {
-
   const profile = [];
   let cumulativeDist = 0;
-
   for (let i = 0; i < coords.length - 1; i++) {
-
     const c1 = coords[i];
     const c2 = coords[i + 1];
-
     const segmentPoints = getProfilePoints(c1, c2, 5);
-
     for (const p of segmentPoints) {
-
       const height = getHeightAtCoordinate(p.coord);
-
       if (height !== null) {
-
         profile.push({
           distance: cumulativeDist + p.dist,
           height: height,
           coord: p.coord
         });
-
       }
-
     }
-
     const dx = c2[0] - c1[0];
     const dy = c2[1] - c1[1];
     cumulativeDist += Math.sqrt(dx*dx + dy*dy);
-
   }
-
   if (profile.length === 0) {
     popup1.innerHTML = "<b>Keine Höhendaten entlang der Linie gefunden.</b>";
     popup1.style.display = 'block';
     return;
   }
-
   showProfileChart(profile);
 }
 
 function showProfileChart(profile) {
-
   const distances = profile.map(p => p.distance.toFixed(2));
   const heights = profile.map(p => p.height.toFixed(2));
   const coords = profile.map(p => p.coord);
-
   const win = window.open("", "Höhenprofil", "width=700,height=500");
-
   win.document.body.innerHTML = `
-  <style>
-  html, body {
-    height:100%;
-    margin:0;
-    font-family:sans-serif;
-    display:flex;
-    flex-direction:column;
-  }
-
-  #chartContainer{
-    position:relative;
-    width:100%;
-  }
-
-  canvas{
-    width:100% !important;
-    height:100% !important;
-  }
-
-  #controls{
-    padding:10px;
-  }
-  </style>
-
-  <h3 style="margin:10px">Höhenprofil</h3>
-
-  <div id="chartContainer">
-    <canvas id="chart"></canvas>
-  </div>
-
-  <div id="controls">
-    <button id="exportCsvBtn">CSV exportieren</button>
-  </div>
-  `;
-
-  const script = win.document.createElement("script");
-  script.src = "https://cdn.jsdelivr.net/npm/chart.js";
-
-  script.onload = () => {
-
-    const ctx = win.document.getElementById("chart").getContext("2d");
-    const container = win.document.getElementById("chartContainer");
-
-    function resizeChartContainer(){
-      const headerHeight = 60;
-      const controlsHeight = 60;
-      container.style.height = (win.innerHeight - headerHeight - controlsHeight) + "px";
-    }
-
-    resizeChartContainer();
-
-    const chart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: distances,
-        datasets: [{
-          label: "Höhe (m)",
-          data: heights,
-          borderWidth: 2,
-          tension: 0.2,
-          pointRadius: 0,
-          fill: false
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: { title: { display:true, text:"Distanz (m)" }},
-          y: { title: { display:true, text:"Höhe (m)" }}
-        }
+    <style>
+      html, body {height:100%; margin:0;font-family:sans-serif;display:flex;flex-direction:column;}
+      #chartContainer {flex:1;position:relative;}
+      canvas { width:100% !important; height:100% !important;}
+    </style>
+    <h3 style="margin:10px">Höhenprofil</h3>
+    <div id="chartContainer"> <canvas id="chart"></canvas> </div>
+    <div id="controls">
+      <button id="exportCsvBtn">CSV exportieren</button>
+      <button id="addHorizontalBtn">Horizontale</button>
+    </div>
+    `;
+    const script = win.document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/chart.js";
+    script.onload = () => {
+      const ctx = win.document.getElementById("chart").getContext("2d");
+      const container = win.document.getElementById("chartContainer");
+      function resizeChartContainer(){
+        const headerHeight = 60;
+        const controlsHeight = 60;
+        container.style.height = (win.innerHeight - headerHeight - controlsHeight) + "px";
       }
-    });
-
-    win.addEventListener("resize", () => {
       resizeChartContainer();
-      chart.resize();
-    });
+      const chart = new Chart(ctx, {
+        type: "line",
+        data: { labels: distances, datasets: [{label: "Höhe (m)", data: heights, borderWidth: 2, tension: 0.2, pointRadius: 0,fill: false}]},
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'nearest', intersect: false },
+          onHover: function(event, elements) {
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const coord = coords[index];
+            // an Hauptfenster schicken
+            //console.log(window);
+            addMarker(coord);
+            //window.opener.showProfilePosition(coord);
+          }
+          },
+          
+        scales: {
+        x: { title: { display:true, text:"Distanz (m)" }},
+        y: { title: { display:true, text:"Höhe (m)" }}
+        }
+        }
+      });
+      win.addEventListener("resize", () => {resizeChartContainer(); chart.resize(); });
 
-    // CSV Export
-    win.document.getElementById("exportCsvBtn").onclick = function(){
+      // CSV Export
+      win.document.getElementById("exportCsvBtn").onclick = function(){
+        let csv = "data:text/csv;charset=utf-8,Distanz;Hoehe\n";
+        for(let i=0;i<profile.length;i++){
+          const dist = distances[i].replace(".",",");
+          const height = heights[i].replace(".",",");
+          csv += dist + ";" + height + "\n";
+        }
+        const uri = encodeURI(csv);
+        const link = win.document.createElement("a");
+        link.setAttribute("href", uri);
+        link.setAttribute("download","hoehenprofil.csv");
+        win.document.body.appendChild(link);
+        link.click();
+        win.document.body.removeChild(link);
+      };
 
-      let csv = "data:text/csv;charset=utf-8,Distanz;Hoehe\n";
+      win.document.getElementById("addHorizontalBtn").onclick = function() {
+        
+        const value = win.prompt("Höhe für horizontale Linie (m):");
+        if (value === null) return;
+        const h = parseFloat(value);
+        if (isNaN(h)) {
+        win.alert("Bitte eine gültige Zahl eingeben.");
+        return;
+        }
 
-      for(let i=0;i<profile.length;i++){
-
-        const dist = distances[i].replace(".",",");
-        const height = heights[i].replace(".",",");
-
-        csv += dist + ";" + height + "\n";
-      }
-
-      const uri = encodeURI(csv);
-
-      const link = win.document.createElement("a");
-      link.setAttribute("href", uri);
-      link.setAttribute("download","hoehenprofil.csv");
-
-      win.document.body.appendChild(link);
-      link.click();
-      win.document.body.removeChild(link);
+        // Array mit konstantem Wert erzeugen
+        const horizontalData = new Array(distances.length).fill(h);
+        chart.data.datasets.push({
+        label: "Horizontale " + h + " m",
+        data: horizontalData,
+        borderColor: "red",
+        borderWidth: 2,
+        borderDash: [8,6],
+        pointRadius: 0,
+        fill: false
+      });
+      chart.update();
     };
-  };
 
+  };
   win.document.body.appendChild(script);
 }
 
-// ===== Automatisch für alle Layers mit permalink: Sichtbarkeit + Opacity speichern =====
+
 map.getLayers().forEach(layer => {
   const key = layer.get('permalink');
   if (key) {
@@ -2143,7 +2107,7 @@ var sLayer = new VectorLayer({
           color: 'rgba(255,165,0,.3)'
       })
   }),
-  displayInLayerSwitcher : false,
+  displayInLayerSwitcher : true,
 });
 map.addLayer(sLayer);
 
@@ -2189,18 +2153,23 @@ search.on('select', function(e){
 
 // Funktion zum Hinzufügen eines Markers
 function addMarker(coordinates) {
-  var marker = new Feature({
+   var marker = new Feature({
     geometry: new Point(coordinates)
   });
   var markerStyle = new Style({
     image: new Icon({
       src: 'data/marker.svg', // Pfad zur Bilddatei
       //scale: 0.5 // Skalierung des Bildes
-    })
+    }),
+    displayInLayerSwitcher : true,
+    name: "Coord",
+    title: "Coord"
   });
   marker.setStyle(markerStyle);
   sLayer.getSource().clear(); // Löscht vorherige Marker
   sLayer.getSource().addFeature(marker);
+  sLayer.set('title', "Punkt");
+  sLayer.set('name', "Punkt");
 };
 
 //---------------------------------------------------------------------------------------------Menü mit Submenü
@@ -2704,38 +2673,43 @@ new Toggle({
     }
   }
     }),
- 
 
 new Toggle({
   html: '<i class="fa fa-area-chart"></i>',
   title: "Höhenprofil",
 
-  onToggle: function() {
+  onToggle: function () {
 
     profileMode = this.getActive();
 
     if (profileMode) {
 
-      profileSource.clear();
-      enableProfileDrawing();
-      profileLayer.set('displayInLayerSwitcher', true);
       console.log("Profilmodus aktiv");
+
+      profileSource.clear();
+
+      profileLayer.setVisible(true);
+      profileLayer.set('displayInLayerSwitcher', true);
+
+      enableProfileDrawing();
 
     } else {
 
+      console.log("Profilmodus deaktiviert");
+
+      profileLayer.setVisible(false);
+      profileLayer.set('displayInLayerSwitcher', false);
+
       if (profileDraw) {
         map.removeInteraction(profileDraw);
-        console.log("Profilmodus deaktiviert, Interaktion entfernt");
         profileDraw = null;
+        console.log("Profil-Interaktion entfernt");
       }
-      //profileLayer.set('displayInLayerSwitcher', false);
-
-      console.log("Profilmodus aus");
 
     }
 
   }
-})
+}),
   ]
 });
 let geojsonCounter = 0;
