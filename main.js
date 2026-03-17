@@ -3181,13 +3181,28 @@ function createGeoTiffStyle(minHeight, maxHeight) {
 
 async function getMinMaxFromMetadata(url) {
   try {
-    const response = await fetch(url, { method: 'HEAD' }); // Vorab-Check
-    if (!response.ok) throw new Error('Datei nicht erreichbar');
+    const response = await fetch(url);
+    if (!response.ok) {
+      // Wenn Netlify eine 404 oder 500 Seite liefert, bricht er hier ab
+      // statt zu versuchen, das HTML als TIFF zu parsen.
+      throw new Error(`Server lieferte Status ${response.status}`);
+    }
 
-    const tiff = await fromArrayBuffer(await (await fetch(url)).arrayBuffer());
-    const image = await tiff.getImage(); // Evtl. getImage(1) für schnellere Statistik nutzen
+    const buffer = await response.arrayBuffer();
+    
+    // Prüfen, ob die ersten Bytes überhaupt ein TIFF sind (II oder MM)
+    const view = new Uint8Array(buffer.slice(0, 2));
+    const isTiff = (view[0] === 0x49 && view[1] === 0x49) || (view[0] === 0x4d && view[1] === 0x4d);
+    
+    if (!isTiff) {
+      throw new Error("Die empfangenen Daten sind kein gültiges GeoTIFF (evtl. Proxy-Fehlerseite).");
+    }
+
+    const tiff = await fromArrayBuffer(buffer);
+    const image = await tiff.getImage();
     const meta = image.getGDALMetadata();
 
+    // ... Rest deiner Statistik-Logik bleibt gleich ...
     if (meta?.STATISTICS_MINIMUM && meta?.STATISTICS_MAXIMUM) {
       return { 
         min: parseFloat(meta.STATISTICS_MINIMUM), 
@@ -3195,19 +3210,19 @@ async function getMinMaxFromMetadata(url) {
       };
     }
 
-    // Fallback: Nur einen Ausschnitt oder Overview lesen statt das ganze File
-    const raster = await image.readRasters({ samples: [0], interleave: false });
+    const raster = await image.readRasters({ samples: [0] });
     const band = raster[0];
     let min = Infinity, max = -Infinity;
     
-    for (let i = 0; i < band.length; i += 10) { // Performance: Nur jeden 10. Pixel prüfen
+    for (let i = 0; i < band.length; i += 10) {
       const v = band[i];
-      if (v !== -9999 && !isNaN(v)) {
+      if (v !== -9999 && !v.isNaN) { // Nutze v.isNaN oder !isNaN(v)
         if (v < min) min = v;
         if (v > max) max = v;
       }
     }
-    return { min, max };
+    return { min: min === Infinity ? 0 : min, max: max === -Infinity ? 100 : max };
+
   } catch (err) {
     console.error('Statistik-Fehler:', err);
     return { min: 0, max: 100 };
