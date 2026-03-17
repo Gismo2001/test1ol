@@ -3462,7 +3462,7 @@ async function handleDomClick(evt) {
       popup1.style.display = 'block';
 
       document.getElementById('loadDomBtn').onclick = async function () {
-  if (!alreadyLoaded) {
+        if (!alreadyLoaded) {
 
     // 👉 URL über Proxy umleiten
     const tifUrlProxy = tifUrl.replace(
