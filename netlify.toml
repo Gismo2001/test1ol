@@ -2,21 +2,3 @@
   command = "npm run build"
   publish = "dist"
 
-# 1. Spezifische Proxy-Regeln (mit :splat Platzhalter)
-[[redirects]]
-  from = "/dgm/*"
-  to = "https://dgm1.s3.eu-de.cloud-object-storage.appdomain.cloud"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/dom/*"
-  to = "https://dom1.s3.eu-de.cloud-object-storage.appdomain.cloud"
-  status = 200
-  force = true
-
-# 2. SPA-Fallback Regel (immer am Ende)
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
