@@ -3335,10 +3335,10 @@ async function handleDgmClick(evt) {
     // 👉 URL über Proxy umleiten
     const tifUrlProxy = tifUrl.replace(
       "https://dgm1.s3.eu-de.cloud-object-storage.appdomain.cloud",
-      "/dgm"
+      "/.netlify/functions/dgm-proxy"
     );
 
-    const dgmData = await addDgmLayer(tifUrlProxy, bbox, props.tile_id);
+        const dgmData = await addDgmLayer(tifUrlProxy, bbox, props.tile_id);
 
     loadedDgms.push({ tile_id: props.tile_id, bbox: bbox });
     activeDgmRasterData.push(dgmData);
@@ -3464,12 +3464,11 @@ async function handleDomClick(evt) {
       document.getElementById('loadDomBtn').onclick = async function () {
         if (!alreadyLoaded) {
 
-    // 👉 URL über Proxy umleiten
+    
     const tifUrlProxy = tifUrl.replace(
       "https://dom1.s3.eu-de.cloud-object-storage.appdomain.cloud",
-      "/dom"
+      "/.netlify/functions/dgm-proxy"
     );
-
     const domData = await addDomLayer(tifUrlProxy, bbox, props.tile_id);
 
     loadedDoms.push({ tile_id: props.tile_id, bbox: bbox });
