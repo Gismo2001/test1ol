@@ -315,7 +315,7 @@ dgmKachelLayer.set('displayInLayerSwitcher', false);
 
 
 const domKachelSource = new VectorSource({
-  url: '/data/dom_kacheln.geojson',  // relativer Pfad im Projekt
+  url: '/data/dom_kacheln_neu.geojson',  // relativer Pfad im Projekt
   format: new GeoJSON(),
 });
 const domKachelLayer = new VectorLayer({
@@ -3461,7 +3461,12 @@ async function handleDomClick(evt) {
       featureFound = true;
 
       const props = feature.getProperties();
-      const tifUrl = props.dom1;
+      let originalTifUrl = props.dom1; // Die URL von IBM (https://dom1...)
+
+       const tifUrl = originalTifUrl.replace(
+  'https://dom1.s3.eu-de.cloud-object-storage.appdomain.cloud',
+  '/dom'
+);
       const bbox = feature.getGeometry().getExtent();
 
       // prüfen ob bereits geladen
