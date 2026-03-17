@@ -24,8 +24,8 @@ export default defineConfig({
         target: 'https://dgm1.s3.eu-de.cloud-object-storage.appdomain.cloud',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/dgm/, ''),
-      },
+        rewrite: (path) => path.replace(/^\/dgm/, '')
+        },
 
       // Proxy für DOM GeoTIFFs
       '/dom': {
