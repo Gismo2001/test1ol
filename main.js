@@ -292,7 +292,7 @@ const profileLayer = new ol.layer.Vector({
 });
 
 const dgmKachelSource = new VectorSource({
-  url: '/data/dgm_kacheln.geojson',  // relativer Pfad im Projekt
+  url: '/data/dgm_kacheln_neu.geojson',  // relativer Pfad im Projekt
   format: new GeoJSON(),
 });
 const dgmKachelLayer = new VectorLayer({
@@ -315,7 +315,7 @@ dgmKachelLayer.set('displayInLayerSwitcher', false);
 
 
 const domKachelSource = new VectorSource({
-  url: '/data/dom_kacheln.geojson',  // relativer Pfad im Projekt
+  url: '/data/dom_kacheln_neu.geojson',  // relativer Pfad im Projekt
   format: new GeoJSON(),
 });
 const domKachelLayer = new VectorLayer({
@@ -1388,7 +1388,7 @@ function getLayersInGroup(layerGroup) {
 
 
 function singleClickHandler(evt) {
-  console.log(dgmClickListener);
+  //console.log(dgmClickListener);
   const visibleLayers = [];
   map.getLayers().forEach(layer => {
     const layerName = layer.get('name');
@@ -3330,29 +3330,32 @@ async function handleDgmClick(evt) {
       popup1.style.display = 'block';
 
       document.getElementById('loadDgmBtn').onclick = async function () {
-        if (!alreadyLoaded) {
-          // DGM laden und Daten zurückbekommen
-          const dgmData = await addDgmLayer(tifUrl, bbox, props.tile_id);
+  if (!alreadyLoaded) {
 
-          // Layer als geladen markieren
-          loadedDgms.push({ tile_id: props.tile_id, bbox: bbox });
-          activeDgmRasterData.push(dgmData);
+    // 👉 URL über Proxy umleiten
+    const tifUrlProxy = tifUrl.replace(
+      "https://dgm1.s3.eu-de.cloud-object-storage.appdomain.cloud",
+      "/dgm"
+    );
 
-          // Gesamt-Min/Max berechnen
-          const overall = getOverallDgmMinMax();
-          activeDgmRasterData.forEach(dgm => {
-            dgm.layer.setStyle(createGeoTiffStyle(overall.min, overall.max));
-          });
+    const dgmData = await addDgmLayer(tifUrlProxy, bbox, props.tile_id);
 
-          // Gesamt-BBox berechnen und Ansicht anpassen
-          const totalBBox = getLoadedDgmExtent();
-          if (totalBBox) {
-            //map.getView().fit(totalBBox, { padding: [50,50,50,50], duration: 700 });
-          }
-        }
+    loadedDgms.push({ tile_id: props.tile_id, bbox: bbox });
+    activeDgmRasterData.push(dgmData);
 
-        popup1.style.display = 'none';
-      };
+    const overall = getOverallDgmMinMax();
+    activeDgmRasterData.forEach(dgm => {
+      dgm.layer.setStyle(createGeoTiffStyle(overall.min, overall.max));
+    });
+
+    const totalBBox = getLoadedDgmExtent();
+    if (totalBBox) {
+      //map.getView().fit(totalBBox, { padding: [50,50,50,50], duration: 700 });
+    }
+  }
+
+  popup1.style.display = 'none';
+};
     });
 
     if (!featureFound) popup1.style.display = 'none';
@@ -3414,7 +3417,7 @@ popup1.style.display = 'block';
 
 async function handleDomClick(evt) {
   const kachelnVisible = domKachelLayer && domKachelLayer.getVisible();
-
+  
   // Popup einmal holen oder erzeugen
   let popup1 = document.getElementById('popup1');
   if (!popup1) {
@@ -3441,6 +3444,7 @@ async function handleDomClick(evt) {
 
       const props = feature.getProperties();
       const tifUrl = props.dom1;
+      console.log('DOM-Kachel angeklickt:', props.tile_id, 'URL:', tifUrl);
       const bbox = feature.getGeometry().getExtent();
 
       // prüfen ob bereits geladen
@@ -3458,65 +3462,91 @@ async function handleDomClick(evt) {
       popup1.style.display = 'block';
 
       document.getElementById('loadDomBtn').onclick = async function () {
-        if (!alreadyLoaded) {
-          // DOM laden und Daten zurückbekommen
-          const domData = await addDomLayer(tifUrl, bbox, props.tile_id);
+  if (!alreadyLoaded) {
 
-          // Layer als geladen markieren
-          loadedDoms.push({ tile_id: props.tile_id, bbox: bbox });
-          activeDomRasterData.push(domData);
+    // 👉 URL über Proxy umleiten
+    const tifUrlProxy = tifUrl.replace(
+      "https://dom1.s3.eu-de.cloud-object-storage.appdomain.cloud",
+      "/dom"
+    );
 
-          // Gesamt-Min/Max berechnen
-          const overall = getOverallDomMinMax();
-          activeDomRasterData.forEach(dom => {
-            dom.layer.setStyle(createGeoTiffStyle(overall.min, overall.max));
-          });
+    const domData = await addDomLayer(tifUrlProxy, bbox, props.tile_id);
 
-          // Gesamt-BBox berechnen und Ansicht anpassen
-          const totalBBox = getLoadedDomExtent();
-          if (totalBBox) {
-            //map.getView().fit(totalBBox, { padding: [50,50,50,50], duration: 700 });
-          }
-        }
+    loadedDoms.push({ tile_id: props.tile_id, bbox: bbox });
+    activeDomRasterData.push(domData);
 
-        popup1.style.display = 'none';
-      };
+    const overall = getOverallDomMinMax();
+    activeDomRasterData.forEach(dom => {
+      dom.layer.setStyle(createGeoTiffStyle(overall.min, overall.max));
+    });
+
+    const totalBBox = getLoadedDomExtent();
+    if (totalBBox) {
+      //map.getView().fit(totalBBox, { padding: [50,50,50,50], duration: 700 });
+    }
+  }
+
+  popup1.style.display = 'none';
+};
     });
 
     if (!featureFound) popup1.style.display = 'none';
     return;
+    if (!kachelnVisible) {
+      popup1.style.display = 'none';
+      return;
+    }   
   }
 
-  // 🟢 FALL 2: Höhenabfrage
-  const domLayers = map.getLayers().getArray().filter((layer) => {
-    const name = layer.get('name');
-    return name && name.endsWith('DOM_GeoTiff') && layer.getVisible();
-  });
+const coord = map.getCoordinateFromPixel(evt.pixel);
 
-  if (domLayers.length === 0) {
-    popup1.style.display = 'none';
-    return;
-  }
+const domLayers = map.getLayers().getArray().filter((layer) => {
+  const name = layer.get('name');
+  return name && name.endsWith('DOM_GeoTiff') && layer.getVisible();
+});
 
-  let height = null;
-
-  for (const layer of domLayers) {
-    const val = await readHeightFromGeoTIFFLayer(layer, evt.pixel);
-    if (val !== null && val !== undefined && !Number.isNaN(val)) {
-      height = val;
-      break;
-    }
-  }
-
-  popup1.style.left = evt.pixel[0] + 10 + 'px';
-  popup1.style.top = evt.pixel[1] - 15 + 'px';
-
-  popup1.innerHTML = height !== null
-    ? `H-DOM: <b>${height.toFixed(2)} m</b>`
-    : `<i>Keine DOM-Daten an dieser Position verfügbar</i>`;
-
-  popup1.style.display = 'block';
+if (domLayers.length === 0) {
+  popup1.style.display = 'none';
+  return;
 }
+
+let height = null;
+let foundLayer = null;
+
+for (const layer of domLayers) {
+
+  // prüfen ob Klick im DOM-Extent liegt
+  if (!layer.bbox || !ol.extent.containsCoordinate(layer.bbox, coord)) {
+    continue;
+  }
+
+  const val = await readHeightFromGeoTIFFLayer(layer, evt.pixel);
+
+  if (val !== null && val !== undefined && !Number.isNaN(val)) {
+    height = val;
+    foundLayer = layer;
+    break; // nur ein DOM möglich
+  }
+}
+
+popup1.style.left = evt.pixel[0] + 10 + 'px';
+popup1.style.top = evt.pixel[1] - 15 + 'px';
+
+if (height !== null) {
+
+  const layerNr = foundLayer.get('name').split('_')[0];
+
+  popup1.innerHTML = `H_Nr_ ${layerNr}: <b>${height.toFixed(2)}</b>`;
+
+} else {
+
+  popup1.innerHTML = `<i>Keine DOM-Daten an dieser Position verfügbar</i>`;
+
+}
+
+popup1.style.display = 'block';
+}
+
 
 /**
  * Liefert einen Höhenwert (erste Band) an Karte-Koordinate zurück oder null.
