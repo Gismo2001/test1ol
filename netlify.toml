@@ -2,3 +2,19 @@
   command = "npm run build"
   publish = "dist"
 
+[[redirects]]
+  from = "/dgm/*"
+  to = "https://dgm1.s3.eu-de.cloud-object-storage.appdomain.cloud"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/dom/*"
+  to = "https://dom1.s3.eu-de.cloud-object-storage.appdomain.cloud"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
