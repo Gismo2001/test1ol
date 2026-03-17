@@ -4,13 +4,13 @@
 
 [[redirects]]
   from = "/dgm/*"
-  to = "https://dgm1.s3.eu-de.cloud-object-storage.appdomain.cloud"
+  to = "https://dgm1.s3.eu-de.cloud-object-storage.appdomain.cloud/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/dom/*"
-  to = "https://dom1.s3.eu-de.cloud-object-storage.appdomain.cloud"
+  to = "https://dom1.s3.eu-de.cloud-object-storage.appdomain.cloud/:splat"
   status = 200
   force = true
 
