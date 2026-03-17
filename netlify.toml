@@ -2,6 +2,14 @@
   command = "npm run build"
   publish = "dist"
 
+# ZUERST die spezifische Cloud-Regel
+[[redirects]]
+  from = "/cloud-data/*"
+  to = "https://dgm1.s3.eu-de.cloud-object-storage.appdomain.cloud"
+  status = 200
+  force = true
+
+# DANACH die allgemeine Regel für Single Page Apps (SPA)
 [[redirects]]
   from = "/*"
   to = "/index.html"

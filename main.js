@@ -3222,6 +3222,7 @@ async function addDgmLayer(url, bbox, id1) {
     sources: [{ url }], 
     projection: 'EPSG:25832', 
     normalize: false, 
+    crossOrigin: 'anonymous', // Wichtig!
     sourceOptions: { allowFullFile: false, cache: true }, 
   });
   const layerNameWithCounter = `${dgmLayerCounter}_${id1} DGM_GeoTiff`;
@@ -3312,7 +3313,12 @@ async function handleDgmClick(evt) {
       featureFound = true;
 
       const props = feature.getProperties();
-      const tifUrl = props.dgm1;
+      let originalTifUrl = props.dgm1; // Die URL von IBM (https://dgm1...)
+
+      const tifUrl = originalTifUrl.replace(
+  'https://dgm1.s3.eu-de.cloud-object-storage.appdomain.cloud',
+  '/dgm'
+);
       const bbox = feature.getGeometry().getExtent();
 
       // prüfen ob bereits geladen
@@ -3333,7 +3339,7 @@ async function handleDgmClick(evt) {
         if (!alreadyLoaded) {
           // DGM laden und Daten zurückbekommen
           const dgmData = await addDgmLayer(tifUrl, bbox, props.tile_id);
-
+          
           // Layer als geladen markieren
           loadedDgms.push({ tile_id: props.tile_id, bbox: bbox });
           activeDgmRasterData.push(dgmData);
