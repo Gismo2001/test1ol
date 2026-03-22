@@ -498,14 +498,12 @@ function showProfileChart(profile) {
           maintainAspectRatio: false,
           interaction: { mode: 'nearest', intersect: false },
           onHover: function(event, elements) {
-          if (elements.length > 0) {
-            const index = elements[0].index;
-            const coord = coords[index];
-            // an Hauptfenster schicken
-            //console.log(window);
-            addMarker(coord);
-            //window.opener.showProfilePosition(coord);
-          }
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const coord = coords[index];
+              // an Hauptfenster schicken
+              addMarker(coord);
+            }
           },
           
         scales: {
@@ -534,25 +532,24 @@ function showProfileChart(profile) {
       };
 
       win.document.getElementById("addHorizontalBtn").onclick = function() {
-        
         const value = win.prompt("Höhe für horizontale Linie (m):");
         if (value === null) return;
         const h = parseFloat(value);
         if (isNaN(h)) {
-        win.alert("Bitte eine gültige Zahl eingeben.");
-        return;
+          win.alert("Bitte eine gültige Zahl eingeben.");
+          return;
         }
-
         // Array mit konstantem Wert erzeugen
         const horizontalData = new Array(distances.length).fill(h);
         chart.data.datasets.push({
-        label: "Horizontale " + h + " m",
-        data: horizontalData,
-        borderColor: "red",
-        borderWidth: 2,
-        borderDash: [8,6],
-        pointRadius: 0,
-        fill: false
+          label: "Horizontale " + h + " m",
+          data: horizontalData,
+          // Zufälliger Farbton (0-360), Sättigung 70%, Helligkeit 50%
+          borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`,
+          borderWidth: 3,
+          borderDash: [6,6],
+          pointRadius: 0,
+          fill: false
       });
       chart.update();
     };
@@ -3107,8 +3104,8 @@ function navigate(obj) {
   window.open(url, '_blank');
 }
 
-const heightStatus = document.getElementById('height-status');
-const heightValue = document.getElementById('height-value');
+const heightStatus = document.getElementById('height-status-container');
+const heightValue = document.getElementById('height-value-main');
 
 function handleDgmPointerMove(evt) {
 
