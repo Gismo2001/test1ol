@@ -1,11 +1,10 @@
 import { defineConfig } from 'vite';
-import { qrcode } from 'vite-plugin-qrcode';
+
 
 export default defineConfig({
   build: {
     sourcemap: true,
   },
- 
   server: {
     proxy: {
 
