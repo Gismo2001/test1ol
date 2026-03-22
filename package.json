@@ -17,12 +17,15 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.4",
-    "jspdf": "^2.5.1",
+    "colormap": "^2.3.2",
+    "geotiff": "^2.1.4-beta.0",
+    "jquery": "^4.0.0",
+    "jspdf": "^2.5.2",
     "kompas": "^0.0.2",
     "ol": "^10.4.0",
     "ol-contextmenu": "^5.5.0",
     "ol-ext": "^4.0.17",
-    "permalinks": "^2.0.0",
+    "ol-mapbox-style": "^13.3.0",
     "proj4": "^2.15.0"
   }
 }
