@@ -1,26 +1,31 @@
 {
-  "name": "test2ol",
+  "name": "test1ol",
   "version": "1.0.0",
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "preview": "vite preview"
   },
   "devDependencies": {
     "@babel/core": "^7.26.7",
     "@babel/preset-react": "^7.26.3",
     "@vitejs/plugin-react": "^4.3.4",
     "babel-loader": "^9.2.1",
-    "vite": "^5.1.5"
+    "vite": "^5.1.5",
+    "vite-plugin-qrcode": "^0.3.0"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.4",
-    "jspdf": "^2.5.1",
+    "colormap": "^2.3.2",
+    "geotiff": "^2.1.4-beta.0",
+    "jquery": "^4.0.0",
+    "jspdf": "^2.5.2",
     "kompas": "^0.0.2",
     "ol": "^10.4.0",
     "ol-contextmenu": "^5.5.0",
     "ol-ext": "^4.0.17",
-    "permalinks": "^2.0.0",
+    "ol-mapbox-style": "^13.3.0",
     "proj4": "^2.15.0"
   }
 }
