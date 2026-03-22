@@ -5,9 +5,7 @@ export default defineConfig({
   build: {
     sourcemap: true,
   },
-  plugins: [
-    qrcode(),
-  ],
+ 
   server: {
     proxy: {
 
