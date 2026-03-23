@@ -2362,6 +2362,11 @@ let jsonButtonState = false; // Initialer Zustand
 let punktButtonState = false;
 let permaButtonState = true;
 
+// Hilfsfunktion für Popups
+const closeDefaultPopups = () => {
+  const popup1 = document.getElementById('popup1');
+  if (popup1) popup1.style.display = 'none';
+};
 
 /* Nested subbar */
 var sub2 = new Bar({
@@ -2621,92 +2626,62 @@ var sub2 = new Bar({
       }
     }),
 
-// DGM laden
-new Toggle({
-  html: '<i class="fa fa-map"></i>',
-  title: "dgm-Datei laden",
-  onToggle: function () {
-    const active = this.getActive();
-    dgmKachelLayer.setVisible(active);
-    
-    //domKachelLayer.setVisible(!active)
-
-    if (active) {
-      enableDgmInteraction();
-      dgmKachelLayer.set('displayInLayerSwitcher', true);
-    } else {
-      disableDgmInteraction();
-      dgmKachelLayer.set('displayInLayerSwitcher', false);
-     
-    }
-    // dgmKachelLayer.set('displayInLayerSwitcher', false);
-    // Optional: Popup schließen
-      const popup1 = document.getElementById('popup1');
-      if (popup1) popup1.style.display = 'none';
-  }
-}),
-    // DOM laden
+    // DGM laden
     new Toggle({
-    html: '<i class="fa-solid fa-file"></i>',
-    title: "dom-Datei laden",
-    onToggle: function () {
-      const active = this.getActive();
-      domKachelLayer.setVisible(active);
-      domKachelLayer.set('displayInLayerSwitcher', true);
-      //dgmKachelLayer.setVisible(!active)
-      if (active) {
-        // Event registrieren
-        domClickListener = map.on('singleclick', handleDomClick);
-      } else {
-        // Event entfernen
-        if (domClickListener) {
-          unByKey(domClickListener);
-          domClickListener = null;
+      html: '<i class="fa fa-map"></i>',
+      title: "DGM laden",
+      onToggle: function (active) {
+        dgmKachelLayer.setVisible(active);
+        dgmKachelLayer.set('displayInLayerSwitcher', active);
+        if (active) {
+          enableDgmInteraction();
+        } else {
+          disableDgmInteraction();
+        }
+        closeDefaultPopups();
       }
-       domKachelLayer.set('displayInLayerSwitcher', false);
-      // Optional: Popup schließen
-      const popup1 = document.getElementById('popup1');
-      if (popup1) popup1.style.display = 'none';
-    }
-  }
     }),
-
-new Toggle({
-  html: '<i class="fa fa-area-chart"></i>',
-  title: "Höhenprofil",
-
-  onToggle: function () {
-
-    profileMode = this.getActive();
-
-    if (profileMode) {
-
-      console.log("Profilmodus aktiv");
-
-      profileSource.clear();
-
-      profileLayer.setVisible(true);
-      profileLayer.set('displayInLayerSwitcher', true);
-
-      enableProfileDrawing();
-
-    } else {
-
-      console.log("Profilmodus deaktiviert");
-
-      profileLayer.setVisible(false);
-      profileLayer.set('displayInLayerSwitcher', false);
-
-      if (profileDraw) {
-        map.removeInteraction(profileDraw);
-        profileDraw = null;
-        console.log("Profil-Interaktion entfernt");
+     // DOM laden
+    new Toggle({
+      html: '<i class="fa-solid fa-file"></i>',
+      title: "DOM laden",
+      onToggle: function (active) {
+        domKachelLayer.setVisible(active);
+        domKachelLayer.set('displayInLayerSwitcher', active);
+        if (active) {
+          // Sicherstellen, dass kein alter Listener existiert
+          if (domClickListener) unByKey(domClickListener);
+          domClickListener = map.on('singleclick', handleDomClick);
+        } else {
+          if (domClickListener) {
+            unByKey(domClickListener);
+            domClickListener = null;
+          }
+        }
+        closeDefaultPopups();
       }
-
-    }
-
-  }
-}),
+    }),
+    // Höhenprofil laden
+    // Höhenprofil
+    new Toggle({
+      html: '<i class="fa fa-area-chart"></i>',
+      title: "Höhenprofil",
+      onToggle: function (active) {
+        profileMode = active;
+        profileLayer.setVisible(active);
+        profileLayer.set('displayInLayerSwitcher', active);
+        if (active) {
+          profileSource.clear();
+          enableProfileDrawing(); // Diese Funktion sollte intern prüfen, ob schon eine Interaktion aktiv ist
+        } else {
+          // Konsistent zur DGM-Logik: Nutze eine disable-Funktion, falls vorhanden
+          if (profileDraw) {
+            map.removeInteraction(profileDraw);
+            profileDraw = null;
+          }
+        }
+      }
+    }),
   ]
 });
 let geojsonCounter = 0;
@@ -3125,7 +3100,7 @@ function handleDgmPointerMove(evt) {
   const activeLayer = visibleDgmLayers.find(layer =>
     layer.bbox && ol.extent.containsCoordinate(layer.bbox, coord)
   );
-
+  //console.log('Aktive DGM-Layer:', visibleDgmLayers.map(l => l.get('name')));
   if (!activeLayer) {
     heightStatus.style.display = 'none';
     return;
@@ -3154,7 +3129,6 @@ function createGeoTiffStyle(minHeight, maxHeight) {
   const NO_DATA = -9999;
   const range = (maxHeight - minHeight) || 1;
   const step = (p) => minHeight + range * p;
-
   return {
     color: [
       'case',
@@ -3175,6 +3149,9 @@ function createGeoTiffStyle(minHeight, maxHeight) {
     ]
   };
 }
+
+
+
 
 async function getMinMaxFromMetadata(url) {
   try {
