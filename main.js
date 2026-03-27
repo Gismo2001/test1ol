@@ -1802,6 +1802,33 @@ const closeDefaultPopups = () => {
   if (popup1) popup1.style.display = 'none';
 };
 
+
+// Die ausgelagerte Funktion
+function handlePermalinkAction() {
+    // Prüfen, ob der Toggle-Status überhaupt "an" ist
+    if (permaButtonState) {
+        const link = permalinkControl.getLink();
+        
+        navigator.clipboard.writeText(link).then(() => {
+            console.log('Permalink kopiert: ' + link);
+            
+            // Benachrichtigung anzeigen
+            note.show(`Kopiert und in URL an-/ausgeschaltet!`, { 
+                duration: 2000, 
+                className: 'ol-notification' 
+            });
+            note.element.style.bottom = '50px';
+            
+            // Visuelles Feedback am Button
+            permalinkControl.element.classList.toggle('active');
+        }).catch(err => {
+            console.error('Fehler beim Kopieren: ', err);
+        });
+    } else {
+        console.warn('Permalink-Funktion ist derzeit deaktiviert (Toggle ist off).');
+    }
+};
+
 /* Nested subbar */
 var sub2 = new Bar({
   toggleOne: true,
@@ -1981,36 +2008,30 @@ var sub1 = new Bar({
     }),
     // Das Untermenü Permalink
     new Toggle({
-      html: '<button id="p-button">P</button>',
-      title: "Permalink erstellen",
-      onToggle: function () {
-      permaButtonState = !permaButtonState; // Zustand umschalten
-      if (permaButtonState === true) {
-        containerBar2.addControl (permalinkControl);
-        isActive = false; //  auf false setzen
-        console.log('perma on: ' + permaButtonState);
-        map.addControl(permalinkControl);
-        setInteractionPerma(permalinkControl); // Deine Funktion aufrufen, wenn der Zustand true ist
-        permalinkControl.element.addEventListener('click', function() {
-          const link = permalinkControl.getLink()
-          navigator.clipboard.writeText(link);
-          console.log('Permalink kopiert: ' + link);
-          note.show(`Kopiert und in url an-/ausgeschaltet! `, { duration: 2000, className: 'ol-notification' });
-          note.element.style.bottom = '50px';
-          // toggle CSS-Klasse "active"
-          permalinkControl.element.classList.toggle('active');
-          console.log(hasUrlParam);
-  });
-        
-      } else {
-        //permaButtonState = false;
-        //permalinkControl.hasUrlParam = false;
-        containerBar2.removeControl (permalinkControl);
-        isActive = false; //  auf true setzen
-        console.log('perma off: ' + permaButtonState);
-      }
-      },
-    }),
+    html: '<i class="fa fa-link"></i>',  
+    title: "Permalink erstellen",
+    onToggle: function (active) { // Viele Toggle-Bibliotheken liefern 'active' als Parameter
+        permaButtonState = active; // Direkt den Status nutzen
+        if (active) {
+            containerBar2.addControl(permalinkControl);
+            map.addControl(permalinkControl);
+            
+            // Falls du zusätzliche Logik brauchst:
+            setInteractionPerma(permalinkControl, true);
+            
+            console.log('perma on');
+        } else {
+            containerBar2.removeControl(permalinkControl);
+            // Falls permalinkControl auch von der Map entfernt werden soll:
+            map.removeControl(permalinkControl);
+            
+            setInteractionPerma(permalinkControl, false);
+            
+            console.log('perma off');
+        }
+    },
+}),
+
   ]
 });
 
@@ -2099,6 +2120,7 @@ new Toggle({
   html: '<i class="fa fa-area-chart"></i>',
   title: "Höhenprofil",
   onToggle: function (active) {
+   
     profileMode = active;
     if (active) {
       // --- TRICK: Layer an die oberste Position schieben ---
@@ -2113,7 +2135,7 @@ new Toggle({
       layers.remove(sLayer); // Kurz entfernen (falls schon vorhanden)
       layers.push(sLayer);   // Am Ende wieder hinzufügen -> Ganz oben im Switcher
       if (layerSwitcher) layerSwitcher.render();
-      
+
     } else {
       profileLayer.setVisible(false);
       profileLayer.set('displayInLayerSwitcher', false);
@@ -2132,6 +2154,8 @@ new Toggle({
   ]
 });
 let geojsonCounter = 0;
+
+
 
 
 // Input-Feld (versteckt im HTML, z. B. im Body)
@@ -2224,6 +2248,9 @@ var permalinkControl = new Permalink({
   //fixed: 2,
   // rotation: true // falls du auch Kartenrotation speichern willst
 });
+// Einmalige Zuweisung des Klick-Events
+permalinkControl.element.addEventListener('click', handlePermalinkAction);
+
 
 // Funktion für Permalink
 function setInteractionPerma (permalinkControl) {
