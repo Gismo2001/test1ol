@@ -131,105 +131,11 @@ let domClickListener = null;
 let loadedDoms = [];   // speichert {tile_id, bbox}
 
 let profileMode = false;
-
-
-
-
-function enableDgmInteraction() {
-
-  if (!dgmClickListener) {
-    dgmClickListener = map.on('singleclick', handleDgmClick);
-  }
-
-  if (!ismobile && !dgmPointerMoveListener) {
-    dgmPointerMoveListener = map.on('pointermove', handleDgmPointerMove);
-  }
-
-  console.log("DGM Interaction aktiviert");
-}
-
-function disableDgmInteraction() {
-
-  if (dgmClickListener) {
-    unByKey(dgmClickListener);
-    dgmClickListener = null;
-  }
-
-  if (dgmPointerMoveListener) {
-    unByKey(dgmPointerMoveListener);
-    dgmPointerMoveListener = null;
-  }
-
-  const popup1 = document.getElementById('popup1');
-  if (popup1) popup1.style.display = 'none';
-
-  heightStatus.style.display = 'none';
-heightValue.style.display = 'none';
-  console.log("DGM Interaction deaktiviert");
-}
-
-function updateDgmInteraction() {
-
-  const kachelnVisible = dgmKachelLayer.getVisible();
-
-  if (kachelnVisible) {
-
-    // Höhenanzeige deaktivieren
-    if (dgmPointerMoveListener) {
-      unByKey(dgmPointerMoveListener);
-      dgmPointerMoveListener = null;
-    }
-
-    console.log("Kachelmodus aktiv");
-
-  } else {
-
-    // Höhenanzeige aktivieren
-    if (!ismobile && !dgmPointerMoveListener) {
-      dgmPointerMoveListener = map.on('pointermove', handleDgmPointerMove);
-    }
-    console.log("Höhenmodus aktiv");
-
-  }
-
-}
-
-function lineIntersectsAnyDgm(coord1, coord2) {
-
-  const lineExtent = ol.extent.boundingExtent([coord1, coord2]);
-
-  for (const layer of activeDgmRasterLayers) {
-
-    if (!layer.getVisible()) continue;
-
-    if (!layer.bbox) continue;
-
-    if (ol.extent.intersects(lineExtent, layer.bbox)) {
-      return true;
-    }
-
-  }
-
-  return false;
-}
-// von EPSG:32632 (UTM 32N) nach EPSG:3857 (WebMercator)
-var firstProjection = "EPSG:32632";
-var secondProjection = "EPSG:3857";
-
-var resultkoord = proj4(firstProjection, secondProjection, [500000, 5800000]);
-
 let ismobile = false;
+
+
 function isMobileDevice() {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-}
-
-if (isMobileDevice()) {
-  console.log("Mobilgerät erkannt" & ismobile);
-
-
-} else {
-  console.log("Desktopgerät erkannt" & ismobile);
 }
 
 
@@ -250,7 +156,6 @@ const mapView = new View({
   center: proj.fromLonLat([7.35, 52.7]),
   zoom: 9
 });
-
 const map = new Map({
   target: "map",
   view: mapView,
@@ -276,9 +181,8 @@ var note = new Notification(
 );
 map.addControl(note);
 
-
+// Beginn dgm code
 const profileSource = new ol.source.Vector();
-
 const profileLayer = new ol.layer.Vector({
   source: profileSource,
   title: 'Profil',
@@ -290,7 +194,6 @@ const profileLayer = new ol.layer.Vector({
     })
   })
 });
-
 const dgmKachelSource = new VectorSource({
   url: '/data/dgm_kacheln_neu.geojson',  // relativer Pfad im Projekt
   format: new GeoJSON(),
@@ -310,9 +213,6 @@ const dgmKachelLayer = new VectorLayer({
     }),
   }),
 });
-map.addLayer(dgmKachelLayer);
-dgmKachelLayer.set('displayInLayerSwitcher', false);
-
 
 const domKachelSource = new VectorSource({
   url: '/data/dom_kacheln_neu.geojson',  // relativer Pfad im Projekt
@@ -333,29 +233,89 @@ const domKachelLayer = new VectorLayer({
     }),
   }),
 });
+
+map.addLayer(dgmKachelLayer);
 map.addLayer(domKachelLayer);
+
 domKachelLayer.set('displayInLayerSwitcher', false);
+dgmKachelLayer.set('displayInLayerSwitcher', false);
 
 dgmKachelLayer.on('change:visible', updateDgmInteraction);
-
 
 updateDgmInteraction();
 
 let profilePoints = [];
-
 let profileDraw = null;
 
+
+// Code für DGM-Interaktion
+function enableDgmInteraction() {
+  if (!dgmClickListener) {
+    dgmClickListener = map.on('singleclick', handleDgmClick);
+  }
+  if (!ismobile && !dgmPointerMoveListener) {
+    dgmPointerMoveListener = map.on('pointermove', handleDgmPointerMove);
+  }
+  console.log("DGM Interaction aktiviert");
+}
+function disableDgmInteraction() {
+  if (dgmClickListener) {
+    unByKey(dgmClickListener);
+    dgmClickListener = null;
+  }
+  if (dgmPointerMoveListener) {
+    unByKey(dgmPointerMoveListener);
+    dgmPointerMoveListener = null;
+  }
+  const popup1 = document.getElementById('popup1');
+  if (popup1) popup1.style.display = 'none';
+  heightStatus.style.display = 'none';
+  heightValue.style.display = 'none';
+  console.log("DGM Interaction deaktiviert");
+}
+function updateDgmInteraction() {
+  const kachelnVisible = dgmKachelLayer.getVisible();
+  if (kachelnVisible) {
+    // Höhenanzeige deaktivieren
+    if (dgmPointerMoveListener) {
+      unByKey(dgmPointerMoveListener);
+      dgmPointerMoveListener = null;
+    }
+    console.log("Kachelmodus aktiv");
+  } else {
+    // Höhenanzeige aktivieren
+    if (!ismobile && !dgmPointerMoveListener) {
+      dgmPointerMoveListener = map.on('pointermove', handleDgmPointerMove);
+    }
+    console.log("Höhenmodus aktiv");
+  }
+}
+function lineIntersectsAnyDgm(coord1, coord2) {
+
+  const lineExtent = ol.extent.boundingExtent([coord1, coord2]);
+
+  for (const layer of activeDgmRasterLayers) {
+
+    if (!layer.getVisible()) continue;
+
+    if (!layer.bbox) continue;
+
+    if (ol.extent.intersects(lineExtent, layer.bbox)) {
+      return true;
+    }
+
+  }
+
+  return false;
+}
 function enableProfileDrawing() {
   profileDraw = new ol.interaction.Draw({
     source: profileSource,
     type: 'LineString',
   });
-
   map.addInteraction(profileDraw);
-
   profileDraw.on('drawend', function(evt) {
-
-    const line = evt.feature.getGeometry();
+  const line = evt.feature.getGeometry();
    const coords = evt.feature.getGeometry().getCoordinates();
 
       generateElevationProfile(coords);
@@ -366,8 +326,16 @@ function enableProfileDrawing() {
   });
 
 }
+function disableProfileDrawing() {
+  console.log("Profilzeichnen deaktiviert");
+  map.removeInteraction(profileDraw);
+  profileDraw = null;
+  sLayer.set('displayInLayerSwitcher', false);
+
+};
 
 
+// Profillinie zeichnen
 map.on('singleclick', function(evt) {
   if (!profileMode) return;
   profilePoints.push(evt.coordinate);
@@ -376,61 +344,6 @@ map.on('singleclick', function(evt) {
     profilePoints = [];
   }
 });
-
-function getProfilePoints(coord1, coord2, step = 5) {
-
-  const line = new ol.geom.LineString([coord1, coord2]);
-  const length = line.getLength();
-
-  const points = [];
-
-  for (let d = 0; d <= length; d += step) {
-
-    const coord = line.getCoordinateAt(d / length);
-    points.push({coord, dist: d});
-
-  }
-
-  return points;
-}
-
-function getHeightAtCoordinate(coord) {
-
-  const pixel = map.getPixelFromCoordinate(coord);
-
-  const offsets = [
-    [0,0],[1,0],[-1,0],[0,1],[0,-1]
-  ];
-
-  for (const layer of activeDgmRasterLayers) {
-
-    if (!layer.getVisible()) continue;
-
-    if (!layer.bbox || !ol.extent.containsCoordinate(layer.bbox, coord)) {
-      continue;
-    }
-
-    for (const o of offsets) {
-
-      const p = [pixel[0] + o[0], pixel[1] + o[1]];
-      const data = layer.getData(p);
-
-      if (
-        data &&
-        !Number.isNaN(data[0]) &&
-        data[0] !== 0 &&
-        data[0] !== -9999
-      ) {
-        return data[0];
-      }
-
-    }
-
-  }
-
-  return null;
-
-}
 
 function generateElevationProfile(coords) {
   const profile = [];
@@ -460,7 +373,16 @@ function generateElevationProfile(coords) {
   }
   showProfileChart(profile);
 }
-
+function getProfilePoints(coord1, coord2, step = 5) {
+  const line = new ol.geom.LineString([coord1, coord2]);
+  const length = line.getLength();
+  const points = [];
+  for (let d = 0; d <= length; d += step) {
+    const coord = line.getCoordinateAt(d / length);
+    points.push({coord, dist: d});
+  }
+  return points;
+}
 function showProfileChart(profile) {
   const distances = profile.map(p => p.distance.toFixed(2));
   const heights = profile.map(p => p.height.toFixed(2));
@@ -557,7 +479,32 @@ function showProfileChart(profile) {
   };
   win.document.body.appendChild(script);
 }
-
+function getHeightAtCoordinate(coord) {
+  const pixel = map.getPixelFromCoordinate(coord);
+  const offsets = [
+    [0,0],[1,0],[-1,0],[0,1],[0,-1]
+  ];
+  for (const layer of activeDgmRasterLayers) {
+    if (!layer.getVisible()) continue;
+    if (!layer.bbox || !ol.extent.containsCoordinate(layer.bbox, coord)) {
+      continue;
+    }
+    for (const o of offsets) {
+      const p = [pixel[0] + o[0], pixel[1] + o[1]];
+      const data = layer.getData(p);
+      if (
+        data &&
+        !Number.isNaN(data[0]) &&
+        data[0] !== 0 &&
+        data[0] !== -9999
+      ) {
+        return data[0];
+      }
+    }
+  }
+  return null;
+}
+// Ende dgm code
 
 map.getLayers().forEach(layer => {
   const key = layer.get('permalink');
@@ -1575,521 +1522,6 @@ function getUniqueFeatures(results) {
   return unique;
 }
 
-
-  /* 
-  
-  // 🔁 Vorherige Ergebnisse ausblenden und leeren
-  document.getElementById("search-results-container").style.display = "none";
-  document.getElementById("search-results").innerHTML = '';
-  
-  var matchingFeatures = [];
-  if (editBarAnAus === false) {
-    var coordinates = evt.coordinate;
-    // ❌ Diese Layernamen ausschließen
-    const excludedLayers = ['gew', 'km10scal', 'km100scal', 'km500scal'];
-
-    map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
-
-      if (layer && !excludedLayers.includes(layer.get('name'))) {
-        matchingFeatures.push(feature);
-      }
-    });
-
-    if (matchingFeatures.length > 1) {
-      let wrappedFeatures = matchingFeatures.map(f => ({ feature: f }));
-      displaySearchResultsBw(wrappedFeatures);
-      document.getElementById("search-results-container").style.display = "block";
-
-      document.getElementById("close-search-results").addEventListener("click", function() {
-        document.getElementById("search-results-container").style.display = "none";
-
-      });
-    }
-    var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
-    var layname = layer.get('name');
-    var beschreibLangValue = feature.get('beschreib_lang');
-    var beschreibLangHtml = '';
-    if (layname !== 'gew' && layname !== 'km10scal' && layname !== 'km100scal' && layname !== 'km500scal'  ) {
-    if (beschreibLangValue && beschreibLangValue.trim() !== '') {
-      beschreibLangHtml = '<br>' + '<u>' + "Beschreib (lang): " + '</u>' + beschreibLangValue + '</p>';
-    };
-    // Popup soll nur für bestimmte Layernamen angezeigt werden
-    if (layname !== 'gew' && layname !== 'km10scal' && layname !== 'km100scal' && layname !== 'km500scal' && layname !== 'fsk' && layname !== 'sle' && layname !== 'weh' && layname !== 'son_lin' && layname !== 'exp_gew_fla' ) {
-        if (feature) {
-        coordinates = feature.getGeometry().getCoordinates();
-        popup.setPosition(coordinates);
-        // HTML-Tag Foto1
-        var foto1Value = feature.get('foto1');
-        var foto1Html = '';
-        var foto2Value = feature.get('foto2');
-        var foto2Html = '';
-        var foto3Value = feature.get('foto3');
-        var foto3Html = '';
-        var foto4Value = feature.get('foto4');
-        var foto4Html = '';
-        
-        if (foto1Value && foto1Value.trim() !== '') {
-          foto1Html = '<a href="' + foto1Value + '" onclick="window.open(\'' + foto1Value + '\', \'_blank\'); return false;">Foto 1</a>';
-        } else {
-          foto1Html =   " Foto 1 ";
-        }
-        if (foto2Value && foto2Value.trim() !== '') {
-          foto2Html = '<a href="' + foto2Value + '" onclick="window.open(\'' + foto2Value + '\', \'_blank\'); return false;">Foto 2</a>';
-        } else {
-          foto2Html = " Foto 2 ";
-        }
-        if (foto3Value && foto3Value.trim() !== '') {
-          foto3Html = '<a href="' + foto3Value + '" onclick="window.open(\'' + foto3Value + '\', \'_blank\'); return false;">Foto 3</a>';
-        } else {
-          foto3Html = " Foto 3 ";
-        }
-        if (foto4Value && foto4Value.trim() !== '') {
-          foto4Html = '<a href="' + foto4Value + '" onclick="window.open(\'' + foto4Value + '\', \'_blank\'); return false;">Foto 4</a>';
-        } else {
-          foto4Html = " Foto 4 ";
-        }
-        var rwert = feature.get('rwert');
-        var hwert = feature.get('hwert');
-        var result = UTMToLatLon_Fix(rwert, hwert, 32, true);
-
-         content.innerHTML =
-         '<div style="max-height: 200px; overflow-y: auto;">' +
-         '<p style="font-weight: bold; text-decoration: underline;">' + feature.get('name') + '</p>' +
-         '<p>' + "Id = " + feature.get('bw_id') +  ' (' + (feature.get('KTR') ? feature.get('KTR') : 'k.A.') + ')' +  '</p>' +
-         '<p>' + "U-Pflicht = " + feature.get('upflicht') + '</p>' +
-         //'<p>' + "Bemerk = " + feature.get('bemerk') + '</p>' +
-         '<p>' + "Bemerk = " + (feature.get('bemerk') ? feature.get('bemerk') : 'k.A.')  +  '</p>' +
-         '<p>' + "Bauj. = " + (feature.get('baujahr') ? feature.get('baujahr') : 'k.A.') + '</p>' +
-         `<p><a href="https://www.google.com/maps?q=${result}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>` +
-         `<p><a href="https://www.google.com/maps?q=&layer=c&cbll=${result}&cbp=12,90,0,0,1" target="_blank" rel="noopener noreferrer">streetview</a></p>` +
-         '<p>' + foto1Html + " " + foto2Html + " " + foto3Html + " " + foto4Html + 
-          '<br>' + '<u>' + "Beschreibung (kurz): " + '</u>' + feature.get('beschreib') + '</p>' +
-          '<p>' + beschreibLangHtml + '</p>' +
-         '</div>';
-      } else {
-        popup.setPosition(undefined);
-      }
-    }
-    // Führen Sie Aktionen für den Layernamen 'gew_info' durch
-    if (layname === 'gew_info') {
-      var foto1Value = feature.get('foto1');
-      var foto1Html = '';
-      var foto2Value = feature.get('foto2');
-      var foto2Html = '';
-      var foto3Value = feature.get('foto3');
-      var foto3Html = '';
-      var foto4Value = feature.get('foto4');
-      var foto4Html = '';
-      var urlWKDB = feature.get('URL_WKDB');
-      var urlWKDBHtml = '';
-      var url_wk_sb = feature.get('URL_WKSB');
-      console.log(url_wk_sb);
-      var url_wk_sb_Html = '';
-
-      if (foto1Value && foto1Value.trim() !== '') {
-        foto1Html = '<a href="' + foto1Value + '" onclick="window.open(\'' + foto1Value + '\', \'_blank\'); return false;">Foto 1</a>';
-      } else {
-        foto1Html =   " Foto 1 ";
-      }
-      if (foto2Value && foto2Value.trim() !== '') {
-        foto2Html = '<a href="' + foto2Value + '" onclick="window.open(\'' + foto2Value + '\', \'_blank\'); return false;">Foto 2</a>';
-      } else {
-        foto2Html = " Foto 2 ";
-      }
-      if (foto3Value && foto3Value.trim() !== '') {
-        foto3Html = '<a href="' + foto3Value + '" onclick="window.open(\'' + foto3Value + '\', \'_blank\'); return false;">Foto 3</a>';
-      } else {
-        foto3Html = " Foto 3 ";
-      }
-      if (foto4Value && foto4Value.trim() !== '') {
-        foto4Html = '<a href="' + foto4Value + '" onclick="window.open(\'' + foto4Value + '\', \'_blank\'); return false;">Foto 4</a>';
-      } else {
-        foto4Html = " Foto 4 ";
-      }
-      if (urlWKDB && urlWKDB.trim() !== '') {
-        urlWKDBHtml = '<a href="' + urlWKDB + '" onclick="window.open(\'' + urlWKDB + '\', \'_blank\'); return false;">NLWKN-WK</a>';
-      } else {
-        urlWKDBHtml = " NLWKN-WK";
-      }
-      
-      if (url_wk_sb && url_wk_sb .trim() !== '') {
-        url_wk_sb_Html = '<a href="' + url_wk_sb + '" onclick="window.open(\'' + url_wk_sb + '\', \'_blank\'); return false;">BfG-WK</a>';
-      } else {
-        url_wk_sb_Html = "BfG-WK";
-      }
-      
-      coordinates = evt.coordinate; 
-      popup.setPosition(coordinates);
-      content.innerHTML =
-      '<div style="max-height: 300px; overflow-y: auto;">' +
-      '<p>Name: ' + feature.get('IDUabschn') + '<br>' + "von " + feature.get('Bez_Anfang') + " bis " + feature.get('Bez_Ende')  + '</p>' +
-      '<p>' + foto1Html + " " + foto2Html + " " + foto3Html + " " + foto4Html + 
-      '<p><a href="' + feature.get('U_Steckbrief') + '" onclick="window.open(\'' + feature.get('U_Steckbrief') + '\', \'_blank\'); return false;">NLWKN-SB</a> ' + url_wk_sb_Html + " " + urlWKDBHtml + 
-      
-      //'<a href="' + feature.get('URL_WKDB') + '" onclick="window.open(\'' + feature.get('URL_WKDB') + '\', \'_blank\'); return false;">WK_DB</a> '+
-      //'<a href="' + feature.get('foto1') + '" onclick="window.open(\'' + feature.get('foto1') + '\', \'_blank\'); return false;">Karte</a> ' +
-      //'<a href="' + feature.get('foto2') + '" onclick="window.open(\'' + feature.get('foto2') + '\', \'_blank\'); return false;">Foto</a><br>' +
-      '<p><a href="' + feature.get('BSB') + '" onclick="window.open(\'' + feature.get('BSB') + '\', \'_blank\'); return false;">BSB  </a>' +
-      '<p>' + "Bemerk = " + (feature.get('bemerk') ? feature.get('bemerk') : 'k.A.')  +  '</p>' +
-      '<a href="' + feature.get('MNB') + '" onclick="window.open(\'' + feature.get('MNB') + '\', \'_blank\'); return false;"> MNB</a><br> ' +
-      'Kat: ' + feature.get('Kat') + '</a>' +
-      ', KTR: ' + feature.get('KTR') + '</a>' +
-      '<br>' + '<u>' + "Beschreibung (kurz): " + '</u>' + feature.get('beschreib') + '</p></div>';
-  
-    }
-    // Führen Sie Aktionen für den Layernamen 'gew_umn' durch
-    if (layname === 'gew_umn') {
-      coordinates = evt.coordinate; 
-      popup.setPosition(coordinates);
-      content.innerHTML =
-      
-      '<div style="max-height: 300px; overflow-y: auto;">' +
-      '<p>ID: ' + feature.get('Massn_ID') + '<br>' +
-      '<p>Bez (Art): ' + feature.get('UMnArtBez') + '<br>' +
-      '<p>Bez (Gruppe): ' + feature.get('UMNGrBez') + '<br>' +
-      '</div>';
-    }
-    // Führen Sie Aktionen für den Layernamen 'son_lin' durch
-    if (layname === 'son_lin') {
-      coordinates = evt.coordinate; 
-      popup.setPosition(coordinates);
-      var foto1Value = feature.get('foto1');
-        var foto1Html = '';
-        var foto2Value = feature.get('foto2');
-        var foto2Html = '';
-        var foto3Value = feature.get('foto3');
-        var foto3Html = '';
-        var foto4Value = feature.get('foto4');
-        var foto4Html = '';
-        
-        if (foto1Value && foto1Value.trim() !== '') {
-          foto1Html = '<a href="' + foto1Value + '" onclick="window.open(\'' + foto1Value + '\', \'_blank\'); return false;">Foto 1</a>';
-        } else {
-          foto1Html =   " Foto 1 ";
-        }
-        if (foto2Value && foto2Value.trim() !== '') {
-          foto2Html = '<a href="' + foto2Value + '" onclick="window.open(\'' + foto2Value + '\', \'_blank\'); return false;">Foto 2</a>';
-        } else {
-          foto2Html = " Foto 2 ";
-        }
-        if (foto3Value && foto3Value.trim() !== '') {
-          foto3Html = '<a href="' + foto3Value + '" onclick="window.open(\'' + foto3Value + '\', \'_blank\'); return false;">Foto 3</a>';
-        } else {
-          foto3Html = " Foto 3 ";
-        }
-        if (foto4Value && foto4Value.trim() !== '') {
-          foto4Html = '<a href="' + foto4Value + '" onclick="window.open(\'' + foto4Value + '\', \'_blank\'); return false;">Foto 4</a>';
-        } else {
-          foto4Html = " Foto 4 ";
-        }
-        content.innerHTML =
-          '<div style="max-height: 200px; overflow-y: auto;">' +
-          '<p style="font-weight: bold; text-decoration: underline;">' + feature.get('name') + '</p>' +
-          '<p>' + "Id = " + feature.get('bw_id') +  ' (' + feature.get('KTR') +')' +  '</p>' +
-          '<p>' + "U-Pflicht = " + feature.get('upflicht') + '</p>' +
-          '<p>' + "Bemerk = " + (feature.get('bemerk') ? feature.get('bemerk') : 'k.A.')  +  '</p>' +
-          '<p>' + "Bauj. = " + feature.get('baujahr') + '</p>' +
-          '<p>' + foto1Html + " " + foto2Html + " " + foto3Html + " " + foto4Html + 
-           '<br>' + '<u>' + "Beschreibung (kurz): " + '</u>' + feature.get('beschreib') + '</p>' +
-           '<p>' + beschreibLangHtml + '</p>' +
-          '</div>';
-      
-    }
-    // Führen Sie Aktionen für den Layernamen 'exp_gew_fla' durch
-    if (layname === 'exp_gew_fla') {
-      coordinates = evt.coordinate; 
-      popup.setPosition(coordinates);
-      var foto1Value = feature.get('foto1');
-        var foto1Html = '';
-        var foto2Value = feature.get('foto2');
-        var foto2Html = '';
-        var foto3Value = feature.get('foto3');
-        var foto3Html = '';
-        var foto4Value = feature.get('foto4');
-        var foto4Html = '';
-        
-        if (foto1Value && foto1Value.trim() !== '') {
-          foto1Html = '<a href="' + foto1Value + '" onclick="window.open(\'' + foto1Value + '\', \'_blank\'); return false;">Foto 1</a>';
-        } else {
-          foto1Html =   " Foto 1 ";
-        }
-        if (foto2Value && foto2Value.trim() !== '') {
-          foto2Html = '<a href="' + foto2Value + '" onclick="window.open(\'' + foto2Value + '\', \'_blank\'); return false;">Foto 2</a>';
-        } else {
-          foto2Html = " Foto 2 ";
-        }
-        if (foto3Value && foto3Value.trim() !== '') {
-          foto3Html = '<a href="' + foto3Value + '" onclick="window.open(\'' + foto3Value + '\', \'_blank\'); return false;">Foto 3</a>';
-        } else {
-          foto3Html = " Foto 3 ";
-        }
-        if (foto4Value && foto4Value.trim() !== '') {
-          foto4Html = '<a href="' + foto4Value + '" onclick="window.open(\'' + foto4Value + '\', \'_blank\'); return false;">Foto 4</a>';
-        } else {
-          foto4Html = " Foto 4 ";
-        }
-        content.innerHTML =
-          '<div style="max-height: 200px; overflow-y: auto;">' +
-          '<p style="font-weight: bold; text-decoration: underline;">' + feature.get('name') + '</p>' +
-          '<p>' + "Id = " + feature.get('bw_id') +  ' (' + feature.get('KTR') +')' +  '</p>' +
-          '<p>' + "U-Pflicht = " + feature.get('upflicht') + '</p>' +
-          '<p>' + "Bemerk = " + (feature.get('bemerk') ? feature.get('bemerk') : 'k.A.')  +  '</p>' +
-          '<p>' + "Bauj. = " + feature.get('baujahr') + '</p>' +
-          '<p>' + foto1Html + " " + foto2Html + " " + foto3Html + " " + foto4Html + 
-           '<br>' + '<u>' + "Beschreibung (kurz): " + '</u>' + feature.get('beschreib') + '</p>' +
-           '<p>' + beschreibLangHtml + '</p>' +
-          '</div>';
-      
-    }
-    // Führen Sie Aktionen für den Layernamen 'exp_bw_sle' durch
-    if (layname === 'sle') {
-      coordinates = evt.coordinate; 
-      popup.setPosition(coordinates);
-      var foto1Value = feature.get('foto1');
-        var foto1Html = '';
-        var foto2Value = feature.get('foto2');
-        var foto2Html = '';
-        var foto3Value = feature.get('foto3');
-        var foto3Html = '';
-        var foto4Value = feature.get('foto4');
-        var foto4Html = '';
-        
-        if (foto1Value && foto1Value.trim() !== '') {
-          foto1Html = '<a href="' + foto1Value + '" onclick="window.open(\'' + foto1Value + '\', \'_blank\'); return false;">Foto 1</a>';
-        } else {
-          foto1Html =   " Foto 1 ";
-        }
-        if (foto2Value && foto2Value.trim() !== '') {
-          foto2Html = '<a href="' + foto2Value + '" onclick="window.open(\'' + foto2Value + '\', \'_blank\'); return false;">Foto 2</a>';
-        } else {
-          foto2Html = " Foto 2 ";
-        }
-        if (foto3Value && foto3Value.trim() !== '') {
-          foto3Html = '<a href="' + foto3Value + '" onclick="window.open(\'' + foto3Value + '\', \'_blank\'); return false;">Foto 3</a>';
-        } else {
-          foto3Html = " Foto 3 ";
-        }
-        if (foto4Value && foto4Value.trim() !== '') {
-          foto4Html = '<a href="' + foto4Value + '" onclick="window.open(\'' + foto4Value + '\', \'_blank\'); return false;">Foto 4</a>';
-        } else {
-          foto4Html = " Foto 4 ";
-        }
-        var rwert = feature.get('rwert');
-        var hwert = feature.get('hwert');
-        let result = UTMToLatLon_Fix(rwert, hwert, 32, true);
-        
-        content.innerHTML =
-          '<div style="max-height: 200px; overflow-y: auto;">' +
-          '<p style="font-weight: bold; text-decoration: underline;">' + feature.get('name') + '</p>' +
-          '<p>' + "Id = " + feature.get('bw_id') +  ' (' + feature.get('KTR') +')' +  '</p>' +
-          '<p>' + "Bemerk = " + (feature.get('bemerk') ? feature.get('bemerk') : 'k.A.')  +  '</p>' +
-          '<p>' + "WSP (OW) = " + feature.get('WSP_OW') + " m" +  "  WSP (UW) = " + feature.get('WSP_UW') + " m" + '</p>' +
-          `<p><a href="https://www.google.com/maps?q=${result}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>` +
-          `<p><a href="https://www.google.com/maps?q=&layer=c&cbll=${result}&cbp=12,90,0,0,1" target="_blank" rel="noopener noreferrer">streetview</a></p>` +
-          '<p>' + "Bauj. = " + feature.get('baujahr') + '</p>' +
-          '<p>' + foto1Html + " " + foto2Html + " " + foto3Html + " " + foto4Html + 
-           '<br>' + '<u>' + "Beschreibung (kurz): " + '</u>' + feature.get('beschreib') + '</p>' +
-           '<p>' + beschreibLangHtml + '</p>' +
-          '</div>';
-      
-    }
-    // Führen Sie Aktionen für den Layernamen 'exp_bw_weh' durch
-    if (layname === 'weh') {
-          coordinates = evt.coordinate; 
-          popup.setPosition(coordinates);
-          var foto1Value = feature.get('foto1');
-            var foto1Html = '';
-            var foto2Value = feature.get('foto2');
-            var foto2Html = '';
-            var foto3Value = feature.get('foto3');
-            var foto3Html = '';
-            var foto4Value = feature.get('foto4');
-            var foto4Html = '';
-            
-            if (foto1Value && foto1Value.trim() !== '') {
-              foto1Html = '<a href="' + foto1Value + '" onclick="window.open(\'' + foto1Value + '\', \'_blank\'); return false;">Foto 1</a>';
-            } else {
-              foto1Html =   " Foto 1 ";
-            }
-            if (foto2Value && foto2Value.trim() !== '') {
-              foto2Html = '<a href="' + foto2Value + '" onclick="window.open(\'' + foto2Value + '\', \'_blank\'); return false;">Foto 2</a>';
-            } else {
-              foto2Html = " Foto 2 ";
-            }
-            if (foto3Value && foto3Value.trim() !== '') {
-              foto3Html = '<a href="' + foto3Value + '" onclick="window.open(\'' + foto3Value + '\', \'_blank\'); return false;">Foto 3</a>';
-            } else {
-              foto3Html = " Foto 3 ";
-            }
-            if (foto4Value && foto4Value.trim() !== '') {
-              foto4Html = '<a href="' + foto4Value + '" onclick="window.open(\'' + foto4Value + '\', \'_blank\'); return false;">Foto 4</a>';
-            } else {
-              foto4Html = " Foto 4 ";
-            }
-            var rwert = feature.get('rwert');
-            var hwert = feature.get('hwert');
-            let result = UTMToLatLon_Fix(rwert, hwert, 32, true);
-            content.innerHTML =
-              '<div style="max-height: 200px; overflow-y: auto;">' +
-              '<p style="font-weight: bold; text-decoration: underline;">' + feature.get('name') + '</p>' +
-              '<p>' + "Id = " + feature.get('bw_id') +  ' (' + feature.get('KTR') +')' +  '</p>' +
-              '<p>' + "Bemerk = " + (feature.get('bemerk') ? feature.get('bemerk') : 'k.A.')  +  '</p>' +
-              //'<p>' + "WSP1 (OW) = " + feature.get('Ziel_OW1').toFixed(2) + " m" +  "  WSP2 (OW) = " + feature.get('Ziel_OW2').toFixed(2) + " m" + '</p>' +
-              `<p><a href="https://www.google.com/maps?q=${result}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>` +
-              `<p><a href="https://www.google.com/maps?q=&layer=c&cbll=${result}&cbp=12,90,0,0,1" target="_blank" rel="noopener noreferrer">streetview</a></p>` +
-              '<p>' + "WSP1 (OW) = " + feature.get('Ziel_OW1') + " m" +  "  WSP2 (OW) = " + feature.get('Ziel_OW2') + " m" + '</p>' +
-              '<p>' + "Bauj. = " + feature.get('baujahr') + '</p>' +
-              '<p>' + foto1Html + " " + foto2Html + " " + foto3Html + " " + foto4Html + 
-               '<br>' + '<u>' + "Beschreibung (kurz): " + '</u>' + feature.get('beschreib') + '</p>' +
-               '<p>' + beschreibLangHtml + '</p>' +
-              '</div>';
-          
-    }
-    if (layname === 'fot') {
-      coordinates = evt.coordinate; 
-      popup.setPosition(coordinates);
-      var foto1Value = feature.get('tmp');
-      var foto1Html = '';
-      var foto2Value = feature.get('Path');
-      var foto2Html = '';
-        
-        if (foto1Value && foto1Value.trim() !== '') {
-          foto1Html = '<a href="' + foto1Value + '" onclick="window.open(\'' + foto1Value + '\', \'_blank\'); return false;">Foto 1</a>';
-        } else {
-          foto1Html =   " Foto LW 1 ";
-        }
-        if (foto2Value && foto2Value.trim() !== '') {
-          foto2Html = '<a href="' + foto2Value + '" onclick="window.open(\'' + foto2Value + '\', \'_blank\'); return false;">Foto 2</a>';
-        } else {
-          foto2Html = " Foto LW 2";
-        }
-      
-        var rwert = feature.get('RWert');
-        var hwert = feature.get('HWert');
-        let result = UTMToLatLon_Fix(rwert, hwert, 32, true);
-        content.innerHTML =
-          '<div style="max-height: 200px; overflow-y: auto;">' +
-          '<p style="font-weight: bold; text-decoration: underline;">' + feature.get('REFOBJ_ID') + '</p>' +
-          `<p><a href="https://www.google.com/maps?q=${result}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>` +
-          `<p><a href="https://www.google.com/maps?q=&layer=c&cbll=${result}&cbp=12,90,0,0,1" target="_blank" rel="noopener noreferrer">streetview</a></p>` +
-          '<p>' + "Datum Uhrzeit: " + feature.get('DateTime_') + '</p>' +
-          '<p>' + foto1Html + " " + foto2Html + 
-           '<br>' + '<u>' + "Ordner: " + '</u>' + feature.get('BOrdner') + '</p>' +
-           '</div>';
-      
-    }
-    // Führen Sie Aktionen für den Layernamen 'gehoelz_vecLayer' durch
-    if (layname === 'gehoelz_vec') {
-      coordinates = evt.coordinate; 
-      popup.setPosition(coordinates);
-      content.innerHTML =
-      '<div style="max-height: 300px; overflow-y: auto;">' +
-      '<p>Gehölzentwicklung' + '<br>' +
-      '<br>' + "Bemerk: " + feature.get('UMn_Bemerk') + '</p>' +
-      '</div>';
-    }
-    // Führen Sie Aktionen für den Layernamen 'fsk' durch
-    if (layname === 'fsk') {
-      if (feature.get('Art') === 'o' || feature.get('Art') === 'l') {
-        coordinates = evt.coordinate; // Define coordinates for 'fsk'
-        popup.setPosition(coordinates);
-        content.innerHTML =
-          '<div style="max-height: 300px; overflow-y: auto;">' +
-          '<p><strong>gemark Flur Flurstück:</strong><br>' + feature.get('Suche') + '</p>' +
-          'FSK: ' + feature.get('fsk') + '</p>' +
-          'FSK(ASL): ' + feature.get('FSK_ASL') + '</p>' +
-          '<p>' + 'Eig.(öffentl.): ' + feature.get('Eig1') + '</p>' +
-          '</div>';
-      } else {
-        coordinates = evt.coordinate; // Define coordinates for 'fsk'
-        popup.setPosition(coordinates);
-        content.innerHTML =
-          '<div style="max-height: 300px; overflow-y: auto;">' +
-          '<p><strong>gemark Flur Flurstück:</strong><br>' + feature.get('Suche') + '</p>' +
-          'FSK: ' + feature.get('fsk') + '</p>' +
-          '<p>' + 'Art (p=privat): ' + feature.get('Art') + '</p>' +
-           '<p>' + 'Eig.(privat): ' + feature.get('Eig1') + '</p>' +
-          '</div>';
-      }
-    }
-        // Führen Sie Aktionen für den Layernamen 'geojson' durch
-    if (layname.toLowerCase().startsWith('geojson')) {
-      var att = feature.getProperties();
-      coordinates = evt.coordinate; 
-      popup.setPosition(coordinates);
-      
-      // Erstelle HTML für alle Attribute außer "geometry"
-      let contentHtml = "<strong>Attributwerte:</strong><br><ul>";
-      for (let key in att) {
-          if (key !== 'geometry') { // Geometrie nicht anzeigen
-              contentHtml += `<li><strong>${key}:</strong> ${att[key]}</li>`;
-          }
-      }
-      contentHtml += "</ul>";
-      content.innerHTML = contentHtml;
-    }
-        // Führen Sie Aktionen für den Layernamen 'editbar' durch
-    if (layname.toLowerCase().startsWith('editbar')) {
-      console.log('angegommen');
-      var att = feature.getProperties();
-      coordinates = evt.coordinate; 
-      popup.setPosition(coordinates);
-      
-      // Erstelle HTML für alle Attribute außer "geometry"
-      let contentHtml = "<strong>Zeichenobjekt:</strong><br><ul>";
-      for (let key in att) {
-          
-              contentHtml += `<li><strong>${key}:</strong> ${att[key]}</li>`;
-          
-      }
-      contentHtml += "</ul>";
-      content.innerHTML = contentHtml;
-    }
-    // Führen Sie Aktionen für den Layernamen 'kml' durch
-    if (layname.toLowerCase().startsWith('kml')) {
-      var att = feature.getProperties();
-      coordinates = evt.coordinate; 
-      popup.setPosition(coordinates);
-      // Erstelle HTML für alle Attribute außer "geometry"
-      let contentHtml = "<strong>Attributwerte:</strong><br><ul>";
-      for (let key in att) {
-          if (key !== 'geometry') { // Geometrie nicht anzeigen
-              contentHtml += `<li><strong>${key}:</strong> ${att[key]}</li>`;
-          }
-      }
-      contentHtml += "</ul>";
-      content.innerHTML = contentHtml;
-    }
-    // Führen Sie Aktionen für den Layernamen "rechtsClick" durch
-    if (layname.toLowerCase().startsWith('rechtsclick')) {
-      var att = feature.getProperties();
-      coordinates = evt.coordinate; 
-      popup.setPosition(coordinates);
-      // Erstelle HTML für alle Attribute außer "geometry"
-      let contentHtml = "<strong>Koordinaten</strong><br><ul>"
-      for (let key in att) {
-          if (key !== 'geometry') { // Geometrie nicht anzeigen
-              contentHtml += `<li><strong>${key}:</strong> ${Number(att[key]).toFixed(3)}</li>`;
-          }
-      }
-      feature.set('type', 'removable');
-      contentHtml += "</ul>";
-      
-      let result = UTMToLatLon_Fix(feature.get('x_32632'), feature.get('y_32632'), 32, true);
-      contentHtml += `<p><a href="https://www.google.com/maps?q=${result}" target="_blank" rel="noopener noreferrer">Google Maps link</a></p>`;
-      content.innerHTML = contentHtml;
-    }
-  }
-    }
-  );
-  } else if(editBarAnAus===true) {  
-  //alert('EditBar ist '+ editBarAnAus + 'map on');
-  //placeMarkerAndShowCoordinates(evt);
-  }
-});
-
-
- */
 //--------------------------------------------------------------------------------------------- Photon search control 
 var sLayer = new VectorLayer({
   title: "Search_Photon",
@@ -2104,9 +1536,10 @@ var sLayer = new VectorLayer({
           color: 'rgba(255,165,0,.3)'
       })
   }),
-  displayInLayerSwitcher : true,
+  displayInLayerSwitcher : false,
 });
 map.addLayer(sLayer);
+
 
 var search = new SearchPhoton({
   //target: $(".options").get(0),
@@ -2167,6 +1600,7 @@ function addMarker(coordinates) {
   sLayer.getSource().addFeature(marker);
   sLayer.set('title', "Punkt");
   sLayer.set('name', "Punkt");
+  sLayer.set('displayInLayerSwitcher', true);
 };
 
 //---------------------------------------------------------------------------------------------Menü mit Submenü
@@ -2633,7 +2067,7 @@ var sub2 = new Bar({
       onToggle: function (active) {
         dgmKachelLayer.setVisible(active);
         dgmKachelLayer.set('displayInLayerSwitcher', active);
-        if (active) {
+        if (true) {
           enableDgmInteraction();
         } else {
           disableDgmInteraction();
@@ -2649,7 +2083,6 @@ var sub2 = new Bar({
         domKachelLayer.setVisible(active);
         domKachelLayer.set('displayInLayerSwitcher', active);
         if (active) {
-          // Sicherstellen, dass kein alter Listener existiert
           if (domClickListener) unByKey(domClickListener);
           domClickListener = map.on('singleclick', handleDomClick);
         } else {
@@ -2661,27 +2094,41 @@ var sub2 = new Bar({
         closeDefaultPopups();
       }
     }),
-    // Höhenprofil laden
-    // Höhenprofil
-    new Toggle({
-      html: '<i class="fa fa-area-chart"></i>',
-      title: "Höhenprofil",
-      onToggle: function (active) {
-        profileMode = active;
-        profileLayer.setVisible(active);
-        profileLayer.set('displayInLayerSwitcher', active);
-        if (active) {
-          profileSource.clear();
-          enableProfileDrawing(); // Diese Funktion sollte intern prüfen, ob schon eine Interaktion aktiv ist
-        } else {
-          // Konsistent zur DGM-Logik: Nutze eine disable-Funktion, falls vorhanden
-          if (profileDraw) {
-            map.removeInteraction(profileDraw);
-            profileDraw = null;
-          }
-        }
+  // Höhenprofil Toggle
+new Toggle({
+  html: '<i class="fa fa-area-chart"></i>',
+  title: "Höhenprofil",
+  onToggle: function (active) {
+    profileMode = active;
+    if (active) {
+      // --- TRICK: Layer an die oberste Position schieben ---
+      const layers = map.getLayers();
+      layers.remove(profileLayer); // Kurz entfernen (falls schon vorhanden)
+      layers.push(profileLayer);   // Am Ende wieder hinzufügen -> Ganz oben im Switcher
+      profileLayer.setVisible(true);
+      profileLayer.set('displayInLayerSwitcher', true);
+      profileSource.clear();
+      enableProfileDrawing(); 
+      // LayerSwitcher explizit zur Aktualisierung zwingen
+      layers.remove(sLayer); // Kurz entfernen (falls schon vorhanden)
+      layers.push(sLayer);   // Am Ende wieder hinzufügen -> Ganz oben im Switcher
+      if (layerSwitcher) layerSwitcher.render();
+      
+    } else {
+      profileLayer.setVisible(false);
+      profileLayer.set('displayInLayerSwitcher', false);
+      if (profileDraw) {
+        map.removeInteraction(profileDraw);
+        profileDraw = null;
       }
-    }),
+      if (typeof disableProfileDrawing === 'function') {
+        disableProfileDrawing(); 
+      }
+    }
+    // LayerSwitcher explizit zur Aktualisierung zwingen
+    if (layerSwitcher) layerSwitcher.render();
+  }
+}),
   ]
 });
 let geojsonCounter = 0;
@@ -3220,7 +2667,7 @@ async function addDgmLayer(url, bbox, id1) {
     title: layerNameWithCounter,
     name: layerNameWithCounter,
     visible: true,
-    willReadFrequently: true,
+    //willReadFrequently: true,
     style: createGeoTiffStyle(min, max), // dynamische Graustufen
   });
   GeoTIFFLayer1.bbox = bbox;
@@ -3255,7 +2702,7 @@ async function addDomLayer(url, bbox, id1) {
     title: layerNameWithCounter,
     name: layerNameWithCounter,
     visible: true,
-    willReadFrequently: true,
+    //willReadFrequently: true,
     style: createGeoTiffStyle(min, max), // dynamische Graustufen
   });
   GeoTIFFLayer1.bbox = bbox;
@@ -4018,60 +3465,6 @@ function drawPoint(coords) {
     duration: 1000,
   });
 }
-
-  //var div_select_epsg = document.getElementById('coordinate_selection').style.display='block';
-   //console.log(div_select_epsg);
-  //
-  //var select_epsg = document.getElementById('coord_select').display='block';
-  //console.log(select_epsg);
-  /* // Schritt 1: Koordinatensystem auswählen
-  const system = prompt(
-    'Bitte Koordinatensystem angeben:\n' +
-    ' - EPSG:4326   (Längen-/Breitengrade)\n' +
-    ' - EPSG:25832  (UTM, ETRS89)\n' +
-    ' - EPSG:32632  (UTM, WGS84)\n' +
-    ' - EPSG:3857   (Web Mercator)'
-  );
-
-  if (!system) return;
-  const crs = system.trim().toUpperCase();
-
-  // Schritt 2: Koordinaten eingeben
-  const input = prompt(`Koordinaten im Format "x,y" eingeben (${crs}):`);
-  if (!input) return;
-
-  const coords = input.split(',').map(str => Number(str.trim()));
-  if (coords.length !== 2 || coords.some(isNaN)) {
-    alert('❌ Ungültige Eingabe. Bitte verwenden Sie das Format "x,y".');
-    return;
-  }
-
-  // Schritt 3: Transformation durchführen
-  let transformed;
-  if (crs === 'EPSG:4326') {
-    transformed = fromLonLat(coords);
-  } else if (crs !== 'EPSG:3857') {
-    transformed = transform(coords, crs, 'EPSG:3857');
-  } else {
-    transformed = coords;
-  }
-
-  drawPoint(transformed);
-}
-
-// --- Punkt zeichnen ---
-function drawPoint(coords) {
-  const pointFeature = new ol.Feature({
-    geometry: new ol.geom.Point(coords),
-  });
-
-  vectorSource.addFeature(pointFeature);
-
-  map.getView().animate({
-    center: coords,
-    zoom: 13,
-    duration: 1000
-  }); */
 
 function getOverallDgmMinMax() {
   if(activeDgmRasterData.length === 0) return null;
