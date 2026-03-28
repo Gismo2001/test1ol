@@ -2057,20 +2057,15 @@ var sub1 = new Bar({
         if (active) {
             containerBar2.addControl(permalinkControl);
             map.addControl(permalinkControl);
-            
             // Falls du zusätzliche Logik brauchst:
             setInteractionPerma(permalinkControl, true);
-            
-            
             console.log('perma on');
         } else {
             containerBar2.removeControl(permalinkControl);
-            // Falls permalinkControl auch von der Map entfernt werden soll:
             map.removeControl(permalinkControl);
-            
             setInteractionPerma(permalinkControl, false);
-            
-            console.log('perma off');
+            const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
+            window.history.replaceState({}, document.title, cleanUrl);
         }
     },
 }),
@@ -2284,16 +2279,22 @@ geojsonInput.addEventListener('change', function (event) {
 function setInteractionPerma(permalinkControl, active) {
     if (active === true) { 
         // 1. Permalink ist EINGESCHALTET
-        permalinkControl.setUrlParam('urlReplace', true); // URL soll sich live anpassen
+        permalinkControl.setUrlParam('urlReplace', true); 
         permalinkControl.isActive = true; 
         console.log('Permalink-Modus: Live-Update der URL ist AN');
     } else {
         // 2. Permalink ist AUSGESCHALTET
-        permalinkControl.setUrlParam('urlReplace', false); // URL bleibt starr
+        permalinkControl.setUrlParam('urlReplace', false); 
         permalinkControl.isActive = false;
+
+        // KORREKTUR: Hier muss permalinkControl stehen, nicht control
+        if (permalinkControl.clear) {
+            permalinkControl.clear();
+        }
+        
         console.log('Permalink-Modus: Live-Update der URL ist AUS');
     }
-}
+};
 //--------------------------------------------------------------------------Drag and Drop
 let dragAndDropInteraction;
 let zaehlerGeojson = 0;
