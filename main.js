@@ -132,7 +132,9 @@ let loadedDoms = [];   // speichert {tile_id, bbox}
 
 let profileMode = false;
 let ismobile = false;
-
+// 1. ZUERST: Alle Variablen deklarieren
+let permaButtonState = false; // Standardmäßig aus
+let permalinkControl; // Nur deklarieren, noch nicht definieren
 
 function isMobileDevice() {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -168,6 +170,39 @@ const map = new Map({
   ]),
   interactions: defaultInteractions().extend([new DragRotateAndZoom()])
 });
+
+// --- 3. Das Control definieren (JETZT erst) ---
+permalinkControl = new Permalink({
+  urlReplace: true,
+  anchor: true,
+  layers: true
+});
+
+/* 
+var permalinkControl = new Permalink({
+  title: 'Permalink',
+  anchor: true,   // setzt ein # in die URL
+  layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
+  updateUrl: true, // wichtig!
+  fixed: 4,
+  groups: true,
+  urlreplace: false 
+  //geohash: true,
+  //fixed: 2,
+  // rotation: true // falls du auch Kartenrotation speichern willst
+}); */
+
+
+// --- 4. Der Sicherheits-Check vor dem Hinzufügen ---
+const urlHasParams = window.location.hash.includes('lon=') || window.location.hash.includes('l=');
+
+if (urlHasParams && permalinkControl) { // Prüfen, ob beides da ist
+    permaButtonState = true;
+    map.addControl(permalinkControl); 
+    console.log("Permalink erfolgreich geladen");
+} else {
+    console.log("Keine Parameter gefunden oder Control fehlt.");
+}
 
 var note = new Notification(
   {
@@ -1274,6 +1309,12 @@ map.addLayer(vector);
 
 const excludedLayerNames = ['gew', 'km10scal', 'km100scal', 'km500scal'];
 
+
+// Einmalige Zuweisung des Klick-Events
+permalinkControl.element.addEventListener('click', handlePermalinkAction);
+
+
+
 const selectInteraction = new Select({
   layers: function(layer) {
     const name = layer.get('name');
@@ -1793,8 +1834,9 @@ window.closeSearchResults = function () {
   document.getElementById("search-results-container").style.display = "none";
 };
 let jsonButtonState = false; // Initialer Zustand
-let punktButtonState = false;
-let permaButtonState = true;
+//let punktButtonState = false;
+
+//let permaButtonState = true;
 
 // Hilfsfunktion für Popups
 const closeDefaultPopups = () => {
@@ -2236,21 +2278,6 @@ geojsonInput.addEventListener('change', function (event) {
     reader.readAsText(file); // Datei einlesen
   });
 });
-
-var permalinkControl = new Permalink({
-  title: 'Permalink',
-  anchor: true,   // setzt ein # in die URL
-  layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
-  updateUrl: false,   // wichtig!
-  fixed: 4,
-  groups: true,
-  urlreplace: false 
-  //geohash: true,
-  //fixed: 2,
-  // rotation: true // falls du auch Kartenrotation speichern willst
-});
-// Einmalige Zuweisung des Klick-Events
-permalinkControl.element.addEventListener('click', handlePermalinkAction);
 
 
 // Funktion für Permalink
