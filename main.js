@@ -242,7 +242,7 @@ dgmKachelLayer.set('displayInLayerSwitcher', false);
 
 dgmKachelLayer.on('change:visible', updateDgmInteraction);
 
-updateDgmInteraction();
+
 
 let profilePoints = [];
 let profileDraw = null;
@@ -2019,6 +2019,7 @@ var sub1 = new Bar({
             // Falls du zusätzliche Logik brauchst:
             setInteractionPerma(permalinkControl, true);
             
+            
             console.log('perma on');
         } else {
             containerBar2.removeControl(permalinkControl);
@@ -2242,8 +2243,8 @@ var permalinkControl = new Permalink({
   layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
   updateUrl: false,   // wichtig!
   fixed: 4,
-  groups: true
-  //urlreplace: false, // ersetzt den kompletten URL (nützlich bei Nutzung von Routenplanern etc.)
+  groups: true,
+  urlreplace: false 
   //geohash: true,
   //fixed: 2,
   // rotation: true // falls du auch Kartenrotation speichern willst
@@ -2253,16 +2254,19 @@ permalinkControl.element.addEventListener('click', handlePermalinkAction);
 
 
 // Funktion für Permalink
-function setInteractionPerma (permalinkControl) {
-     { 
-     //permalinkControl.setUrlParam('urlReplace', false);
-     permalinkControl.isActive = false;
-     console.log(permalinkControl.urlreplace);
-     }  
-     console.log('setinteractionPerma Layers aufgerufen: ' + permalinkControl.localStorage);
-   
-}; 
-
+function setInteractionPerma(permalinkControl, active) {
+    if (active === true) { 
+        // 1. Permalink ist EINGESCHALTET
+        permalinkControl.setUrlParam('urlReplace', true); // URL soll sich live anpassen
+        permalinkControl.isActive = true; 
+        console.log('Permalink-Modus: Live-Update der URL ist AN');
+    } else {
+        // 2. Permalink ist AUSGESCHALTET
+        permalinkControl.setUrlParam('urlReplace', false); // URL bleibt starr
+        permalinkControl.isActive = false;
+        console.log('Permalink-Modus: Live-Update der URL ist AUS');
+    }
+}
 //--------------------------------------------------------------------------Drag and Drop
 let dragAndDropInteraction;
 let zaehlerGeojson = 0;
