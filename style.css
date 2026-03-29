@@ -360,3 +360,6 @@ html {
   color: inherit;
 }
 
+.ol-permalink.mein-spezial-button {
+    top: 50px; /* Oder ein anderer fester Wert, je nach gewünschter Höhe */
+}

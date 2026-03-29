@@ -173,15 +173,10 @@ const map = new Map({
 
 // --- 3. Das Control definieren (JETZT erst) ---
 var permaFunktionality = new Permalink({
+  className: 'ol-permalink mein-spezial-button', // Eigene Klasse hinzufügen
   refreshDelay:100,
-  /* title: 'Permalink',
-  anchor: true,   // setzt ein # in die URL
-  layers: true,
-  //updateUrl: true,
-  urlReplace: false,
-  //fixed: 4,
-  groups: true,
-  urlreplace: false,  */
+  visible: true,
+  localStorage: false,
    onclick: function(url) {
         // Kopiert die URL direkt in die Zwischenablage
         navigator.clipboard.writeText(url).then(function() {
@@ -1355,7 +1350,6 @@ function getLayersInGroup(layerGroup) {
   return layers;
 }
 
-
 function singleClickHandler(evt) {
   console.log(dgmClickListener);
   const visibleLayers = [];
@@ -2010,6 +2004,7 @@ new Toggle({
      if (active) {
          map.addControl(permaFunktionality);
          permaFunktionality.setUrlReplace(true);
+         
          console.log('Permalink aktiviert: ' + permaFunktionality.getUrlReplace());
          const hatUrl = permaFunktionality.hasUrlParam ? 'ja' : 'nein';
          console.log('Hat URL: ' + hatUrl);
@@ -2146,18 +2141,6 @@ new Toggle({
   ]
 });
 let geojsonCounter = 0;
-
-
-
-
-// Input-Feld (versteckt im HTML, z. B. im Body)
-//const geojsonInput = document.createElement('input');
-//geojsonInput.type = 'file';
-//geojsonInput.accept = '.geojson,.json';
-//geojsonInput.style.display = 'none';
-//document.body.appendChild(geojsonInput);
-
-// Zähler für die geladenen GeoJSON-Dateien
 
 
 //Event-Handler für Datei-Upload
@@ -3329,8 +3312,6 @@ window.onload = function() {
   } */
 }
 
-
-
 const vectorSource = new ol.source.Vector();
 const vectorLayer = new ol.layer.Vector({
   source: vectorSource,
@@ -3347,10 +3328,7 @@ const vectorLayer = new ol.layer.Vector({
     }),
   }),
 });
-
 //map.addLayer(vectorLayer);
-
-
 function handleCRSChange(event) {
   const crs = event.target.value.toUpperCase();
   const systemLabel = crs.replace('_', ':'); // sicherer als replace('EPSG_', ...)
