@@ -134,7 +134,7 @@ let profileMode = false;
 let ismobile = false;
 
 
-//let permalinkControl; // Nur deklarieren, noch nicht definieren
+let permaFunktionality; // Nur deklarieren, noch nicht definieren
 
 function isMobileDevice() {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -172,7 +172,7 @@ const map = new Map({
 });
 
 // --- 3. Das Control definieren (JETZT erst) ---
-var permaFunktionality = new Permalink({
+permaFunktionality = new Permalink({
   className: 'ol-permalink mein-spezial-button', // Eigene Klasse hinzufügen
   refreshDelay:100,
   visible: true,
@@ -2376,13 +2376,35 @@ function initializeWMS(WMSCapabilities,map ) {
       trace: true
   });
   map.addControl(cap);
-  cap.on('load', function (e) {
-      map.addLayer(e.layer);
-      e.layer.set('legend', e.options.data.legend);
-      //e.layer.set('permalink', e.options.data.name);
-      
- });
+cap.on('load', function (e) {
+    const layer = e.layer;
+    
+    // 1. ID sicher generieren
+    const rawTitle = (e.options.data && e.options.data.title) || "wms_layer";
+    const permalinkId = rawTitle.toLowerCase().replace(/\s+/g, '_');
+    
+    // 2. Wichtige Attribute setzen
+    layer.set('permalink', permalinkId);
+    layer.set('title', rawTitle); 
+    
+    // 3. Layer zur Karte
+    map.addLayer(layer);
+    
+    // 4. Wir verzichten auf den sofortigen Aufruf von getLayerByLink,
+    // um den internen ol-ext Fehler komplett zu umgehen.
+    // Stattdessen triggern wir nur das generelle Update.
+    setTimeout(() => {
+        if (typeof permaFunktionality !== 'undefined' && permaFunktionality) {
+            // changed() reicht völlig aus, damit das Control 
+            // den neuen Layer bemerkt und in die URL schreibt.
+            permaFunktionality.changed();
+            console.log(`WMS '${permalinkId}' ist nun im Permalink registriert.`);
+        }
+    }, 250); // Etwas großzügigerer Puffer für die Stabilität
+});
 };
+
+
 
 function checkForLinkInTH(html) {
   const table = document.createElement('table');
