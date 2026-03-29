@@ -132,9 +132,9 @@ let loadedDoms = [];   // speichert {tile_id, bbox}
 
 let profileMode = false;
 let ismobile = false;
-// 1. ZUERST: Alle Variablen deklarieren
-let permaButtonState = false; // Standardmäßig aus
-let permalinkControl; // Nur deklarieren, noch nicht definieren
+
+
+//let permalinkControl; // Nur deklarieren, noch nicht definieren
 
 function isMobileDevice() {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -172,37 +172,24 @@ const map = new Map({
 });
 
 // --- 3. Das Control definieren (JETZT erst) ---
-permalinkControl = new Permalink({
-  urlReplace: true,
-  anchor: true,
-  layers: true
+var permaFunktionality = new Permalink({
+  refreshDelay:100,
+  /* title: 'Permalink',
+  anchor: true,   // setzt ein # in die URL
+  layers: true,
+  //updateUrl: true,
+  urlReplace: false,
+  //fixed: 4,
+  groups: true,
+  urlreplace: false,  */
+   onclick: function(url) {
+        // Kopiert die URL direkt in die Zwischenablage
+        navigator.clipboard.writeText(url).then(function() {
+            alert("Link kopiert!");
+        });
+    }
 });
 
-/* 
-var permalinkControl = new Permalink({
-  title: 'Permalink',
-  anchor: true,   // setzt ein # in die URL
-  layers: true,   // speichert Layer-Status (sichtbar / unsichtbar)
-  updateUrl: true, // wichtig!
-  fixed: 4,
-  groups: true,
-  urlreplace: false 
-  //geohash: true,
-  //fixed: 2,
-  // rotation: true // falls du auch Kartenrotation speichern willst
-}); */
-
-
-// --- 4. Der Sicherheits-Check vor dem Hinzufügen ---
-const urlHasParams = window.location.hash.includes('lon=') || window.location.hash.includes('l=');
-
-if (urlHasParams && permalinkControl) { // Prüfen, ob beides da ist
-    permaButtonState = true;
-    map.addControl(permalinkControl); 
-    console.log("Permalink erfolgreich geladen");
-} else {
-    console.log("Keine Parameter gefunden oder Control fehlt.");
-}
 
 var note = new Notification(
   {
@@ -540,7 +527,7 @@ function getHeightAtCoordinate(coord) {
   return null;
 }
 // Ende dgm code
-
+/* 
 map.getLayers().forEach(layer => {
   const key = layer.get('permalink');
   if (key) {
@@ -552,7 +539,7 @@ map.getLayers().forEach(layer => {
     });
   }
 });
-
+ */
 //_____-----------------------------------------------------------------APrint
 map.addControl(new CanvasAttribution());
 map.addControl(new CanvasTitle({ 
@@ -1310,9 +1297,6 @@ map.addLayer(vector);
 const excludedLayerNames = ['gew', 'km10scal', 'km100scal', 'km500scal'];
 
 
-// Einmalige Zuweisung des Klick-Events
-permalinkControl.element.addEventListener('click', handlePermalinkAction);
-
 
 
 const selectInteraction = new Select({
@@ -1834,41 +1818,11 @@ window.closeSearchResults = function () {
   document.getElementById("search-results-container").style.display = "none";
 };
 let jsonButtonState = false; // Initialer Zustand
-//let punktButtonState = false;
-
-//let permaButtonState = true;
 
 // Hilfsfunktion für Popups
 const closeDefaultPopups = () => {
   const popup1 = document.getElementById('popup1');
   if (popup1) popup1.style.display = 'none';
-};
-
-
-// Die ausgelagerte Funktion
-function handlePermalinkAction() {
-    // Prüfen, ob der Toggle-Status überhaupt "an" ist
-    if (permaButtonState) {
-        const link = permalinkControl.getLink();
-        
-        navigator.clipboard.writeText(link).then(() => {
-            console.log('Permalink kopiert: ' + link);
-            
-            // Benachrichtigung anzeigen
-            note.show(`Kopiert und in URL an-/ausgeschaltet!`, { 
-                duration: 2000, 
-                className: 'ol-notification' 
-            });
-            note.element.style.bottom = '50px';
-            
-            // Visuelles Feedback am Button
-            permalinkControl.element.classList.toggle('active');
-        }).catch(err => {
-            console.error('Fehler beim Kopieren: ', err);
-        });
-    } else {
-        console.warn('Permalink-Funktion ist derzeit deaktiviert (Toggle ist off).');
-    }
 };
 
 /* Nested subbar */
@@ -2049,27 +2003,27 @@ var sub1 = new Bar({
       },
     }),
     // Das Untermenü Permalink
-    new Toggle({
-    html: '<i class="fa fa-link"></i>',  
-    title: "Permalink erstellen",
-    onToggle: function (active) { // Viele Toggle-Bibliotheken liefern 'active' als Parameter
-        permaButtonState = active; // Direkt den Status nutzen
-        if (active) {
-            containerBar2.addControl(permalinkControl);
-            map.addControl(permalinkControl);
-            // Falls du zusätzliche Logik brauchst:
-            setInteractionPerma(permalinkControl, true);
-            console.log('perma on');
-        } else {
-            containerBar2.removeControl(permalinkControl);
-            map.removeControl(permalinkControl);
-            setInteractionPerma(permalinkControl, false);
-            const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
-            window.history.replaceState({}, document.title, cleanUrl);
-        }
-    },
+new Toggle({
+    html: '<i class="fa fa-link"></i>', // ol-ext baut den Button-Wrapper meist selbst
+    title: "Permalink",
+    onToggle: function (active) {
+     if (active) {
+         map.addControl(permaFunktionality);
+         permaFunktionality.setUrlReplace(true);
+         console.log('Permalink aktiviert: ' + permaFunktionality.getUrlReplace());
+         const hatUrl = permaFunktionality.hasUrlParam ? 'ja' : 'nein';
+         console.log('Hat URL: ' + hatUrl);
+         console.log(permaFunktionality);
+         
+       } else {
+        permaFunktionality.setUrlReplace(false);
+         const hatUrl = permaFunktionality.hasUrlParam ? 'ja' : 'nein';
+         console.log('Hat URL: ' + hatUrl);
+         map.removeControl(permaFunktionality);
+         console.log('Permalink deaktiviert');
+       }
+    }
 }),
-
   ]
 });
 
@@ -2275,26 +2229,6 @@ geojsonInput.addEventListener('change', function (event) {
 });
 
 
-// Funktion für Permalink
-function setInteractionPerma(permalinkControl, active) {
-    if (active === true) { 
-        // 1. Permalink ist EINGESCHALTET
-        permalinkControl.setUrlParam('urlReplace', true); 
-        permalinkControl.isActive = true; 
-        console.log('Permalink-Modus: Live-Update der URL ist AN');
-    } else {
-        // 2. Permalink ist AUSGESCHALTET
-        permalinkControl.setUrlParam('urlReplace', false); 
-        permalinkControl.isActive = false;
-
-        // KORREKTUR: Hier muss permalinkControl stehen, nicht control
-        if (permalinkControl.clear) {
-            permalinkControl.clear();
-        }
-        
-        console.log('Permalink-Modus: Live-Update der URL ist AUS');
-    }
-};
 //--------------------------------------------------------------------------Drag and Drop
 let dragAndDropInteraction;
 let zaehlerGeojson = 0;
@@ -2407,21 +2341,11 @@ containerBar1.element.style.bottom = '60px';
 var containerBar2 = new Bar();
 map.addControl(containerBar2);
 
-//containerBar2.addControl (search);
-//containerBar2.addControl (permalinkControl);
 containerBar2.addControl (printControl);
 containerBar2.addControl(toggleButtonU);
 
 containerBar2.setPosition('bottom-right');
 containerBar2.element.style.bottom = '60px';
-
-//var mainbar3 = new Bar();
-//map.addControl(mainbar3);
-//mainbar3.addControl(new ZoomToExtent({
-//   extent: [727361, 6839277, 858148, 6990951] 
-// }));
-//mainbar3.setPosition('bottom-left');
-//mainbar3.element.style.bottom = '120px';
 
 var checkExist = setInterval(() => {
   let barElement = document.querySelector('.ol-control.ol-bar.bottom-left');
