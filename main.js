@@ -753,6 +753,29 @@ const km500scal_layer = new VectorLayer({
   visible: true  
 });
 
+// Nibis Bohrdaten - Manuell definierter Layer
+const wmsNibisLayer = new TileLayer({
+  title: "Nibis Bohrdaten", // Für die Anzeige im LayerSwitcher
+  // Wir nutzen die gleichen Keys wie bei deinen dynamischen Layern
+  permalink: 'nibis_bohrdaten', 
+  visible: false,
+  opacity: 0.5,
+  source: new TileWMS({
+    url: 'https://nibis.lbeg.de/net3/public/ogc.ashx?PkgId=37',
+    params: {
+      'LAYERS': 'group_817',
+      'FORMAT': 'image/png',
+      'TRANSPARENT': true,
+      'TILED': true,
+      'VERSION': '1.3.0' // Sicherstellen, dass die Koordinatenordnung stimmt
+    },
+    // Die Attribution gehört hierhin:
+    attributions: '© LBEG Niedersachsen',
+    crossOrigin: 'anonymous' // Wichtig, falls du später Export-Funktionen nutzt
+  })
+});
+
+
 const wmsNsgLayer = new TileLayer({
   title: "NSG",
   name: "NSG",
@@ -1232,7 +1255,7 @@ const wmsLayerGroup = new LayerGroup({
   fold: true,
   fold: 'close',
   visible: true,
-  layers: [ Alkis_layer, wmsLsgLayer, wmsNsgLayer, wmsBiotopeEL, wmsUesgLayer, wmsWrrlFgLayer, wmsGewWmsFgLayer ]
+  layers: [ Alkis_layer, wmsNibisLayer,wmsLsgLayer, wmsNsgLayer, wmsBiotopeEL, wmsUesgLayer, wmsWrrlFgLayer, wmsGewWmsFgLayer ]
 });
 const GNAtlasGroup = new LayerGroup({
   title: 'Luftbilder',
@@ -2338,11 +2361,10 @@ var checkExist = setInterval(() => {
   }
 }, 100);
 
-document.addEventListener('DOMContentLoaded', function() {
-  initializeWMS(WMSCapabilities, map ); // Aufrufen der initializeWMS-Funktion aus myFunc.js
-});
-
 //-----------------------------------------------------------------------------------------------------WMS-Control
+document.addEventListener('DOMContentLoaded', function() {
+  initializeWMS(WMSCapabilities, map ); 
+});
 
 function initializeWMS(WMSCapabilities,map ) {
   var cap = new WMSCapabilities({
@@ -2357,29 +2379,28 @@ function initializeWMS(WMSCapabilities,map ) {
       searchLabel: 'Suche',
       optional: 'token',
       services: {
-  'Verwaltungsgrenzen NI ': 'https://opendata.lgln.niedersachsen.de/doorman/noauth/verwaltungsgrenzen_wms',            
-  'Hydro, Umweltkarten NI ': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Hydro_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
-  'WRRL, Umweltkarten NI ': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/WRRL_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
-  'Natur, Umweltkarten NI': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Natur_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
-  'Natur, LK':'https://geodaten.emsland.de:443/core-services/services/lkel_fb67_naturschutz_und_forsten_wms?',
-  'HW-Schutz, Umwelkarten NI':'https://www.umweltkarten-niedersachsen.de/arcgis/services/HWSchutz_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
-  'schutzgebiete, NL': 'https://service.pdok.nl/provincies/aardkundige-waarden/wms/v1_0?request=GetCapabilities&service=WMS',
-  'krw wateren, NL': 'https://service.pdok.nl/ihw/gebiedsbeheer/krw-oppervlaktewaterlichamen/wms/v1_0?SERVICE=WMS&VERSION=1.3.0&request=getcapabilities',
-  'EU-Waterbodies 3rd RBMP': 'https://water.discomap.eea.europa.eu/arcgis/services/WISE_WFD/WFD2022_SurfaceWaterBody_WM/MapServer/WMSServer?request=GetCapabilities&service=WMS',
-  'Luft u. Lärm': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Luft_Laerm_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
-  'Boden, Umweltkarten NI': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Boden_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
-  'Pegelonline, DE': 'https://www.pegelonline.wsv.de/webservices/gis/wms/aktuell/mnwmhw?request=GetCapabilities&service=WMS&version=1.3.0',
-  'Inspire Hydro': 'https://sg.geodatenzentrum.de/wms_dlm250_inspire?Request=GetCapabilities&SERVICE=WMS',
-  'TopPlusOpen': 'https://sgx.geodatenzentrum.de/wms_topplus_open?request=GetCapabilities&service=wms',
-  'Drenthe Geodata': 'https://services.geodataoverijssel.nl/geoserver/ows?'
-      },
+        'Hydro, Umweltkarten NI ': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Hydro_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',  'WRRL, Umweltkarten NI ': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/WRRL_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
+        'Natur, Umweltkarten NI': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Natur_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
+        'Natur, LK':'https://geodaten.emsland.de:443/core-services/services/lkel_fb67_naturschutz_und_forsten_wms?',
+        'HW-Schutz, Umwelkarten NI':'https://www.umweltkarten-niedersachsen.de/arcgis/services/HWSchutz_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
+        'schutzgebiete, NL': 'https://service.pdok.nl/provincies/aardkundige-waarden/wms/v1_0?request=GetCapabilities&service=WMS',
+        'krw wateren, NL': 'https://service.pdok.nl/ihw/gebiedsbeheer/krw-oppervlaktewaterlichamen/wms/v1_0?SERVICE=WMS&VERSION=1.3.0&request=getcapabilities',
+        'EU-Waterbodies 3rd RBMP': 'https://water.discomap.eea.europa.eu/arcgis/services/WISE_WFD/WFD2022_SurfaceWaterBody_WM/MapServer/WMSServer?request=GetCapabilities&service=WMS',
+        'Luft u. Lärm': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Luft_Laerm_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
+        'Boden, Umweltkarten NI': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Boden_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
+        'Pegelonline, DE': 'https://www.pegelonline.wsv.de/webservices/gis/wms/aktuell/mnwmhw?request=GetCapabilities&service=WMS&version=1.3.0',
+        'Inspire Hydro': 'https://sg.geodatenzentrum.de/wms_dlm250_inspire?Request=GetCapabilities&SERVICE=WMS',
+        'TopPlusOpen': 'https://sgx.geodatenzentrum.de/wms_topplus_open?request=GetCapabilities&service=wms',
+        'Drenthe Geodata': 'https://services.geodataoverijssel.nl/geoserver/ows?'
+        
+        
+        
+  },
       trace: true
   });
   map.addControl(cap);
 cap.on('load', function (e) {
     const layer = e.layer;
-    
-    // 1. ID sicher generieren
     const rawTitle = (e.options.data && e.options.data.title) || "wms_layer";
     const permalinkId = rawTitle.toLowerCase().replace(/\s+/g, '_');
     
@@ -2387,8 +2408,9 @@ cap.on('load', function (e) {
     layer.set('permalink', permalinkId);
     layer.set('title', rawTitle); 
     
-    // 3. Layer zur Karte
     map.addLayer(layer);
+    console.log(permalinkId); 
+    console.log(layer)
     
     // 4. Wir verzichten auf den sofortigen Aufruf von getLayerByLink,
     // um den internen ol-ext Fehler komplett zu umgehen.
@@ -2403,7 +2425,6 @@ cap.on('load', function (e) {
     }, 250); // Etwas großzügigerer Puffer für die Stabilität
 });
 };
-
 
 
 function checkForLinkInTH(html) {
