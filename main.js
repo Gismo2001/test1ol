@@ -59,8 +59,6 @@ import Legend from 'ol-ext/control/Legend';
 
 import { toLonLat, transform } from 'ol/proj';
 import { format } from 'ol/coordinate';
-
-
  
 import contextFeature from 'ol/Feature';
 import ContextMenu from 'ol-contextmenu';
@@ -117,6 +115,10 @@ import WMSCapabilities from'ol-ext/control/WMSCapabilities';
 import { getCenter } from 'ol/extent'; // ❗ WICHTIG: oben importieren
 
 import {extend as extendExtent, createEmpty as createEmptyExtent} from 'ol/extent';
+
+import { TabulatorFull as Tabulator } from 'tabulator-tables';
+// Importiere ein Standard-Theme (z.B. einfaches Tabulator-Design)
+import 'tabulator-tables/dist/css/tabulator.min.css';
 
 let activeDgmRasterLayers = [];  
 let activeDgmRasterData = [];  
@@ -682,8 +684,8 @@ const exp_bw_que_layer = new VectorLayer({
   style: queStyle,
   visible: false
 });
-const exp_bw_due_layer = new VectorLayer({
-  source: new VectorSource({format: new GeoJSON(),url: function (extent) {return './myLayers/exp_bw_due.geojson' + '?bbox=' + extent.join(',');},strategy: LoadingStrategy.bbox }),
+let exp_bw_due_layer = new VectorLayer({
+  source: new VectorSource({format: new GeoJSON(),url: function (extent) {return './myLayers/exp_bw_due.geojson' + '?bbox=' + extent.join(',');} }),
   title: 'Düker', 
   name: 'due', 
   permalink:'due',  
@@ -2020,7 +2022,7 @@ var sub1 = new Bar({
       },
     }),
     // Das Untermenü Permalink
-new Toggle({
+    new Toggle({
     html: '<i class="fa fa-link"></i>', // ol-ext baut den Button-Wrapper meist selbst
     title: "Permalink",
     onToggle: function (active) {
@@ -2042,6 +2044,25 @@ new Toggle({
        }
     }
 }),
+    // Das Untermenü Tabelle anzeigen
+    new Toggle({
+    html: '<i class="fa fa-link"></i>', // ol-ext baut den Button-Wrapper meist selbst
+    title: "Tabelle anzeigen",
+    onToggle: function (active) {
+      if (active) {
+         console.log('Tabelle anzeigen aktiviert: ');
+         openExternalTable(exp_bw_due_layer);
+            // Wir setzen den Button sofort wieder auf "inactive", 
+            // da das Fenster ein Eigenleben führt
+            setTimeout(() => this.setActive(false), 200);
+      } else {
+         console.log('Tabelle anzeigen deaktiviert');
+         container.style.display = 'none';
+      }
+    }
+}),
+
+
   ]
 });
 
@@ -3516,3 +3537,82 @@ function getLoadedDomExtent() {
   });
   return extent;
 }
+
+// --- 2. Die Tabellen-Funktion (Öffnen & Injektion) ---
+function openExternalTable(vectorLayer) {
+    const features = vectorLayer.getSource().getFeatures();
+    const tableData = features.map(f => {
+        const props = f.getProperties();
+        const { geometry, ...attributes } = props;
+        return {
+            // Wir nutzen ID_con als interne ID für den Rückkanal
+            id: f.get('ID_con'), 
+            ...attributes
+        };
+    });
+
+    const tableWin = window.open("", "FeatureTable", "width=1000,height=600");
+    if (!tableWin) {
+        alert("Popup wurde blockiert!");
+        return;
+    }
+
+    tableWin.document.head.innerHTML = `
+        <title>Attributtabelle: ${vectorLayer.get('title') || 'Layer'}</title>
+        <link href="https://unpkg.com/tabulator-tables@6.2.1/dist/css/tabulator_modern.min.css" rel="stylesheet">
+        <style>
+            body { margin: 0; padding: 0; font-family: sans-serif; background: #fff; }
+            #tab-container { height: 100vh; width: 100vw; }
+        </style>
+    `;
+    tableWin.document.body.innerHTML = `<div id="tab-container"></div>`;
+
+    const script = tableWin.document.createElement("script");
+    script.src = "https://unpkg.com/tabulator-tables@6.2.1/dist/js/tabulator.min.js";
+    
+    script.onload = () => {
+        new tableWin.Tabulator("#tab-container", {
+            data: tableData,
+            autoColumns: true,
+            layout: "fitColumns",
+            selectable: 1,
+            rowClick: function(e, row) {
+                const rowData = row.getData();
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'ZOOM_TO_FEATURE',
+                        featureId: rowData.id // Das ist der Wert aus 'ID_con'
+                    }, "*");
+                }
+            }
+        });
+    };
+    tableWin.document.head.appendChild(script);
+}
+
+// --- 3. Der Zentrale Listener (Nur EINMAL!) ---
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'ZOOM_TO_FEATURE') {
+        const targetId = event.data.featureId;
+        console.log("Nachricht empfangen! Suche ID_con:", targetId);
+
+        if (exp_bw_due_layer) {
+            const source = exp_bw_due_layer.getSource();
+            const features = source.getFeatures();
+
+            // Suche das Feature mit der passenden ID_con
+            const feature = features.find(f => f.get('ID_con') == targetId);
+
+            if (feature) {
+                map.getView().fit(feature.getGeometry(), {
+                    duration: 800,
+                    padding: [100, 100, 100, 100],
+                    maxZoom: 18 
+                });
+                console.log("Zoom erfolgreich ausgeführt.");
+            } else {
+                console.warn("ID_con " + targetId + " im Layer nicht gefunden. (Ggf. BBOX-Ladestrategie aktiv?)");
+            }
+        }
+    }
+});

@@ -40,7 +40,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script type="module" src="./main.js"></script>
-   
+  
+
   </head>
 
 <body>
@@ -85,5 +86,12 @@
   </div>
 
   <canvas id="myChart" width="400" height="200"></canvas>
+
+<div id="table-container" style="display:none; position: fixed; bottom: 0; width: 100%; height: 300px; background: white; z-index: 2000; border-top: 2px solid #ccc;">
+    <button onclick="document.getElementById('table-container').style.display='none'">Schließen</button>
+    <div id="feature-table"></div>
+</div>
+
+
 </body>
   </html>
