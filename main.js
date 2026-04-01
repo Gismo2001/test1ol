@@ -137,6 +137,7 @@ let ismobile = false;
 
 
 let permaFunktionality; // Nur deklarieren, noch nicht definieren
+let tableWindow = null;
 
 function isMobileDevice() {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -2045,21 +2046,24 @@ var sub1 = new Bar({
     }
 }),
     // Das Untermenü Tabelle anzeigen
-    new Toggle({
-    html: '<i class="fa fa-link"></i>', // ol-ext baut den Button-Wrapper meist selbst
-    title: "Tabelle anzeigen",
-    onToggle: function (active) {
-      if (active) {
-         console.log('Tabelle anzeigen aktiviert: ');
-         openExternalTable(exp_bw_due_layer);
-            // Wir setzen den Button sofort wieder auf "inactive", 
-            // da das Fenster ein Eigenleben führt
-            setTimeout(() => this.setActive(false), 200);
-      } else {
-         console.log('Tabelle anzeigen deaktiviert');
-         container.style.display = 'none';
-      }
+   
+
+new Toggle({
+  html: '<i class="fa fa-link"></i>',
+  title: "Tabelle anzeigen",
+ onToggle: function (active) {
+  if (active) {
+    if (!tableWindow || tableWindow.closed) {
+      openTableWindow();
+    } else {
+      tableWindow.focus();
     }
+  } else {
+    if (tableWindow && !tableWindow.closed) {
+      tableWindow.close();
+    }
+  }
+}
 }),
 
 
@@ -2400,6 +2404,7 @@ function initializeWMS(WMSCapabilities,map ) {
       searchLabel: 'Suche',
       optional: 'token',
       services: {
+        'Verwaltungsgrenzen NI ': 'https://opendata.lgln.niedersachsen.de/doorman/noauth/verwaltungsgrenzen_wms',            
         'Hydro, Umweltkarten NI ': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Hydro_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',  'WRRL, Umweltkarten NI ': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/WRRL_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
         'Natur, Umweltkarten NI': 'https://www.umweltkarten-niedersachsen.de/arcgis/services/Natur_wms/MapServer/WMSServer?VERSION=1.3.0.&SERVICE=WMS&REQUEST=GetCapabilities',
         'Natur, LK':'https://geodaten.emsland.de:443/core-services/services/lkel_fb67_naturschutz_und_forsten_wms?',
@@ -3538,81 +3543,72 @@ function getLoadedDomExtent() {
   return extent;
 }
 
-// --- 2. Die Tabellen-Funktion (Öffnen & Injektion) ---
-function openExternalTable(vectorLayer) {
-    const features = vectorLayer.getSource().getFeatures();
-    const tableData = features.map(f => {
-        const props = f.getProperties();
-        const { geometry, ...attributes } = props;
-        return {
-            // Wir nutzen ID_con als interne ID für den Rückkanal
-            id: f.get('ID_con'), 
-            ...attributes
-        };
-    });
 
-    const tableWin = window.open("", "FeatureTable", "width=1000,height=600");
-    if (!tableWin) {
-        alert("Popup wurde blockiert!");
-        return;
+
+function openTableWindow() {
+  tableWindow = window.open(
+    "table.html",
+    "Düker Tabelle",
+    "width=800,height=600"
+  );
+
+  // ⏱️ Warten bis Fenster fertig geladen ist
+  let checkLoaded = setInterval(() => {
+    if (tableWindow && tableWindow.document.readyState === "complete") {
+      clearInterval(checkLoaded);
+      sendDueDataToTable();
     }
+  }, 200);
+}
+function getDueData() {
+  let data = [];
 
-    tableWin.document.head.innerHTML = `
-        <title>Attributtabelle: ${vectorLayer.get('title') || 'Layer'}</title>
-        <link href="https://unpkg.com/tabulator-tables@6.2.1/dist/css/tabulator_modern.min.css" rel="stylesheet">
-        <style>
-            body { margin: 0; padding: 0; font-family: sans-serif; background: #fff; }
-            #tab-container { height: 100vh; width: 100vw; }
-        </style>
-    `;
-    tableWin.document.body.innerHTML = `<div id="tab-container"></div>`;
+  exp_bw_due_layer.getSource().getFeatures().forEach((f) => {
+    data.push({
+      ID_con: f.get("ID_con"),
+      name: f.get("name"),
+      beschreib: f.get("beschreib"),
+      bw_id: f.get("bw_id"),
+      station:f.get("stat_von"),
+      UPflicht:f.get("upflicht"),
+      Bauart: f.get("bauart"), 
+      Baujahr: f.get("baujahr"),
 
-    const script = tableWin.document.createElement("script");
-    script.src = "https://unpkg.com/tabulator-tables@6.2.1/dist/js/tabulator.min.js";
-    
-    script.onload = () => {
-        new tableWin.Tabulator("#tab-container", {
-            data: tableData,
-            autoColumns: true,
-            layout: "fitColumns",
-            selectable: 1,
-            rowClick: function(e, row) {
-                const rowData = row.getData();
-                if (window.opener) {
-                    window.opener.postMessage({
-                        type: 'ZOOM_TO_FEATURE',
-                        featureId: rowData.id // Das ist der Wert aus 'ID_con'
-                    }, "*");
-                }
-            }
-        });
-    };
-    tableWin.document.head.appendChild(script);
+          });
+  });
+
+  return data;
 }
 
-// --- 3. Der Zentrale Listener (Nur EINMAL!) ---
-window.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'ZOOM_TO_FEATURE') {
-        const targetId = event.data.featureId;
-        console.log("Nachricht empfangen! Suche ID_con:", targetId);
+function sendDueDataToTable() {
+  if (tableWindow && !tableWindow.closed) {
+    tableWindow.postMessage({
+      type: "setData",
+      data: getDueData()
+    }, "*");
+  }
+}
 
-        if (exp_bw_due_layer) {
-            const source = exp_bw_due_layer.getSource();
-            const features = source.getFeatures();
+window.addEventListener("message", (event) => {
 
-            // Suche das Feature mit der passenden ID_con
-            const feature = features.find(f => f.get('ID_con') == targetId);
+  if (event.data.type === "zoomToFeature") {
 
-            if (feature) {
-                map.getView().fit(feature.getGeometry(), {
-                    duration: 800,
-                    padding: [100, 100, 100, 100],
-                    maxZoom: 18 
-                });
-                console.log("Zoom erfolgreich ausgeführt.");
-            } else {
-                console.warn("ID_con " + targetId + " im Layer nicht gefunden. (Ggf. BBOX-Ladestrategie aktiv?)");
-            }
+    const id = event.data.id;
+
+    const feature = exp_bw_due_layer
+      .getSource()
+      .getFeatures()
+      .find(f => f.get("ID_con") === id);
+
+    if (feature) {
+      map.getView().fit(
+        feature.getGeometry().getExtent(),
+        {
+          duration: 500,
+          maxZoom: 18
         }
+      );
     }
+  }
+
 });
