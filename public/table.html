@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Düker Tabelle</title>
+
+  <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
+
+  <style>
+    body { margin: 0; }
+    #example-table { height: 100vh; }
+  </style>
+</head>
+<body>
+
+<div id="example-table"></div>
+
+<script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+
+<script>
+ let table = new Tabulator("#example-table", {
+  layout: "fitDataStretch",
+  autoColumns: true,   // 🔥 DAS ist der Schlüssel!
+});
+
+  // 📥 Daten empfangen
+  window.addEventListener("message", (event) => {
+    if (event.data.type === "setData") {
+      table.setData(event.data.data);
+    }
+  });
+
+  // 📤 Klick → zurück zur Karte
+  table.on("rowClick", function (e, row) {
+    const data = row.getData();
+
+    window.opener.postMessage({
+      type: "zoomToFeature",
+      id: data.ID_con
+    }, "*");
+  });
+</script>
+
+</body>
+</html>
