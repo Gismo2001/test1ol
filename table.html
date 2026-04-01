@@ -19,7 +19,7 @@
 
 <script>
  let table = new Tabulator("#example-table", {
-  layout: "fitDataStretch",
+  layout: "fitDataToTable",
   autoColumns: true,   // 🔥 DAS ist der Schlüssel!
 });
 
@@ -30,15 +30,25 @@
     }
   });
 
-  // 📤 Klick → zurück zur Karte
-  table.on("rowClick", function (e, row) {
-    const data = row.getData();
+  
+  table.on("rowMouseEnter", function (e, row) {
+  const data = row.getData();
 
-    window.opener.postMessage({
-      type: "zoomToFeature",
-      id: data.ID_con
-    }, "*");
-  });
+  window.opener.postMessage({
+    type: "highlightFeature",
+    id: data.ID_con
+  }, "*");
+});
+
+
+table.on("rowDblClick", function (e, row) {
+  const data = row.getData();
+
+  window.opener.postMessage({
+    type: "zoomToFeature",
+    id: data.ID_con
+  }, "*");
+});
 </script>
 
 </body>

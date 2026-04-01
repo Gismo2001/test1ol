@@ -137,7 +137,12 @@ let ismobile = false;
 
 
 let permaFunktionality; // Nur deklarieren, noch nicht definieren
+
+
 let tableWindow = null;
+let highlightedFeature = null;
+
+
 
 function isMobileDevice() {
   return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -187,6 +192,9 @@ permaFunktionality = new Permalink({
         });
     }
 });
+
+
+
 
 
 var note = new Notification(
@@ -538,6 +546,25 @@ map.getLayers().forEach(layer => {
   }
 });
  */
+
+
+const highlightStyl = new Style({
+  stroke: new Stroke({
+    color: 'yellow',
+    width: 4,
+  }),
+  fill: new Fill({
+    color: 'rgba(255,255,0,0.3)',
+  }),
+  image: new CircleStyle({
+    radius: 8,
+    fill: new Fill({ color: 'yellow' }),
+    stroke: new Stroke({ color: 'black', width: 2 }),
+  }),
+});
+
+
+
 //_____-----------------------------------------------------------------APrint
 map.addControl(new CanvasAttribution());
 map.addControl(new CanvasTitle({ 
@@ -2051,19 +2078,46 @@ var sub1 = new Bar({
 new Toggle({
   html: '<i class="fa fa-link"></i>',
   title: "Tabelle anzeigen",
- onToggle: function (active) {
-  if (active) {
-    if (!tableWindow || tableWindow.closed) {
-      openTableWindow();
-    } else {
-      tableWindow.focus();
-    }
-  } else {
-    if (tableWindow && !tableWindow.closed) {
-      tableWindow.close();
-    }
+
+  onToggle: function (active) {
+
+    const container = document.getElementById("layer-select-container");
+
+    if (active) {
+
+      // ✅ Dropdown anzeigen
+      container.style.display = "block";
+
+      // ✅ Dropdown befüllen
+      updateLayerSelect();
+
+      // ✅ Tabellenfenster öffnen
+      if (!tableWindow || tableWindow.closed) {
+        openTableWindow();
+      } else {
+        tableWindow.focus();
+      }
+
+    if (window.currentLayerList && window.currentLayerList.length > 0) {
+  const firstLayer = window.currentLayerList[0].layer;
+
+  if (firstLayer) {
+    setCurrentLayer(firstLayer);
+    sendLayerDataToTable(firstLayer);
   }
 }
+    } else {
+
+      // ❌ Dropdown ausblenden
+      container.style.display = "none";
+
+      // ❌ Tabellenfenster schließen
+      if (tableWindow && !tableWindow.closed) {
+        tableWindow.close();
+      }
+
+    }
+  }
 }),
 
 
@@ -3543,12 +3597,12 @@ function getLoadedDomExtent() {
   return extent;
 }
 
-
+let currentLayer = null;
 
 function openTableWindow() {
   tableWindow = window.open(
     "table.html",
-    "Düker Tabelle",
+    "BW Tabelle",
     "width=800,height=600"
   );
 
@@ -3556,59 +3610,178 @@ function openTableWindow() {
   let checkLoaded = setInterval(() => {
     if (tableWindow && tableWindow.document.readyState === "complete") {
       clearInterval(checkLoaded);
-      sendDueDataToTable();
+      sendLayerDataToTable();
     }
   }, 200);
 }
-function getDueData() {
-  let data = [];
 
-  exp_bw_due_layer.getSource().getFeatures().forEach((f) => {
-    data.push({
-      ID_con: f.get("ID_con"),
-      name: f.get("name"),
-      beschreib: f.get("beschreib"),
-      bw_id: f.get("bw_id"),
-      station:f.get("stat_von"),
-      UPflicht:f.get("upflicht"),
-      Bauart: f.get("bauart"), 
-      Baujahr: f.get("baujahr"),
+function getLayerData(layer) {
+  return layer.getSource().getFeatures().map(f => {
+    const props = { ...f.getProperties() };
+    delete props.geometry;
 
-          });
+    // Mapping auf deine Struktur
+    return {
+      ID_con: props.ID_con,
+      name: props.name,
+      beschreib: props.beschreib,
+      bw_id: props.bw_id,
+      station: props.stat_von,
+      UPflicht: props.upflicht,
+      Bauart: props.bauart,
+      Baujahr: props.baujahr,
+    };
   });
-
-  return data;
 }
+function sendLayerDataToTable(layer) {
 
-function sendDueDataToTable() {
+  if (!layer) {
+    console.warn("Kein Layer übergeben!");
+    return;
+  }
+
   if (tableWindow && !tableWindow.closed) {
     tableWindow.postMessage({
       type: "setData",
-      data: getDueData()
+      data: getLayerData(layer)
     }, "*");
   }
 }
 
 window.addEventListener("message", (event) => {
 
-  if (event.data.type === "zoomToFeature") {
+  if (event.data.type === "highlightFeature") {
+    highlightFeatureById(event.data.id);
+  }
 
-    const id = event.data.id;
-
-    const feature = exp_bw_due_layer
-      .getSource()
-      .getFeatures()
-      .find(f => f.get("ID_con") === id);
-
-    if (feature) {
-      map.getView().fit(
-        feature.getGeometry().getExtent(),
-        {
-          duration: 500,
-          maxZoom: 18
-        }
-      );
+  if (event.data.type === "clearHighlight") {
+    if (highlightedFeature) {
+      highlightedFeature.setStyle(null);
+      highlightedFeature = null;
     }
   }
 
+  // 🔥 NEU: Zoom
+  if (event.data.type === "zoomToFeature") {
+    zoomToFeatureById(event.data.id);
+  }
+
 });
+function highlightFeatureById(id) {
+  const feature = featureIndex[id];
+  if (!feature) return;
+
+  if (highlightedFeature) {
+    highlightedFeature.setStyle(null);
+  }
+
+  feature.setStyle(highlightStyle);
+  highlightedFeature = feature;
+}
+let featureIndex = {};
+
+function zoomToFeatureById(id) {
+
+  const feature = featureIndex[id];
+  if (!feature) return;
+
+  const geometry = feature.getGeometry();
+
+  map.getView().fit(geometry.getExtent(), {
+    duration: 500,
+    maxZoom: 18,
+    padding: [50, 50, 50, 50]
+  });
+  highlightFeatureById(id);
+};
+
+function getVisibleLayersFromGroup(group) {
+  let visibleLayers = [];
+
+  group.getLayers().forEach(layer => {
+
+    if (layer.getLayers) {
+      // 👉 Untergruppe
+      visibleLayers = visibleLayers.concat(getVisibleLayersFromGroup(layer));
+    } else {
+      // 👉 echter Layer
+      if (layer.getVisible()) {
+        visibleLayers.push(layer);
+      }
+    }
+
+  });
+
+  return visibleLayers;
+};
+
+function getAllVisibleBwLayers() {
+  return [
+    ...getVisibleLayersFromGroup(BwGroupP),
+    ...getVisibleLayersFromGroup(BwGroupL)
+  ];
+};
+function getVisibleLayerNames() {
+  return getAllVisibleBwLayers().map(layer => ({
+    name: layer.get("title"),
+    layer: layer
+  }));
+};
+
+function updateLayerSelect() {
+  const select = document.getElementById("layer-select");
+  select.innerHTML = "";
+
+  const layers = getVisibleLayerNames();
+
+  // ✅ zuerst speichern
+  window.currentLayerList = layers;
+  console.log("LayerList:", window.currentLayerList);
+
+  layers.forEach((entry, index) => {
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = entry.name;
+    select.appendChild(option);
+  });
+
+  if (layers.length > 0) {
+    select.value = "0";
+    select.dispatchEvent(new Event("change"));
+  }
+};
+document.getElementById("layer-select").addEventListener("change", function () {
+
+  const index = parseInt(this.value, 10);
+  const entry = window.currentLayerList[index];
+
+  if (!entry || !entry.layer) {
+    console.warn("Layer nicht gefunden:", index);
+    return;
+  }
+
+  const selectedLayer = entry.layer;
+
+  setCurrentLayer(selectedLayer);
+  sendLayerDataToTable(selectedLayer);
+
+});
+
+
+function setCurrentLayer(layer) {
+  currentLayer = layer;
+
+  featureIndex = {};
+
+  layer.getSource().getFeatures().forEach(f => {
+    featureIndex[f.get("ID_con")] = f;
+  });
+}
+
+const layers = getVisibleLayerNames();
+if (layers.length > 0) {
+  setCurrentLayer(layers[0].layer);
+}
+
+BwGroupP.getLayers().on("change:length", updateLayerSelect);
+BwGroupL.getLayers().on("change:length", updateLayerSelect);
