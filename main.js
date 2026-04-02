@@ -119,6 +119,7 @@ import {extend as extendExtent, createEmpty as createEmptyExtent} from 'ol/exten
 import { TabulatorFull as Tabulator } from 'tabulator-tables';
 // Importiere ein Standard-Theme (z.B. einfaches Tabulator-Design)
 import 'tabulator-tables/dist/css/tabulator.min.css';
+import toggle from 'tabulator-tables/src/js/modules/Format/defaults/formatters/toggle.js';
 
 let activeDgmRasterLayers = [];  
 let activeDgmRasterData = [];  
@@ -2081,56 +2082,6 @@ var sub1 = new Bar({
     }
 }),
     // Das Untermenü Tabelle anzeigen
-   
-
-new Toggle({
-  html: '<i class="fa fa-link"></i>',
-  title: "Tabelle anzeigen",
-
-  onToggle: function (active) {
-    
-    const container = document.getElementById("layer-select-container");
-
-    if (active) {
-      tablewindowIsActive = true;
-      console.log('tabelwindowIsActive: ' + tablewindowIsActive);
-      // ✅ Dropdown anzeigen
-      container.style.display = "block";
-
-      // ✅ Dropdown befüllen
-      const layerliste = getVisibleLayerNames();
-      updateLayerSelect(layerliste);
-
-      // ✅ Tabellenfenster öffnen
-      if (!tableWindow || tableWindow.closed) {
-        openTableWindow();
-      } else {
-        tableWindow.focus();
-      }
-
-    if (window.currentLayerList && window.currentLayerList.length > 0) {
-  const firstLayer = window.currentLayerList[0].layer;
-
-  if (firstLayer) {
-    setCurrentLayer(firstLayer);
-    sendLayerDataToTable(firstLayer);
-  }
-}
-    } else {
-      tablewindowIsActive = false;
-      console.log('tablewindowIsActive: ' + tablewindowIsActive);
-      // ❌ Dropdown ausblenden
-      container.style.display = "none";
-
-      // ❌ Tabellenfenster schließen
-      if (tableWindow && !tableWindow.closed) {
-        tableWindow.close();
-      }
-
-    }
-  }
-}),
-
 
   ]
 });
@@ -2253,6 +2204,67 @@ new Toggle({
 }),
   ]
 });
+
+var sub3 = new Bar({
+   toggleOne: true,
+   controls: [
+    // Tabelle anzeigen
+    new Toggle({
+  html: '<i class="fa fa-table" aria-hidden="true"></i>',
+  title: "Tabelle anzeigen",
+
+  onToggle: function (active) {
+    
+    const container = document.getElementById("layer-select-container");
+
+    if (active) {
+      tablewindowIsActive = true;
+      console.log('tabelwindowIsActive: ' + tablewindowIsActive);
+      // ✅ Dropdown anzeigen
+      container.style.display = "block";
+
+      // ✅ Dropdown befüllen
+      const layerliste = getVisibleLayerNames();
+      updateLayerSelect(layerliste);
+
+      // ✅ Tabellenfenster öffnen
+      if (!tableWindow || tableWindow.closed) {
+        openTableWindow();
+      } else {
+        tableWindow.focus();
+      }
+
+    if (window.currentLayerList && window.currentLayerList.length > 0) {
+  const firstLayer = window.currentLayerList[0].layer;
+
+  if (firstLayer) {
+    setCurrentLayer(firstLayer);
+    sendLayerDataToTable(firstLayer);
+  }
+}
+    } else {
+      tablewindowIsActive = false;
+      console.log('tablewindowIsActive: ' + tablewindowIsActive);
+      // ❌ Dropdown ausblenden
+      container.style.display = "none";
+
+
+      // ❌ Tabellenfenster schließen
+      if (tableWindow && !tableWindow.closed) {
+        tableWindow.close();
+
+      }
+      highlightedFeature.setStyle(null);
+
+    }
+  }
+}),
+
+  ]
+});
+
+
+
 let geojsonCounter = 0;
 
 
@@ -2408,6 +2420,7 @@ var toggle1 = new Toggle({
   onToggle: function(active) {
     if (active) {
       toggle2.setActive(false); // anderes Toggle schließen
+      toggle3.setActive(false); // anderes Toggle schließen
     }
   }
 });
@@ -2420,13 +2433,26 @@ var toggle2 = new Toggle({
   onToggle: function(active) {
     if (active) {
       toggle1.setActive(false); // anderes Toggle schließen
+      toggle3.setActive(false); // anderes Toggle schließen
+    }
+  }
+});
+// Das Hauptmenü 3
+var toggle3 = new Toggle({
+  html: 'T',
+  title: "Dateien",
+  bar: sub3,
+  onToggle: function(active) {
+    if (active) {
+      toggle1.setActive(false); // anderes Toggle schließen
+      toggle2.setActive(false); // anderes Toggle schließen
     }
   }
 });
 
 // Hauptbar mit den beiden Toggles
 var containerBar1 = new Bar({
-  controls: [toggle1, toggle2]
+  controls: [toggle1, toggle2, toggle3]
 });
 
 map.addControl(containerBar1);
