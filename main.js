@@ -1681,14 +1681,22 @@ var currentlyHighlightedFeature = null; // Variable zur Verfolgung des aktuell m
 
 // Markierungsstil für das gefundene Feature
 const highlightStyle = new Style({
- stroke: new Stroke({
- color: 'red',
- width: 12 
- }),
- fill: new Fill({
- color: 'rgb(234, 255, 0)'
- })
+  stroke: new Stroke({
+    color: 'yellow',
+    width: 4,
+  }),
+  fill: new Fill({
+    color: 'rgba(255,255,0,0.3)',
+  }),
+  image: new CircleStyle({
+    radius: 8,
+    fill: new Fill({ color: 'yellow' }),
+    stroke: new Stroke({ color: 'black', width: 2 }),
+  }),
 });
+
+
+
 //-------------------------------------------------------------Suche BW
 function searchFeaturesByTextBw(searchText) {  
   let layers = [exp_bw_bru_nlwkn_layer, exp_bw_due_layer, exp_bw_sle_layer, exp_bw_weh_layer, exp_bw_bru_andere_layer, exp_bw_ein_layer, exp_bw_que_layer, exp_bw_son_pun_layer, exp_bw_son_lin_layer ]; 
@@ -3607,66 +3615,72 @@ function openTableWindow() {
   tableWindow = window.open("table.html", "BW Tabelle", "width=800,height=600");
   tablewindowIsActive = true;
 
-  // 🔥 Listener aktivieren, wenn Fenster öffnet
+  // Listener für moveend aktivieren (wie bisher)
   moveEndKey = map.on('moveend', () => {
     if (currentLayer) sendLayerDataToTable(currentLayer);
   });
 
-  // Überwachen, wann das Fenster geschlossen wird
-  const checkClosed = setInterval(() => {
-    if (!tableWindow || tableWindow.closed) {
-      clearInterval(checkClosed);
-      tablewindowIsActive = false;
-      
-      // 🛑 Listener wieder entfernen (Unbind)
-      if (moveEndKey) {
-        ol.Observable.unByKey(moveEndKey);
-        moveEndKey = null;
-        console.log("Karten-Synchronisation gestoppt.");
+  let checkLoaded = setInterval(() => {
+    if (tableWindow && tableWindow.document.readyState === "complete") {
+      clearInterval(checkLoaded);
+      // 🔥 NEU: Sofort beim Laden die ersten Daten schicken
+      if (currentLayer) {
+        sendLayerDataToTable(currentLayer);
       }
     }
-  }, 1000);
+  }, 200);
 }
 
 function getLayerData(layer) {
-  // Holt den aktuellen Ausschnitt des Sichtfelds
   const extent = map.getView().calculateExtent(map.getSize());
+  const features = layer.getSource().getFeaturesInExtent(extent);
+  
+  const seenIds = new Set(); // Hilfsmittel zum Merken der IDs
+  const uniqueData = [];
 
-  // Nutzt getFeaturesInExtent, um nur sichtbare Objekte zu laden
-  return layer.getSource().getFeaturesInExtent(extent).map(f => {
+  features.forEach(f => {
     const props = { ...f.getProperties() };
-    delete props.geometry;
+    const id = props.ID_con;
 
-    return {
-      ID_con: props.ID_con,
-      name: props.name,
-      beschreib: props.beschreib,
-      bw_id: props.bw_id,
-      station: props.stat_von,
-      UPflicht: props.upflicht,
-      Bauart: props.bauart,
-      Baujahr: props.baujahr,
-    };
+    // Nur hinzufügen, wenn die ID noch nicht vorkam und existiert
+    if (id && !seenIds.has(id)) {
+      seenIds.add(id);
+      
+      delete props.geometry;
+      uniqueData.push({
+        ID_con: id,
+        name: props.name,
+        beschreib: props.beschreib,
+        bw_id: props.bw_id,
+        station: props.stat_von,
+        UPflicht: props.upflicht,
+        Bauart: props.bauart,
+        Baujahr: props.baujahr,
+      });
+    }
   });
+
+  return uniqueData;
 }
 
 function sendLayerDataToTable(layer) {
+  if (!layer || !tableWindow || tableWindow.closed) return;
 
-  if (!layer) {
-    console.warn("Kein Layer übergeben!");
-    return;
-  }
+  // ✅ Sicherheit: Nur an denselben Ursprung senden (z.B. https://deineseite.de)
+  const targetOrigin = window.location.origin; 
 
-  if (tableWindow && !tableWindow.closed) {
-    tableWindow.postMessage({
-      type: "setData",
-      data: getLayerData(layer)
-    }, "*");
-  }
+  tableWindow.postMessage({
+    type: "setData",
+    data: getLayerData(layer)
+  }, targetOrigin); // <--- Hier statt "*"
 }
 
 window.addEventListener("message", (event) => {
-
+ // ✅ Sicherheit: Nachrichten von fremden Origins ignorieren
+  if (event.origin !== window.location.origin) {
+    console.warn("Blockierte Nachricht von fremder Quelle:", event.origin);
+    return;
+  }
   if (event.data.type === "highlightFeature") {
     highlightFeatureById(event.data.id);
   }
@@ -3686,15 +3700,47 @@ window.addEventListener("message", (event) => {
 });
 function highlightFeatureById(id) {
   const feature = featureIndex[id];
-  if (!feature) return;
+  if (!feature || !currentLayer) return;
 
+  // 1. Alten Highlight-Zustand zurücksetzen
   if (highlightedFeature) {
     highlightedFeature.setStyle(null);
   }
 
-  feature.setStyle(highlightStyle);
+  // 2. Der universelle "Halo"-Stil (Leuchten im Hintergrund)
+  const haloStyle = new ol.style.Style({
+    // Für Punkte (SVGs): Ein großer gelber Kreis dahinter
+    image: new ol.style.Circle({
+      radius: 20, 
+      fill: new ol.style.Fill({ color: 'rgba(255, 255, 0, 0.6)' }),
+      stroke: new ol.style.Stroke({ color: 'orange', width: 2 })
+    }),
+    // Für Linien: Eine sehr dicke gelbe Linie unter der echten Linie
+    stroke: new ol.style.Stroke({
+      color: 'rgba(255, 255, 0, 0.7)',
+      width: 12 // Schön breit, damit sie unter deiner Linie hervorguckt
+    })
+  });
+
+  // 3. Original-Stil vom Layer oder der Style-Funktion holen
+  let original = currentLayer.getStyle();
+  if (typeof original === 'function') {
+    original = original(feature, map.getView().getResolution());
+  }
+
+  // 4. Stile kombinieren: Halo UNTEN, Original OBEN
+  // Wir stellen sicher, dass das Ergebnis immer ein Array ist
+  let finalStyles = [haloStyle];
+  if (Array.isArray(original)) {
+    finalStyles = finalStyles.concat(original);
+  } else if (original) {
+    finalStyles.push(original);
+  }
+
+  feature.setStyle(finalStyles);
   highlightedFeature = feature;
-}
+};
+
 let featureIndex = {};
 
 function zoomToFeatureById(id) {
@@ -3818,6 +3864,9 @@ layerSwitcher.on('layer:visible', function(e) {
     if (isVisible && title === 'fsk') {
       // Führe eine Aktion aus, wenn dieser spezifische Layer aktiviert wurde
       console.log('Der fsk-Layer wurde aktiviert! Hier könnte weitere Logik folgen.');
+    }
+    if (currentLayer) {
+      sendLayerDataToTable(currentLayer);
     }
   } else {
       console.log('Layer Sichtbarkeit geändert, aber Tabelle nicht aktiv, daher keine Aktion.');

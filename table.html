@@ -5,8 +5,8 @@
   <title>BW Tabelle</title>
   <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
   <style>
-    body { margin: 0; }
-    #example-table { height: 100vh; }
+    body { margin: 0; padding: 0; overflow: hidden; }
+    #example-table { height: 100vh; width: 100vw; }
   </style>
 </head>
 <body>
@@ -14,44 +14,62 @@
 <div id="example-table"></div>
 <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
 <script>
+// Sicherheit: Den eigenen Ursprung für postMessage speichern
+const targetOrigin = window.location.origin;
+
 let table = new Tabulator("#example-table", {
-  layout: "fitDataStretch",
+  layout: "fitColumns", // Nutzt den Platz besser aus
+  placeholder: "Lade Daten...", // Falls die Liste mal leer ist
   columns: [
-    { title: "ID", field: "ID_con" },
-    { title: "Name", field: "name" },
+    { title: "ID", field: "ID_con", width: 80 },
+    { title: "Name", field: "name", width: 150 },
     {
       title: "Beschreibung",
       field: "beschreib",
-      width: 300,              // ✅ feste Breite
-      formatter: function(cell){
-        return cell.getValue();
-      }
+      widthGrow: 3, // Nimmt verfügbaren Platz flexibel ein
+      formatter: "plaintext"
     },
-    { title: "BW ID", field: "bw_id" },
-    { title: "Station", field: "station" }
+    { title: "BW ID", field: "bw_id", width: 100 },
+    { title: "Station", field: "station", width: 100 }
   ]
 });
 
-  // 📥 Daten empfangen
-  window.addEventListener("message", (event) => {
-    if (event.data.type === "setData") {
-      table.setData(event.data.data);
-    }
-  });
-  table.on("rowMouseEnter", function (e, row) {
-   const data = row.getData();
-    window.opener.postMessage({
-    type: "highlightFeature",
-    id: data.ID_con
-  }, "*");
-  });
-  table.on("rowDblClick", function (e, row) {
-  const data = row.getData();
+// 📥 Daten sicher empfangen
+window.addEventListener("message", (event) => {
+  // Nur Nachrichten vom eigenen Server akzeptieren
+  if (event.origin !== targetOrigin) return;
+  
+  if (event.data.type === "setData") {
+    table.setData(event.data.data);
+  }
+});
 
-  window.opener.postMessage({
-    type: "zoomToFeature",
-    id: data.ID_con
-  }, "*");
+// 📤 Events sicher an die Hauptkarte senden
+table.on("rowMouseEnter", function (e, row) {
+  const data = row.getData();
+  if (data.ID_con) {
+    window.opener.postMessage({
+      type: "highlightFeature",
+      id: data.ID_con
+    }, targetOrigin); // ✅ Sicherheit: targetOrigin statt "*"
+  }
+});
+
+
+
+table.on("rowDblClick", function (e, row) {
+  const data = row.getData();
+  if (data.ID_con) {
+    window.opener.postMessage({
+      type: "zoomToFeature",
+      id: data.ID_con
+    }, targetOrigin); // ✅ Sicherheit: targetOrigin statt "*"
+  }
+});
+
+// 🧹 Optional: Highlight löschen, wenn Maus die Tabelle verlässt
+table.on("tableMouseOut", function() {
+  window.opener.postMessage({ type: "clearHighlight" }, targetOrigin);
 });
 </script>
 
