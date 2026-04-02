@@ -285,7 +285,7 @@ function enableDgmInteraction() {
   if (!ismobile && !dgmPointerMoveListener) {
     dgmPointerMoveListener = map.on('pointermove', handleDgmPointerMove);
   }
-  console.log("DGM Interaction aktiviert");
+  
 }
 function disableDgmInteraction() {
   if (dgmClickListener) {
@@ -300,7 +300,7 @@ function disableDgmInteraction() {
   if (popup1) popup1.style.display = 'none';
   heightStatus.style.display = 'none';
   heightValue.style.display = 'none';
-  console.log("DGM Interaction deaktiviert");
+ 
 }
 function updateDgmInteraction() {
   const kachelnVisible = dgmKachelLayer.getVisible();
@@ -310,13 +310,13 @@ function updateDgmInteraction() {
       unByKey(dgmPointerMoveListener);
       dgmPointerMoveListener = null;
     }
-    console.log("Kachelmodus aktiv");
+   
   } else {
     // Höhenanzeige aktivieren
     if (!ismobile && !dgmPointerMoveListener) {
       dgmPointerMoveListener = map.on('pointermove', handleDgmPointerMove);
     }
-    console.log("Höhenmodus aktiv");
+   
   }
 }
 function lineIntersectsAnyDgm(coord1, coord2) {
@@ -1405,7 +1405,7 @@ function getLayersInGroup(layerGroup) {
 }
 
 function singleClickHandler(evt) {
-  console.log(dgmClickListener);
+ 
   const visibleLayers = [];
   map.getLayers().forEach(layer => {
     const layerName = layer.get('name');
@@ -1538,7 +1538,7 @@ map.on('click', function (evt) {
     if (ul) {
       while (ul.firstChild) {
         ul.removeChild(ul.firstChild);
-        console.log('Liste geleert');
+      
       }
     }
 
@@ -2067,17 +2067,15 @@ var sub1 = new Bar({
          map.addControl(permaFunktionality);
          permaFunktionality.setUrlReplace(true);
          
-         console.log('Permalink aktiviert: ' + permaFunktionality.getUrlReplace());
+         
          const hatUrl = permaFunktionality.hasUrlParam ? 'ja' : 'nein';
-         console.log('Hat URL: ' + hatUrl);
-         console.log(permaFunktionality);
          
        } else {
         permaFunktionality.setUrlReplace(false);
          const hatUrl = permaFunktionality.hasUrlParam ? 'ja' : 'nein';
-         console.log('Hat URL: ' + hatUrl);
+         
          map.removeControl(permaFunktionality);
-         console.log('Permalink deaktiviert');
+         
        }
     }
 }),
@@ -2244,7 +2242,7 @@ var sub3 = new Bar({
 }
     } else {
       tablewindowIsActive = false;
-      console.log('tablewindowIsActive: ' + tablewindowIsActive);
+      
       // ❌ Dropdown ausblenden
       container.style.display = "none";
 
@@ -2526,8 +2524,6 @@ cap.on('load', function (e) {
     layer.set('title', rawTitle); 
     
     map.addLayer(layer);
-    console.log(permalinkId); 
-    console.log(layer)
     
     // 4. Wir verzichten auf den sofortigen Aufruf von getLayerByLink,
     // um den internen ol-ext Fehler komplett zu umgehen.
@@ -2537,7 +2533,7 @@ cap.on('load', function (e) {
             // changed() reicht völlig aus, damit das Control 
             // den neuen Layer bemerkt und in die URL schreibt.
             permaFunktionality.changed();
-            console.log(`WMS '${permalinkId}' ist nun im Permalink registriert.`);
+          
         }
     }, 250); // Etwas großzügigerer Puffer für die Stabilität
 });
@@ -3880,16 +3876,16 @@ layerSwitcher.on('layer:visible', function(e) {
   const layer = e.layer; // Das betroffene OpenLayers Layer-Objekt
   const isVisible = layer.getVisible(); // Aktueller Status (true/false)
   const title = layer.get('title'); // Titel des Layers (falls gesetzt)
-  console.log('Layerswitcher geändert:',  tablewindowIsActive);
-  console.log(`Der Layer "${title}" ist jetzt ${isVisible ? 'sichtbar' : 'unsichtbar'}.`);
+  
+  
   if (tablewindowIsActive) {
     const layerliste = getVisibleLayerNames();
-    console.log('Liste wird gefüllt ');
+  
     updateLayerSelect(layerliste); 
     // Beispiel: Zusätzliche Logik
     if (isVisible && title === 'fsk') {
       // Führe eine Aktion aus, wenn dieser spezifische Layer aktiviert wurde
-      console.log('Der fsk-Layer wurde aktiviert! Hier könnte weitere Logik folgen.');
+  
     }
     if (currentLayer) {
       sendLayerDataToTable(currentLayer);
@@ -3904,7 +3900,7 @@ let moveEndKey = null;
 
 map.on('moveend', function() {
   if (tablewindowIsActive && currentLayer) {
-    console.log("Karte bewegt - aktualisiere Tabellendaten für den sichtbaren Bereich");
+    
     sendLayerDataToTable(currentLayer);
   }
 });
