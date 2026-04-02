@@ -2,10 +2,8 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Bauwerke Tabelle</title>
-
+  <title>BW Tabelle</title>
   <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
-
   <style>
     body { margin: 0; }
     #example-table { height: 100vh; }
@@ -13,14 +11,25 @@
 </head>
 <body>
 
-<div id="bw-table"></div>
-
+<div id="example-table"></div>
 <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
-
 <script>
- let table = new Tabulator("#bw-table", {
-  layout:"fitDataTable",
-  autoColumns: true,  
+let table = new Tabulator("#example-table", {
+  layout: "fitDataStretch",
+  columns: [
+    { title: "ID", field: "ID_con" },
+    { title: "Name", field: "name" },
+    {
+      title: "Beschreibung",
+      field: "beschreib",
+      width: 300,              // ✅ feste Breite
+      formatter: function(cell){
+        return cell.getValue();
+      }
+    },
+    { title: "BW ID", field: "bw_id" },
+    { title: "Station", field: "station" }
+  ]
 });
 
   // 📥 Daten empfangen
@@ -29,18 +38,14 @@
       table.setData(event.data.data);
     }
   });
-
- table.on("rowMouseEnter", function (e, row) {
-  
-  const data = row.getData();
-
-  window.opener.postMessage({
+  table.on("rowMouseEnter", function (e, row) {
+   const data = row.getData();
+    window.opener.postMessage({
     type: "highlightFeature",
     id: data.ID_con
   }, "*");
-});
-
-table.on("rowDblClick", function (e, row) {
+  });
+  table.on("rowDblClick", function (e, row) {
   const data = row.getData();
 
   window.opener.postMessage({
