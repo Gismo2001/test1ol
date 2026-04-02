@@ -2080,16 +2080,18 @@ new Toggle({
   title: "Tabelle anzeigen",
 
   onToggle: function (active) {
-
+    
     const container = document.getElementById("layer-select-container");
 
     if (active) {
-
+      tablewindowIsActive = true;
+      console.log('tabelwindowIsActive: ' + tablewindowIsActive);
       // ✅ Dropdown anzeigen
       container.style.display = "block";
 
       // ✅ Dropdown befüllen
-      updateLayerSelect();
+      const layerliste = getVisibleLayerNames();
+      updateLayerSelect(layerliste);
 
       // ✅ Tabellenfenster öffnen
       if (!tableWindow || tableWindow.closed) {
@@ -2107,7 +2109,8 @@ new Toggle({
   }
 }
     } else {
-
+      tablewindowIsActive = false;
+      console.log('tablewindowIsActive: ' + tablewindowIsActive);
       // ❌ Dropdown ausblenden
       container.style.display = "none";
 
@@ -3598,29 +3601,42 @@ function getLoadedDomExtent() {
 }
 
 let currentLayer = null;
+const layers = getVisibleLayerNames();
 
 function openTableWindow() {
-  tableWindow = window.open(
-    "table.html",
-    "BW Tabelle",
-    "width=800,height=600"
-  );
+  tableWindow = window.open("table.html", "BW Tabelle", "width=800,height=600");
+  tablewindowIsActive = true;
 
-  // ⏱️ Warten bis Fenster fertig geladen ist
-  let checkLoaded = setInterval(() => {
-    if (tableWindow && tableWindow.document.readyState === "complete") {
-      clearInterval(checkLoaded);
-      sendLayerDataToTable();
+  // 🔥 Listener aktivieren, wenn Fenster öffnet
+  moveEndKey = map.on('moveend', () => {
+    if (currentLayer) sendLayerDataToTable(currentLayer);
+  });
+
+  // Überwachen, wann das Fenster geschlossen wird
+  const checkClosed = setInterval(() => {
+    if (!tableWindow || tableWindow.closed) {
+      clearInterval(checkClosed);
+      tablewindowIsActive = false;
+      
+      // 🛑 Listener wieder entfernen (Unbind)
+      if (moveEndKey) {
+        ol.Observable.unByKey(moveEndKey);
+        moveEndKey = null;
+        console.log("Karten-Synchronisation gestoppt.");
+      }
     }
-  }, 200);
+  }, 1000);
 }
 
 function getLayerData(layer) {
-  return layer.getSource().getFeatures().map(f => {
+  // Holt den aktuellen Ausschnitt des Sichtfelds
+  const extent = map.getView().calculateExtent(map.getSize());
+
+  // Nutzt getFeaturesInExtent, um nur sichtbare Objekte zu laden
+  return layer.getSource().getFeaturesInExtent(extent).map(f => {
     const props = { ...f.getProperties() };
     delete props.geometry;
 
-    // Mapping auf deine Struktur
     return {
       ID_con: props.ID_con,
       name: props.name,
@@ -3633,6 +3649,7 @@ function getLayerData(layer) {
     };
   });
 }
+
 function sendLayerDataToTable(layer) {
 
   if (!layer) {
@@ -3728,15 +3745,12 @@ function getVisibleLayerNames() {
   }));
 };
 
-function updateLayerSelect() {
+function updateLayerSelect(layers) {
   const select = document.getElementById("layer-select");
+  if (!select) return;
+  
   select.innerHTML = "";
-
-  const layers = getVisibleLayerNames();
-
-  // ✅ zuerst speichern
   window.currentLayerList = layers;
-  console.log("LayerList:", window.currentLayerList);
 
   layers.forEach((entry, index) => {
     const option = document.createElement("option");
@@ -3745,11 +3759,17 @@ function updateLayerSelect() {
     select.appendChild(option);
   });
 
+  // ✅ Nur triggern, wenn auch wirklich Layer da sind
   if (layers.length > 0) {
     select.value = "0";
-    select.dispatchEvent(new Event("change"));
+    // Falls noch kein currentLayer gesetzt ist oder wir den ersten erzwingen wollen:
+    const firstLayer = layers[0].layer;
+    setCurrentLayer(firstLayer);
+    sendLayerDataToTable(firstLayer);
+  } else {
+    console.log("Keine sichtbaren Layer vorhanden.");
   }
-};
+}
 document.getElementById("layer-select").addEventListener("change", function () {
 
   const index = parseInt(this.value, 10);
@@ -3778,10 +3798,40 @@ function setCurrentLayer(layer) {
   });
 }
 
-const layers = getVisibleLayerNames();
+
 if (layers.length > 0) {
   setCurrentLayer(layers[0].layer);
 }
 
-BwGroupP.getLayers().on("change:length", updateLayerSelect);
-BwGroupL.getLayers().on("change:length", updateLayerSelect);
+
+layerSwitcher.on('layer:visible', function(e) {
+  const layer = e.layer; // Das betroffene OpenLayers Layer-Objekt
+  const isVisible = layer.getVisible(); // Aktueller Status (true/false)
+  const title = layer.get('title'); // Titel des Layers (falls gesetzt)
+  console.log('Layerswitcher geändert:',  tablewindowIsActive);
+  console.log(`Der Layer "${title}" ist jetzt ${isVisible ? 'sichtbar' : 'unsichtbar'}.`);
+  if (tablewindowIsActive) {
+    const layerliste = getVisibleLayerNames();
+    console.log('Liste wird gefüllt ');
+    updateLayerSelect(layerliste); 
+    // Beispiel: Zusätzliche Logik
+    if (isVisible && title === 'fsk') {
+      // Führe eine Aktion aus, wenn dieser spezifische Layer aktiviert wurde
+      console.log('Der fsk-Layer wurde aktiviert! Hier könnte weitere Logik folgen.');
+    }
+  } else {
+      console.log('Layer Sichtbarkeit geändert, aber Tabelle nicht aktiv, daher keine Aktion.');
+  }
+   
+ 
+});
+let moveEndKey = null;
+
+map.on('moveend', function() {
+  if (tablewindowIsActive && currentLayer) {
+    console.log("Karte bewegt - aktualisiere Tabellendaten für den sichtbaren Bereich");
+    sendLayerDataToTable(currentLayer);
+  }
+});
+
+let tablewindowIsActive = false;
