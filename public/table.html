@@ -19,19 +19,26 @@
 const targetOrigin = window.location.origin;
 
 let table = new Tabulator("#example-table", {
-  layout: "fitColumns", // Nutzt den Platz besser aus
-  placeholder: "Lade Daten...", // Falls die Liste mal leer ist
+  layout: "fitDataFill", // Nutzt den Platz besser aus
+  placeholder: "Lade Daten..., ggf. Zoomen oder Pan", // Falls die Liste mal leer ist
+  persistence:{
+      sort:true,
+      filter:true,
+      columns:true,
+    },
   columns: [
-    { title: "ID", field: "ID_con", width: 80 },
-    { title: "Name", field: "name", width: 150 },
+    { title: "ID", field: "ID_con"},
+    { title: "Name", field: "name"},
+    { title: "BW ID", field: "bw_id"},
+    { title: "Station", field: "station"},
+    { title: "U_Pflicht", field: "upflicht"},
+    { title: "Bauart", field: "bauart"},
     {
       title: "Beschreibung",
       field: "beschreib",
       widthGrow: 3, // Nimmt verfügbaren Platz flexibel ein
       formatter: "plaintext"
     },
-    { title: "BW ID", field: "bw_id", width: 100 },
-    { title: "Station", field: "station", width: 100 }
   ]
 });
 

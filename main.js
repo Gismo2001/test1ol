@@ -3675,9 +3675,9 @@ function getLayerData(layer) {
         beschreib: props.beschreib,
         bw_id: props.bw_id,
         station: props.stat_von,
-        UPflicht: props.upflicht,
-        Bauart: props.bauart,
-        Baujahr: props.baujahr,
+        upflicht: props.upflicht,
+        bauart: props.bauart,
+        baujahr: props.baujahr,
       });
     }
   });
@@ -3733,7 +3733,7 @@ function highlightFeatureById(id) {
   const haloStyle = new ol.style.Style({
     // Für Punkte (SVGs): Ein großer gelber Kreis dahinter
     image: new ol.style.Circle({
-      radius: 20, 
+      radius: 12, 
       fill: new ol.style.Fill({ color: 'rgba(255, 255, 0, 0.6)' }),
       stroke: new ol.style.Stroke({ color: 'orange', width: 2 })
     }),
