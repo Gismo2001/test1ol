@@ -1,4 +1,14 @@
 import './style.css';
+import $ from 'jquery';
+import { saveAs } from 'file-saver';
+import Chart from 'chart.js/auto';
+import 'ol/ol.css';
+import 'ol-contextmenu/dist/ol-contextmenu.css';
+import 'ol-ext/dist/ol-ext.css';
+
+window.$ = window.jQuery = $;
+window.Chart = Chart;
+
 import {Map, View} from 'ol';
 import * as LoadingStrategy from 'ol/loadingstrategy';
 //import {bbox as bboxStrategy, tile} from 'ol/loadingstrategy.js';
@@ -57,7 +67,7 @@ import CanvasScaleLine from 'ol-ext/control/CanvasScaleLine';
 import PrintDialog from 'ol-ext/control/PrintDialog';
 import Legend from 'ol-ext/control/Legend';
 
-import { toLonLat, transform } from 'ol/proj';
+import { toLonLat, transform, fromLonLat } from 'ol/proj';
 import { format } from 'ol/coordinate';
  
 import contextFeature from 'ol/Feature';
@@ -70,6 +80,8 @@ import listIcon from 'ol-contextmenu';
 import { Text } from 'ol/style';
 import { Icon } from 'ol/style';
 
+window.$ = window.jQuery = $;
+window.Chart = Chart;
 
 import GeoTIFFSource from 'ol/source/GeoTIFF.js';
 import { WebGLTile as WebGLTileLayer } from 'ol/layer.js';
@@ -114,7 +126,7 @@ import SearchPhoton from 'ol-ext/control/SearchPhoton';
 import WMSCapabilities from'ol-ext/control/WMSCapabilities';
 import { getCenter } from 'ol/extent'; // ❗ WICHTIG: oben importieren
 
-import {extend as extendExtent, createEmpty as createEmptyExtent} from 'ol/extent';
+import {extend as extendExtent, createEmpty as createEmptyExtent, boundingExtent, intersects, containsCoordinate} from 'ol/extent';
 
 import { TabulatorFull as Tabulator } from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
@@ -153,7 +165,7 @@ proj4.defs("EPSG:32632", "+proj=utm +zone=32 +datum=WGS84 +units=m +no_defs");
 proj4.defs('EPSG:25832', '+proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs');
 proj4.defs("EPSG:31467", "+proj=tmerc +lat_0=0 +lon_0=9 +k=1.000000 +x_0=3500000 +y_0=0 +datum=potsdam +units=m +no_defs");
 proj4.defs("EPSG:31466", "+proj=tmerc +lat_0=0 +lon_0=6 +k=1.000000 +x_0=2500000 +y_0=0 +datum=potsdam +units=m +no_defs");
-ol.proj.proj4.register(proj4);
+register(proj4);
 
 
 const attribution = new Attribution({
@@ -210,13 +222,13 @@ var note = new Notification(
 map.addControl(note);
 
 // Beginn dgm code
-const profileSource = new ol.source.Vector();
-const profileLayer = new ol.layer.Vector({
+const profileSource = new VectorSource();
+const profileLayer = new VectorLayer({
   source: profileSource,
   title: 'Profil',
   name: 'Profil',     // wichtig für Switcher
-  style: new ol.style.Style({
-    stroke: new ol.style.Stroke({
+  style: new Style({
+    stroke: new Stroke({
       color: 'red',
       width: 3
     })
@@ -320,7 +332,7 @@ function updateDgmInteraction() {
 }
 function lineIntersectsAnyDgm(coord1, coord2) {
 
-  const lineExtent = ol.extent.boundingExtent([coord1, coord2]);
+  const lineExtent = boundingExtent([coord1, coord2]);
 
   for (const layer of activeDgmRasterLayers) {
 
@@ -328,7 +340,7 @@ function lineIntersectsAnyDgm(coord1, coord2) {
 
     if (!layer.bbox) continue;
 
-    if (ol.extent.intersects(lineExtent, layer.bbox)) {
+    if (intersects(lineExtent, layer.bbox)) {
       return true;
     }
 
@@ -337,7 +349,7 @@ function lineIntersectsAnyDgm(coord1, coord2) {
   return false;
 }
 function enableProfileDrawing() {
-  profileDraw = new ol.interaction.Draw({
+  profileDraw = new Draw({
     source: profileSource,
     type: 'LineString',
   });
@@ -402,7 +414,7 @@ function generateElevationProfile(coords) {
   showProfileChart(profile);
 }
 function getProfilePoints(coord1, coord2, step = 5) {
-  const line = new ol.geom.LineString([coord1, coord2]);
+  const line = new LineString([coord1, coord2]);
   const length = line.getLength();
   const points = [];
   for (let d = 0; d <= length; d += step) {
@@ -429,83 +441,73 @@ function showProfileChart(profile) {
       <button id="addHorizontalBtn">Horizontale</button>
     </div>
     `;
-    const script = win.document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/chart.js";
-    script.onload = () => {
-      const ctx = win.document.getElementById("chart").getContext("2d");
-      const container = win.document.getElementById("chartContainer");
-      function resizeChartContainer(){
-        const headerHeight = 60;
-        const controlsHeight = 60;
-        container.style.height = (win.innerHeight - headerHeight - controlsHeight) + "px";
-      }
-      resizeChartContainer();
-      const chart = new Chart(ctx, {
-        type: "line",
-        data: { labels: distances, datasets: [{label: "Höhe (m)", data: heights, borderWidth: 2, tension: 0.2, pointRadius: 0,fill: false}]},
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'nearest', intersect: false },
-          onHover: function(event, elements) {
-            if (elements.length > 0) {
-              const index = elements[0].index;
-              const coord = coords[index];
-              // an Hauptfenster schicken
-              addMarker(coord);
-            }
-          },
-          
-        scales: {
+  const ctx = win.document.getElementById("chart").getContext("2d");
+  const container = win.document.getElementById("chartContainer");
+  function resizeChartContainer(){
+    const headerHeight = 60;
+    const controlsHeight = 60;
+    container.style.height = (win.innerHeight - headerHeight - controlsHeight) + "px";
+  }
+  resizeChartContainer();
+  const chart = new Chart(ctx, {
+    type: "line",
+    data: { labels: distances, datasets: [{label: "Höhe (m)", data: heights, borderWidth: 2, tension: 0.2, pointRadius: 0, fill: false}]},
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'nearest', intersect: false },
+      onHover: function(event, elements) {
+        if (elements.length > 0) {
+          const index = elements[0].index;
+          const coord = coords[index];
+          addMarker(coord);
+        }
+      },
+      scales: {
         x: { title: { display:true, text:"Distanz (m)" }},
         y: { title: { display:true, text:"Höhe (m)" }}
-        }
-        }
-      });
-      win.addEventListener("resize", () => {resizeChartContainer(); chart.resize(); });
+      }
+    }
+  });
+  win.addEventListener("resize", () => {resizeChartContainer(); chart.resize(); });
 
-      // CSV Export
-      win.document.getElementById("exportCsvBtn").onclick = function(){
-        let csv = "data:text/csv;charset=utf-8,Distanz;Hoehe\n";
-        for(let i=0;i<profile.length;i++){
-          const dist = distances[i].replace(".",",");
-          const height = heights[i].replace(".",",");
-          csv += dist + ";" + height + "\n";
-        }
-        const uri = encodeURI(csv);
-        const link = win.document.createElement("a");
-        link.setAttribute("href", uri);
-        link.setAttribute("download","hoehenprofil.csv");
-        win.document.body.appendChild(link);
-        link.click();
-        win.document.body.removeChild(link);
-      };
-
-      win.document.getElementById("addHorizontalBtn").onclick = function() {
-        const value = win.prompt("Höhe für horizontale Linie (m):");
-        if (value === null) return;
-        const h = parseFloat(value);
-        if (isNaN(h)) {
-          win.alert("Bitte eine gültige Zahl eingeben.");
-          return;
-        }
-        // Array mit konstantem Wert erzeugen
-        const horizontalData = new Array(distances.length).fill(h);
-        chart.data.datasets.push({
-          label: "Horizontale " + h + " m",
-          data: horizontalData,
-          // Zufälliger Farbton (0-360), Sättigung 70%, Helligkeit 50%
-          borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`,
-          borderWidth: 3,
-          borderDash: [6,6],
-          pointRadius: 0,
-          fill: false
-      });
-      chart.update();
-    };
-
+  // CSV Export
+  win.document.getElementById("exportCsvBtn").onclick = function(){
+    let csv = "data:text/csv;charset=utf-8,Distanz;Hoehe\n";
+    for(let i=0;i<profile.length;i++){
+      const dist = distances[i].replace(".",",");
+      const height = heights[i].replace(".",",");
+      csv += dist + ";" + height + "\n";
+    }
+    const uri = encodeURI(csv);
+    const link = win.document.createElement("a");
+    link.setAttribute("href", uri);
+    link.setAttribute("download","hoehenprofil.csv");
+    win.document.body.appendChild(link);
+    link.click();
+    win.document.body.removeChild(link);
   };
-  win.document.body.appendChild(script);
+
+  win.document.getElementById("addHorizontalBtn").onclick = function() {
+    const value = win.prompt("Höhe für horizontale Linie (m):");
+    if (value === null) return;
+    const h = parseFloat(value);
+    if (isNaN(h)) {
+      win.alert("Bitte eine gültige Zahl eingeben.");
+      return;
+    }
+    const horizontalData = new Array(distances.length).fill(h);
+    chart.data.datasets.push({
+      label: "Horizontale " + h + " m",
+      data: horizontalData,
+      borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`,
+      borderWidth: 3,
+      borderDash: [6,6],
+      pointRadius: 0,
+      fill: false
+    });
+    chart.update();
+  };
 }
 function getHeightAtCoordinate(coord) {
   const pixel = map.getPixelFromCoordinate(coord);
@@ -514,7 +516,7 @@ function getHeightAtCoordinate(coord) {
   ];
   for (const layer of activeDgmRasterLayers) {
     if (!layer.getVisible()) continue;
-    if (!layer.bbox || !ol.extent.containsCoordinate(layer.bbox, coord)) {
+    if (!layer.bbox || !containsCoordinate(layer.bbox, coord)) {
       continue;
     }
     for (const o of offsets) {
@@ -1633,7 +1635,7 @@ search.on('select', function(e){
     var view = map.getView();
     var resolution = view.getResolutionForExtent(f.getGeometry().getExtent(), map.getSize());
     var zoom = view.getZoomForResolution(resolution);
-    var center = ol.extent.getCenter(f.getGeometry().getExtent());
+    var center = getCenter(f.getGeometry().getExtent());
     // redraw before zoom
     setTimeout(function(){
       view.animate({
@@ -1880,7 +1882,7 @@ const closeDefaultPopups = () => {
   if (popup1) popup1.style.display = 'none';
 };
 
-/* Nested subbar */
+/* Nested subbar Suche */
 var sub2 = new Bar({
   toggleOne: true,
   controls: [
@@ -2666,7 +2668,7 @@ function handleDgmPointerMove(evt) {
 
   // passenden Layer finden
   const activeLayer = visibleDgmLayers.find(layer =>
-    layer.bbox && ol.extent.containsCoordinate(layer.bbox, coord)
+    layer.bbox && containsCoordinate(layer.bbox, coord)
   );
   //console.log('Aktive DGM-Layer:', visibleDgmLayers.map(l => l.get('name')));
   if (!activeLayer) {
@@ -2944,7 +2946,7 @@ let foundLayer = null;
 for (const layer of dgmLayers) {
 
   // prüfen ob Klick im DGM-Extent liegt
-  if (!layer.bbox || !ol.extent.containsCoordinate(layer.bbox, coord)) {
+  if (!layer.bbox || !containsCoordinate(layer.bbox, coord)) {
     continue;
   }
 
@@ -3267,23 +3269,23 @@ const textButton = new Button({
       const text = prompt('Text eingeben:');
       if (!text) return;
 
-      const feature = new ol.Feature({
-        geometry: new ol.geom.Point(evt.coordinate),
+      const feature = new Feature({
+        geometry: new Point(evt.coordinate),
         name: text
       });
 
-      feature.setStyle(new ol.style.Style({
-        text: new ol.style.Text({
+      feature.setStyle(new Style({
+        text: new Text({
           text: text,
           font: '14px Calibri,sans-serif',
-          fill: new ol.style.Fill({ color: '#000' }),
-          stroke: new ol.style.Stroke({ color: '#fff', width: 2 }),
+          fill: new Fill({ color: '#000' }),
+          stroke: new Stroke({ color: '#fff', width: 2 }),
           offsetY: -15
         }),
-        image: new ol.style.Circle({
+        image: new CircleStyle({
           radius: 4,
-          fill: new ol.style.Fill({ color: '#ffcc33' }),
-          stroke: new ol.style.Stroke({ color: '#333', width: 1 })
+          fill: new Fill({ color: '#ffcc33' }),
+          stroke: new Stroke({ color: '#333', width: 1 })
         })
       }));
 
@@ -3467,16 +3469,16 @@ window.onload = function() {
   } */
 }
 
-const vectorSource = new ol.source.Vector();
-const vectorLayer = new ol.layer.Vector({
+const vectorSource = new VectorSource();
+const vectorLayer = new VectorLayer({
   source: vectorSource,
-  style: new ol.style.Style({
-    image: new ol.style.Circle({
+  style: new Style({
+    image: new CircleStyle({
       radius: 6,
-      fill: new ol.style.Fill({
+      fill: new Fill({
         color: 'red',
       }),
-      stroke: new ol.style.Stroke({
+      stroke: new Stroke({
         color: 'white',
         width: 2,
       }),
@@ -3548,15 +3550,15 @@ function handleCRSChange(event) {
 
   // --- Transformation in WebMercator ---
   if (systemLabel === 'EPSG:4326') {
-    transformed = ol.proj.fromLonLat([x, y]); // [lon, lat]
+    transformed = fromLonLat([x, y]); // [lon, lat]
   } else if (systemLabel === 'EPSG:31466' || systemLabel === 'EPSG:31467') {
-    transformed = ol.proj.transform([x, y], systemLabel, 'EPSG:3857');
+    transformed = transform([x, y], systemLabel, 'EPSG:3857');
   } else if (systemLabel !== 'EPSG:3857') {
-    transformed = ol.proj.transform([x, y], systemLabel, 'EPSG:3857');
+    transformed = transform([x, y], systemLabel, 'EPSG:3857');
   } else if (systemLabel !== 'EPSG:32632') {
-    transformed = ol.proj.transform([x, y], systemLabel, 'EPSG:3857');
+    transformed = transform([x, y], systemLabel, 'EPSG:3857');
   } else if (systemLabel !== 'EPSG:25832') {
-    transformed = ol.proj.transform([x, y], systemLabel, 'EPSG:3857');
+    transformed = transform([x, y], systemLabel, 'EPSG:3857');
     
   } else {
     transformed = [x, y];
@@ -3567,8 +3569,8 @@ function handleCRSChange(event) {
 
 // --- Punkt in der Karte darstellen ---
 function drawPoint(coords) {
-  const pointFeature = new ol.Feature({
-    geometry: new ol.geom.Point(coords),
+  const pointFeature = new Feature({
+    geometry: new Point(coords),
   });
 
   // ⚠️ Hier muss dein eigener VectorSource-Name eingesetzt werden
@@ -3729,15 +3731,15 @@ function highlightFeatureById(id) {
   }
 
   // 2. Der universelle "Halo"-Stil (Leuchten im Hintergrund)
-  const haloStyle = new ol.style.Style({
+  const haloStyle = new Style({
     // Für Punkte (SVGs): Ein großer gelber Kreis dahinter
-    image: new ol.style.Circle({
+    image: new CircleStyle({
       radius: 12, 
-      fill: new ol.style.Fill({ color: 'rgba(255, 255, 0, 0.6)' }),
-      stroke: new ol.style.Stroke({ color: 'orange', width: 2 })
+      fill: new Fill({ color: 'rgba(255, 255, 0, 0.6)' }),
+      stroke: new Stroke({ color: 'orange', width: 2 })
     }),
     // Für Linien: Eine sehr dicke gelbe Linie unter der echten Linie
-    stroke: new ol.style.Stroke({
+    stroke: new Stroke({
       color: 'rgba(255, 255, 0, 0.7)',
       width: 12 // Schön breit, damit sie unter deiner Linie hervorguckt
     })

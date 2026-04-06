@@ -1,11 +1,17 @@
 import { defineConfig } from 'vite';
-
+import legacy from '@vitejs/plugin-legacy';
 
 export default defineConfig({
+  plugins: [
+    legacy({
+      targets: ['defaults', 'not IE 11']
+    })
+  ],
   build: {
     sourcemap: true,
   },
   server: {
+    host: '0.0.0.0',
     proxy: {
 
       // Proxy für LGN-STAC (bestehend)
@@ -33,5 +39,8 @@ export default defineConfig({
       }
 
     },
+  },
+  preview: {
+    host: '0.0.0.0'
   },
 });
