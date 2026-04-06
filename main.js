@@ -117,7 +117,6 @@ import { getCenter } from 'ol/extent'; // ❗ WICHTIG: oben importieren
 import {extend as extendExtent, createEmpty as createEmptyExtent} from 'ol/extent';
 
 import { TabulatorFull as Tabulator } from 'tabulator-tables';
-// Importiere ein Standard-Theme (z.B. einfaches Tabulator-Design)
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import toggle from 'tabulator-tables/src/js/modules/Format/defaults/formatters/toggle.js';
 
