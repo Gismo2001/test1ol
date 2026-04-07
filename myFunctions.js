@@ -1,7 +1,9 @@
 import proj4 from 'proj4';
 import { register } from 'ol/proj/proj4';
 import { getArea } from 'ol/sphere';
-import { transform } from 'ol/proj';
+import { transform, toLonLat } from 'ol/proj';
+import { getLength } from 'ol/sphere';
+import { getCenter } from 'ol/extent';
 import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import Fill from 'ol/style/Fill';
@@ -100,8 +102,8 @@ export function generatePopupHTML(feature, layer) {
     const geom = feature.getGeometry();
     const center = geom.getType() === 'Point'
       ? geom.getCoordinates()
-      : ol.extent.getCenter(geom.getExtent());
-    const [lon, lat] = ol.proj.toLonLat(center);
+      : getCenter(geom.getExtent());
+    const [lon, lat] = toLonLat(center);
     latLonResult = `${lat.toFixed(5)},${lon.toFixed(5)}`;
   }
  // Spezialfälle FSK, UMN, editbar, geojson, fot und kml: Nur spezieller Inhalt, kein allgemeiner Block
@@ -159,13 +161,13 @@ return `
   let html = `<p><strong>Geometrie-Typ:</strong> ${type}</p>`;
 
   if (type === 'Point') {
-    const coords = ol.proj.toLonLat(geom.getCoordinates());
+    const coords = toLonLat(geom.getCoordinates());
     html += `<p><strong>Koordinaten:</strong> ${coords[1].toFixed(5)}, ${coords[0].toFixed(5)}</p>`;
   } else if (type === 'LineString') {
-    const length = ol.sphere.getLength(geom);
+    const length = getLength(geom);
     html += `<p><strong>Länge:</strong> ${length.toFixed(2)} m</p>`;
   } else if (type === 'Polygon') {
-    const area = ol.sphere.getArea(geom);
+    const area = getArea(geom);
     html += `<p><strong>Fläche:</strong> ${area.toFixed(2)} m²</p>`;
   }
   // Attributliste erzeugen
@@ -222,13 +224,13 @@ return `
   let html = `<p><strong>Geometrie-Typ:</strong> ${type}</p>`;
 
   if (type === 'Point') {
-    const coords = ol.proj.toLonLat(geom.getCoordinates());
+    const coords = toLonLat(geom.getCoordinates()); // in Grad
     html += `<p><strong>Koordinaten:</strong> ${coords[1].toFixed(5)}, ${coords[0].toFixed(5)}</p>`;
   } else if (type === 'LineString') {
-    const length = ol.sphere.getLength(geom); // in Metern
+    const length = getLength(geom); // in Metern
     html += `<p><strong>Länge:</strong> ${length.toFixed(2)} m</p>`;
   } else if (type === 'Polygon') {
-    const area = ol.sphere.getArea(geom); // in m²
+    const area = getArea(geom); // in m²
     html += `<p><strong>Fläche:</strong> ${area.toFixed(2)} m²</p>`;
   }
 
@@ -253,13 +255,13 @@ return `
   let content = `<p><strong>Geometrie-Typ:</strong> ${type}</p>`;
 
   if (type === 'Point') {
-    const coords = ol.proj.toLonLat(geom.getCoordinates());
+    const coords = toLonLat(geom.getCoordinates());
     content += `<p><strong>Koordinaten:</strong> ${coords[1].toFixed(5)}, ${coords[0].toFixed(5)}</p>`;
   } else if (type === 'LineString') {
-    const length = ol.sphere.getLength(geom); // in Metern
+    const length = getLength(geom); // in Metern
     content += `<p><strong>Länge:</strong> ${length.toFixed(2)} m</p>`;
   } else if (type === 'Polygon') {
-    const area = ol.sphere.getArea(geom); // in m²
+    const area = getArea(geom); // in m²
     content += `<p><strong>Fläche:</strong> ${area.toFixed(2)} m²</p>`;
   }
 

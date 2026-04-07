@@ -13,6 +13,8 @@
     "@vitejs/plugin-legacy": "^5.4.3",
     "@vitejs/plugin-react": "^4.3.4",
     "babel-loader": "^9.2.1",
+    "core-js": "^3.49.0",
+    "regenerator-runtime": "^0.14.1",
     "vite": "^5.1.5"
   },
   "dependencies": {

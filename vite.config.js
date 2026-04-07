@@ -4,7 +4,9 @@ import legacy from '@vitejs/plugin-legacy';
 export default defineConfig({
   plugins: [
     legacy({
-      targets: ['defaults', 'not IE 11']
+      targets: ['> 0.5%', 'last 2 versions', 'Firefox ESR', 'not dead', 'Safari >= 11'],
+      modernPolyfills: true,
+      additionalLegacyPolyfills: ['regenerator-runtime/runtime'],
     })
   ],
   build: {
