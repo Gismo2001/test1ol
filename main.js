@@ -206,17 +206,11 @@ permaFunktionality = new Permalink({
 });
 
 
-
-
-
 var note = new Notification(
   {
     className: 'ol-notification',
-    //autoClose: false,
-    closeBox: true,
+    autoClose: true,
     closeBoxTitle: 'close',
-    //closeBoxCallback: function() {console.log('closeBoxCallback');},
-    
   }
 );
 map.addControl(note);
@@ -1902,6 +1896,7 @@ const closeDefaultPopups = () => {
   if (popup1) popup1.style.display = 'none';
 };
 
+let punktButtonState = false;
 /* Nested subbar Suche */
 var sub2 = new Bar({
   toggleOne: true,

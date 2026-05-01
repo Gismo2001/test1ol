@@ -2,7 +2,9 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+
+    
     <meta name="format-detection" content="telephone=no">
     <meta http-equiv="X-UA-Compatible" content="IE=EDGE" /> 
     <title>GB 1 web map</title>
@@ -31,8 +33,7 @@
   <div id="layer-select-container" style="display:none;">
   <select id="layer-select"></select>
   </div>
-
-   <div id="example-table"></div>
+  <div id="example-table"></div>
   <div id="map" tabindex="0"></div>
 
   <div id="coordinate_selection" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: white; padding: 10px; border-radius: 8px; border: 1px solid #ccc; z-index: 1100; display: none;">
@@ -55,7 +56,7 @@
   <div id="custom-controls" class="custom-controls"></div>
 
   <div id="notification">
-      <p>Es gab einen Fehler bei der Standortbestimmung.</p>
+      <p>Standortbestimmung eingeschaltet?</p>
       <p>Möchten Sie es erneut versuchen? <span id="retryButton" style="cursor:pointer; text-decoration:underline;">Erneut versuchen</span></p>
   </div>
 
@@ -73,7 +74,6 @@
     HA: <span id="height-value-alt">-</span> m
   </div>
 
-  <canvas id="myChart" width="400" height="200"></canvas>
  
 
 <!-- <div id="table-container" style="display:none; position: fixed; bottom: 0; width: 100%; height: 300px; background: white; z-index: 2000; border-top: 2px solid #ccc;">
