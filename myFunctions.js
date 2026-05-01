@@ -447,7 +447,7 @@ export function zoomToFeature(feature, map) {
   map.getView().fit(extent, {
     duration: 1000,
     padding: [50, 50, 50, 50],
-    maxZoom: 20
+    maxZoom: 17
   });
 
   // Temporärer Highlight-Stil

@@ -1525,56 +1525,76 @@ var closer = document.getElementById('popup-closer');
 let clickCooldown = false;
 
 map.on('click', function (evt) {
-  if  (!dgmClickListener && !domClickListener) {
+  if (dgmClickListener || domClickListener) return;
   if (clickCooldown) return;
+
   clickCooldown = true;
-  setTimeout(() => clickCooldown = false, 300); // Sperre für 300ms
+  setTimeout(() => clickCooldown = false, 300);
 
   if (editBarAnAus === false) {
-    var foundResults = [];
-    var seenFeatureIds = new Set();
-    
-    // Liste leeren  
-    var ul = document.getElementById('search-results');
-    if (ul) {
-      while (ul.firstChild) {
-        ul.removeChild(ul.firstChild);
-      
-      }
+
+    // UL leeren
+    const ul = document.getElementById('search-results');
+    if (ul) ul.innerHTML = '';
+
+    const foundResults = [];
+    const seenIds = new Set();
+
+    // Hilfsfunktion: stabile eindeutige ID erzeugen
+    function getStableId(feature) {
+      if (feature.getId()) return feature.getId();
+
+      const props = { ...feature.getProperties() };
+      delete props.geometry;
+
+      const sorted = Object.keys(props)
+        .sort()
+        .reduce((o, k) => { o[k] = props[k]; return o; }, {});
+
+      return JSON.stringify(sorted);
     }
 
+    // Features am Klickpunkt einsammeln
     map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
       if (!layer) return;
+
       const lyname = layer.get('name') || '';
-      if (lyname !== 'gew' && lyname !== 'km10scal' && lyname !== 'km100scal' && lyname !== 'km500scal') {
-        feature.set('layerName', lyname);
-        let fid = feature.getId() || JSON.stringify(feature.getProperties());
-        if (!seenFeatureIds.has(fid)) {
-          foundResults.push({feature, layer});
-          seenFeatureIds.add(fid);
-        }
+      if (['gew', 'km10scal', 'km100scal', 'km500scal'].includes(lyname)) return;
+
+      feature.set('layerName', lyname);
+
+      const fid = getStableId(feature);
+      if (!seenIds.has(fid)) {
+        seenIds.add(fid);
+        foundResults.push({ feature, layer, fid });
       }
     });
 
     const coordinates = evt.coordinate;
-    const uniqueResults = getUniqueFeatures(foundResults);
-    if (uniqueResults.length === 1) {
-      const { feature, layer } = uniqueResults[0];
+
+    // Wenn nur ein Feature → Popup direkt anzeigen
+    if (foundResults.length === 1) {
+      const { feature, layer } = foundResults[0];
       document.getElementById('search-results-container').style.display = 'none';
       popup.setPosition(coordinates);
       content.innerHTML = generatePopupHTML(feature, layer);
+
       selectInteraction.getFeatures().clear();
       selectInteraction.getFeatures().push(feature);
-
-    } else if (uniqueResults.length > 1) {
-      myFuncInfoDiv(uniqueResults, popup, content, selectInteraction, coordinates, map);
-    } else {
-      popup.setPosition(undefined);
+      return;
     }
 
+    // Wenn mehrere Features → Liste anzeigen
+    if (foundResults.length > 1) {
+      myFuncInfoDiv(foundResults, popup, content, selectInteraction, coordinates, map);
+      return;
+    }
+
+    // Wenn keine Features → Popup schließen
+    popup.setPosition(undefined);
   }
-}
 });
+
 
 function getUniqueFeatures(results) {
   const seen = new Set();
@@ -2468,14 +2488,15 @@ containerBar2.addControl(toggleButtonU);
 containerBar2.setPosition('bottom-right');
 containerBar2.element.style.bottom = '60px';
 
-var checkExist = setInterval(() => {
+/* var checkExist = setInterval(() => {
+  console.log('aufgerufen')
   let barElement = document.querySelector('.ol-control.ol-bar.bottom-left');
   if (barElement) {
     //barElement.style.bottom = '160px';
     clearInterval(checkExist);
   }
 }, 100);
-
+ */
 //-----------------------------------------------------------------------------------------------------WMS-Control
 document.addEventListener('DOMContentLoaded', function() {
   initializeWMS(WMSCapabilities, map ); 
@@ -2875,9 +2896,9 @@ async function handleDgmClick(evt) {
       let originalTifUrl = props.dgm1; // Die URL von IBM (https://dgm1...)
 
       const tifUrl = originalTifUrl.replace(
-  'https://dgm1.s3.eu-de.cloud-object-storage.appdomain.cloud',
-  '/dgm'
-);
+        'https://dgm1.s3.eu-de.cloud-object-storage.appdomain.cloud',
+        '/dgm'
+      );
       const bbox = feature.getGeometry().getExtent();
 
       // prüfen ob bereits geladen
