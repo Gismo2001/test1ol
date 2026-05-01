@@ -210,6 +210,7 @@ var note = new Notification(
   {
     className: 'ol-notification',
     autoClose: true,
+    closeBox: true,
     closeBoxTitle: 'close',
   }
 );
@@ -3273,7 +3274,7 @@ var edit = new EditBar({
 });
 map.addControl(edit);
 edit.setPosition('bottom-left');
-edit.element.style.bottom = '140px';
+edit.element.style.bottom = '160px';
 edit.element.style.left = '15px';
 
 // Benutzerdefinierter Button für Text hinzufügen
