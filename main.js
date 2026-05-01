@@ -2488,15 +2488,15 @@ containerBar2.addControl(toggleButtonU);
 containerBar2.setPosition('bottom-right');
 containerBar2.element.style.bottom = '60px';
 
-/* var checkExist = setInterval(() => {
-  console.log('aufgerufen')
+ var checkExist = setInterval(() => {
+ 
   let barElement = document.querySelector('.ol-control.ol-bar.bottom-left');
   if (barElement) {
-    //barElement.style.bottom = '160px';
+    barElement.style.bottom = '160px';
     clearInterval(checkExist);
   }
-}, 100);
- */
+}, 100); 
+
 //-----------------------------------------------------------------------------------------------------WMS-Control
 document.addEventListener('DOMContentLoaded', function() {
   initializeWMS(WMSCapabilities, map ); 
@@ -3482,12 +3482,13 @@ window.onload = function() {
   }
 
   // Prüfen ob PC oder Mobilgerät
-  /* if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+   if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
     console.log("Mobilgerät erkannt");
+    //alert("Mobil");
   } else {
     console.log("Desktopgerät erkannt");
-    alert("Bitte auf einem Mobilgerät öffnen, um die volle Funktionalität zu nutzen.");c
-  } */
+    //alert("Desktop");
+  } 
 }
 
 const vectorSource = new VectorSource();
