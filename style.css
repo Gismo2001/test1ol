@@ -1,5 +1,5 @@
 @import "node_modules/ol/ol.css";
-
+@import "node_modules/ol-ext/dist/ol-ext.css";
 
 *{
   box-sizing: border-box;
@@ -7,20 +7,91 @@
   padding: 0;
 }
 
-body,
-html {
-  width: 100%;
-  height: 100%;
+
+html, body {
+  
   margin: 0;
+  height: 100dvh;
   padding: 0;
-  overflow: hidden;
-  z-index: 1;
+  
 }
 
 #map {
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
 }
+
+ 
+/* --- MOBILE OPTIMIERUNG FÜR OPENLAYERS & OL-EXT --- */
+@media (max-width: 768px) {
+
+  /* --- 1. Buttons kleiner & sicher innerhalb des Viewports --- */
+  .ol-control button {
+    width: 1.3em;
+    height: 1.3em;
+    font-size: 1.2em;
+    padding: 0;
+    line-height: 1.3em;
+  }
+
+  /* Touch-optimierte Buttons */
+  .ol-touch .ol-control button,
+  .ol-touch .ol-control.ol-layerswitcher button {
+    width: 30px;
+    height: 30px;
+    font-size: 1.25em;
+  }
+
+  /* PrintDialog & andere Controls */
+  .ol-touch .ol-control,
+  .ol-touch .ol-control.ol-print-dialog {
+    font-size: 12px;
+    text-align: center;
+    padding: 5px;
+    background-color: #dbdbdb;
+  }
+
+  /* --- 2. LayerSwitcher Panel kompakter --- */
+  .ol-touch .ol-control.ol-layerswitcher .panel-container {
+    margin: 1px;
+    padding-right: 0;
+    font-size: 16px;
+  }
+
+  /* --- 3. SearchPhoton nach links verschieben (verhindert Overflow rechts) --- */
+  .ol-search {
+    left: 10px;
+    right: auto !important;
+  }
+
+  /* Suchfeld: Breite begrenzen, damit es nicht in Controls läuft */
+  .ol-search input {
+    width: 60vw;
+    font-size: 16px;
+  }
+
+  /* Autocomplete-Liste sicher innerhalb des Viewports */
+  .ol-search ul.autocomplete {
+    max-width: 75vw;
+    overflow-x: hidden;
+  }
+
+  /* --- 4. PrintDialog extrem klein halten (verhindert Opera-Overflow) --- */
+  .ol-print-dialog {
+    height: 10px;
+    width: 10px;
+  }
+
+  /* --- 5. HARTE Overflow-Sperre für Opera/Chrome/Edge --- */
+  #map {
+    contain: layout paint size;
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    max-width: 100vw;
+  }
+}
+
  /* Style für den Print-Button P */
  .get-position {
   position: absolute;
