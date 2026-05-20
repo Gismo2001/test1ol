@@ -1729,6 +1729,8 @@ function searchFeaturesByTextBw(searchText) {
           let name = properties.name ? properties.name.toLowerCase() : '';
           let beschreib = properties.beschreib ? properties.beschreib.toLowerCase() : '';
           let bauart = properties.bauart ? properties.bauart.toLowerCase() : '';
+          let ktr = properties.ktr ? properties.ktr.toLowerCase() : '';
+          console.log(ktr)
           let searchTextLower = searchText.toLowerCase(); // Suchtext ebenfalls in Kleinbuchstaben umwandeln
           if (name.includes(searchTextLower) || bw_id.includes(searchTextLower) || name.includes(searchTextLower) || beschreib.includes(searchTextLower) || bauart.includes(searchTextLower)) 
             {
