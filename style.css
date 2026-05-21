@@ -358,36 +358,66 @@ html, body {
 }
 
 #search-results-container {
-  position: fixed;
-  top: 0;
+  position: absolute;
+  top: 10px;
   left: 50%;
   transform: translateX(-50%);
   background: white;
-  border: 1px solid black;
-  padding: 10px;
-  z-index: 1009; /* Stellt sicher, dass es über anderen Elementen liegt */
-  display: none; /* Startet unsichtbar */
-  max-height: 300px; /* Begrenzte Höhe, damit die Scrollbar erscheint */
-  max-width: 250px;
-  overflow-y: auto; /* Scrollbar hinzufügen, wenn nötig */
-}
-#search-results li {
-  cursor: pointer;
   padding: 1px;
-  border-bottom: 1px solid #ddd;
+  border-radius: 0px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 24;
+  width: 200px; 
+  font-size: 12px;
+  max-height: 30vh; 
+  display: flex;
+  flex-direction: column;
 }
-#search-results {
-  list-style-position: inside; /* Punkte innerhalb des Containers */
-  padding-left: 0; /* Entfernt zusätzlichen linken Abstand */
+
+#search-results-container {
+  list-style: none; 
+  padding: 0;       
+  margin: 0;
+  overflow-y: auto;
 }
-#close-search-results {
-  background: none;
-  border: none;
-  font-size: 18px;
+
+#search-results-container-li li {
+  padding: 2px 2px;
+  border-bottom: 1px solid #f0f0f0;
   cursor: pointer;
-  position: absolute;
-  top: 5px;
-  right: 5px;
+  transition: background 0.2s ease;
+  color: #333;
+}
+
+#search-results-container-li li:hover {
+  background-color: #f5f5f5;
+  color: #007bff;
+}
+
+#search-results-container-li li:last-child {
+  border-bottom: none;
+}
+
+#search-results-container h3 {
+  margin: 0 0 2px 0;
+  font-size: 13px;
+  color: #555;
+}
+
+#close-search-results {
+  float: right;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+#search-results-container.hidden {
+  display: none !important; 
+}
+
+#search-results-container-li li.selected {
+    background-color: #e7f3ff;
+    border-left: 4px solid #007bff;
+    font-weight: bold;
 }
 
 
@@ -421,4 +451,65 @@ html, body {
   max-width: 300px;
   white-space: normal;
   overflow-wrap: break-word;
+}
+
+/* ================================================================= */
+/* --- NEU: SPEZIELLE REGELN FÜR HANDY-QUERFORMAT (LANDSCAPE) ---    */
+/* ================================================================= */
+@media screen and (max-height: 420px) and (orientation: landscape) {
+  
+  /* 1. Die Haupt-Toolbar legt sich horizontal statt vertikal an */
+  .ol-control.ol-bar.ol-top.ol-left {
+    top: 0.5em !important;
+    left: 3em !important;
+    flex-direction: row !important;
+  }
+
+  /* Sub-Bars (wie dein I-Menü) klappen ebenfalls horizontal aus */
+  .ol-control.ol-bar .ol-bar {
+    flex-direction: row !important;
+    margin-left: 5px !important;
+    margin-top: 0 !important;
+  }
+
+  /* 2. Buttons kompakter machen, um Bildschirmhöhe zu sparen */
+  .ol-control button,
+  .ol-touch .ol-control button {
+    width: 26px !important;
+    height: 26px !important;
+    line-height: 24px !important;
+    font-size: 11px !important;
+  }
+
+  /* 3. Den Permalink-Button sauber an die neue Position anpassen */
+  .ol-permalink-button {
+    top: 0.5em !important;
+    left: 15em !important; /* Schiebt ihn rechts neben die horizontale Bar */
+  }
+
+  /* 4. Das Feature-Select Suchergebnis-Fenster im Querformat begrenzen */
+  #search-results-container {
+    top: 5px !important;
+    max-height: 55vh !important; /* Verhindert das Überlagern des gesamten Bildschirms */
+    width: 220px !important;
+  }
+
+  /* Das Suchfeld ein Stück nach rechts verschieben, damit die Toolbar links frei atmen kann */
+  .ol-search {
+    left: 200px !important; /* Schiebt das Suchfeld rechts neben die Zoom-Buttons und die Toolbar */
+    top: 1em !important;
+    right: auto !important;
+  }
+
+  /* Das Eingabefeld im Querformat kompakt halten */
+  .ol-search input {
+    width: 180px !important;
+    font-size: 14px !important;
+  }
+
+  /* Die Autocomplete-Vorschlagsliste der Suche anpassen, damit sie mitwandert */
+  .ol-search ul.autocomplete {
+    left: 0 !important;
+    max-width: 250px !important;
+  }
 }
