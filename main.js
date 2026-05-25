@@ -561,6 +561,10 @@ const highlightStyl = new Style({
 });
 
 
+document.querySelectorAll('#search-results li').forEach(li => {
+  li.classList.remove('selected');
+});
+
 
 //_____-----------------------------------------------------------------APrint
 map.addControl(new CanvasAttribution());
@@ -3704,6 +3708,7 @@ function getLayerData(layer) {
         upflicht: props.upflicht,
         bauart: props.bauart,
         baujahr: props.baujahr,
+        ktr: props.KTR,
       });
     }
   });

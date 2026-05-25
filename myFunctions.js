@@ -410,31 +410,49 @@ function createResultListItem(layer, layerTitle, name, bwId, feature, map, popup
   listItem.style.cursor = 'pointer';
   // Einfacher Klick → Popup anzeigen
 
-  listItem.addEventListener('click', () => {
-    const geometry = feature.getGeometry();
-    let coordinates;
-  
-    // 🔍 Geometrie-Typ prüfen
-    const type = geometry.getType();
-    if (type === 'Point') {
-      coordinates = geometry.getCoordinates();
-    } else {
-      // 📍 Bei Linien oder Flächen: Schwerpunkt verwenden
-      const extent = geometry.getExtent();
-      coordinates = [
-        (extent[0] + extent[2]) / 2, // Mittelpunkt X
-        (extent[1] + extent[3]) / 2  // Mittelpunkt Y
-      ];
-    }
-  
-    popup.setPosition(coordinates);
-    content.innerHTML = generatePopupHTML(feature, layer, coordinates, popup);
-  
-    // 🔴 Feature visuell markieren
-    selectInteraction.getFeatures().clear();
-    selectInteraction.getFeatures().push(feature);
+listItem.addEventListener('click', () => {
+
+  // 🔹 Alle anderen Listeneinträge abwählen
+  document.querySelectorAll('#search-results li').forEach(li => {
+    li.classList.remove('selected');
   });
-    
+
+  // 🔹 Diesen Eintrag markieren
+  listItem.classList.add('selected');
+
+  const geometry = feature.getGeometry();
+  let coordinates;
+
+  // 🔍 Geometrie-Typ prüfen
+  const type = geometry.getType();
+
+  if (type === 'Point') {
+    coordinates = geometry.getCoordinates();
+  } else {
+
+    // 📍 Mittelpunkt verwenden
+    const extent = geometry.getExtent();
+
+    coordinates = [
+      (extent[0] + extent[2]) / 2,
+      (extent[1] + extent[3]) / 2
+    ];
+  }
+
+  popup.setPosition(coordinates);
+
+  content.innerHTML = generatePopupHTML(
+    feature,
+    layer,
+    coordinates,
+    popup
+  );
+
+  // 🔴 Feature visuell markieren
+  selectInteraction.getFeatures().clear();
+  selectInteraction.getFeatures().push(feature);
+
+});
   listItem.addEventListener('dblclick', () => zoomToFeature(feature, map));
   return listItem;
 }
